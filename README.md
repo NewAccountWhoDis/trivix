@@ -1,36 +1,60 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Trivix
 
-## Getting Started
+High-energy trivia for hosts, players, and team captains.
 
-First, run the development server:
+## Stack
+
+Next.js 15 (App Router) · TypeScript · Tailwind · Firebase (Auth + Firestore + Admin SDK) · Framer Motion · GSAP · React Three Fiber · Lottie · Radix UI · Vitest · Playwright · Lighthouse CI · Netlify.
+
+See `docs/superpowers/specs/` for design specs and `docs/superpowers/plans/` for implementation plans.
+
+## Local development
+
+Prerequisites: Node 20+, Java 17 (for Firebase emulator).
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+cp .env.example .env.local           # adjust values if needed
+npx firebase login                    # one-time, uses your Google account
+npm run dev:emu                       # Next dev + emulators in parallel
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Visit http://localhost:3000 (app) and http://localhost:4000 (emulator UI).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Scripts
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Command | What it does |
+|---|---|
+| `npm run dev` | Next dev server |
+| `npm run dev:emu` | Next dev + Firebase emulators in parallel |
+| `npm run build` | Production build |
+| `npm run start` | Run production build |
+| `npm run typecheck` | tsc --noEmit |
+| `npm run lint` | ESLint |
+| `npm run format` | Prettier write |
+| `npm test` | Vitest unit + integration |
+| `npm run test:integration` | Vitest integration only (needs emulator running, or use `emulators:exec`) |
+| `npm run test:e2e` | Playwright E2E + axe |
+| `npm run lighthouse` | Lighthouse CI |
+| `npm run emulators` | Firebase Auth + Firestore emulators |
+| `npm run seed` | Seed emulator with fixture users (populated in Plan 2) |
 
-## Learn More
+## Deployment
 
-To learn more about Next.js, take a look at the following resources:
+Push to `main` → Netlify build → production. PRs get deploy previews. The first admin must be created by manually setting `users/{founder-uid}.isAdmin = true` in the Firestore console after signing up.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Required Netlify environment variables (production):
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```
+NEXT_PUBLIC_FIREBASE_API_KEY
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
+NEXT_PUBLIC_FIREBASE_PROJECT_ID
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
+NEXT_PUBLIC_FIREBASE_APP_ID
+NEXT_PUBLIC_USE_EMULATORS=false
+NEXT_PUBLIC_SITE_URL=https://trivix.app
+FIREBASE_PROJECT_ID
+FIREBASE_SERVICE_ACCOUNT_JSON   # JSON string from a service account
+USE_FIREBASE_EMULATORS=false
+```
