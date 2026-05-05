@@ -17,17 +17,17 @@ type Size = 'sm' | 'md' | 'lg';
 
 const variants: Record<Variant, string> = {
   primary:
-    'bg-brand-red text-text-primary hover:shadow-glow-red active:scale-[0.97] transition',
+    'bg-brand-red text-brand-black hover:shadow-glow-red active:scale-[0.97] transition',
   secondary:
     'bg-brand-ink text-text-primary border border-brand-line hover:border-brand-red transition',
   ghost:
     'bg-transparent text-text-primary hover:bg-brand-ink transition',
   danger:
-    'bg-game-red text-text-primary hover:shadow-glow-quad-r transition',
-  'quad-r': 'bg-game-red text-text-primary hover:shadow-glow-quad-r transition',
-  'quad-b': 'bg-game-blue text-text-primary hover:shadow-glow-quad-b transition',
+    'bg-game-red text-brand-black hover:shadow-glow-quad-r transition',
+  'quad-r': 'bg-game-red text-brand-black hover:shadow-glow-quad-r transition',
+  'quad-b': 'bg-game-blue text-brand-black hover:shadow-glow-quad-b transition',
   'quad-y': 'bg-game-yellow text-brand-black hover:shadow-glow-quad-y transition',
-  'quad-g': 'bg-game-green text-text-primary hover:shadow-glow-quad-g transition',
+  'quad-g': 'bg-game-green text-brand-black hover:shadow-glow-quad-g transition',
 };
 
 const sizes: Record<Size, string> = {

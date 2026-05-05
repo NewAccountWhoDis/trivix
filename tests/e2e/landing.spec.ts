@@ -5,7 +5,7 @@ test('landing page renders branded heading and CTAs', async ({ page }) => {
   await page.goto('/');
   await expect(page.getByRole('heading', { level: 1, name: /trivix/i })).toBeVisible();
   await expect(page.getByRole('button', { name: /get started/i })).toBeVisible();
-  await expect(page.getByRole('button', { name: /i'?m a host/i })).toBeVisible();
+  await expect(page.getByRole('button', { name: /i.?m a host/i })).toBeVisible();
 });
 
 test('respects prefers-reduced-motion', async ({ browser }) => {
