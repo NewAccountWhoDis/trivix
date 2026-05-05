@@ -40,3 +40,7 @@ ui-debug.log
 
 # netlify
 .netlify/
+
+# typescript / lighthouse
+*.tsbuildinfo
+.lighthouseci/

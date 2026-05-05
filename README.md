@@ -23,21 +23,21 @@ Visit http://localhost:3000 (app) and http://localhost:4000 (emulator UI).
 
 ## Scripts
 
-| Command | What it does |
-|---|---|
-| `npm run dev` | Next dev server |
-| `npm run dev:emu` | Next dev + Firebase emulators in parallel |
-| `npm run build` | Production build |
-| `npm run start` | Run production build |
-| `npm run typecheck` | tsc --noEmit |
-| `npm run lint` | ESLint |
-| `npm run format` | Prettier write |
-| `npm test` | Vitest unit + integration |
+| Command                    | What it does                                                              |
+| -------------------------- | ------------------------------------------------------------------------- |
+| `npm run dev`              | Next dev server                                                           |
+| `npm run dev:emu`          | Next dev + Firebase emulators in parallel                                 |
+| `npm run build`            | Production build                                                          |
+| `npm run start`            | Run production build                                                      |
+| `npm run typecheck`        | tsc --noEmit                                                              |
+| `npm run lint`             | ESLint                                                                    |
+| `npm run format`           | Prettier write                                                            |
+| `npm test`                 | Vitest unit + integration                                                 |
 | `npm run test:integration` | Vitest integration only (needs emulator running, or use `emulators:exec`) |
-| `npm run test:e2e` | Playwright E2E + axe |
-| `npm run lighthouse` | Lighthouse CI |
-| `npm run emulators` | Firebase Auth + Firestore emulators |
-| `npm run seed` | Seed emulator with fixture users (populated in Plan 2) |
+| `npm run test:e2e`         | Playwright E2E + axe                                                      |
+| `npm run lighthouse`       | Lighthouse CI                                                             |
+| `npm run emulators`        | Firebase Auth + Firestore emulators                                       |
+| `npm run seed`             | Seed emulator with fixture users (populated in Plan 2)                    |
 
 ## Deployment
 

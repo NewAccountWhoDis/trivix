@@ -15,6 +15,7 @@
 Files this plan creates (no modifications — fresh repo on top of an empty `main` branch with the spec already committed):
 
 **Project root**
+
 - `package.json` — npm scripts, dependencies
 - `tsconfig.json` — strict TS, path alias `@/*` → `./`
 - `next.config.mjs` — Next config, image domains, headers
@@ -35,6 +36,7 @@ Files this plan creates (no modifications — fresh repo on top of an empty `mai
 - `README.md` — quickstart for next engineer
 
 **App**
+
 - `app/layout.tsx` — root layout; loads fonts, theme provider, mounts R3F canvas slot
 - `app/page.tsx` — themed landing page
 - `app/globals.css` — Tailwind base + CSS reset + font face declarations
@@ -43,10 +45,12 @@ Files this plan creates (no modifications — fresh repo on top of an empty `mai
 - `app/api/health/route.ts` — `{ ok: true }` for smoke tests
 
 **Styles**
+
 - `styles/theme.ts` — color, radius, shadow, font, motion tokens (single source of truth)
 - `styles/fonts.ts` — Next/Font instances for Anton, Inter, JetBrains Mono
 
 **lib**
+
 - `lib/firebase/client.ts` — initializes Firebase client SDK; connects to emulators when `NEXT_PUBLIC_USE_EMULATORS=true`
 - `lib/firebase/admin.ts` — initializes Firebase Admin SDK; `import "server-only"`
 - `lib/firebase/session.ts` — session cookie create/verify helpers (skeleton; full auth lands in Plan 2)
@@ -57,11 +61,13 @@ Files this plan creates (no modifications — fresh repo on top of an empty `mai
 - `lib/utils/cn.ts` — `clsx` + `tailwind-merge` helper
 
 **hooks**
+
 - `hooks/useMotionTier.ts` — React hook around `detectMotionTier()`
 - `hooks/useReducedMotion.ts` — React hook around media query
 - `hooks/useTheme.ts` — exposes theme tokens to components (rare; mostly Tailwind handles theming)
 
 **components**
+
 - `components/ui/Button.tsx`
 - `components/ui/Input.tsx`
 - `components/ui/Card.tsx`
@@ -76,9 +82,11 @@ Files this plan creates (no modifications — fresh repo on top of an empty `mai
 - `components/layout/ThemeProvider.tsx` — provides motion tier + theme to subtree
 
 **types**
+
 - `types/firestore.ts` — empty placeholder (populated in Plan 2)
 
 **tests**
+
 - `tests/unit/motion/tier.test.ts`
 - `tests/unit/motion/reduced-motion.test.ts`
 - `tests/unit/avatar/seed.test.ts`
@@ -92,9 +100,11 @@ Files this plan creates (no modifications — fresh repo on top of an empty `mai
 - `tests/fixtures/seed.ts` — placeholder; populated in Plan 2
 
 **.github**
+
 - `.github/workflows/ci.yml` — lint + typecheck + unit + integration + build + E2E + Lighthouse
 
 **public**
+
 - `public/favicon.ico` — placeholder (Trivix mark TBD in Plan 5; for now use a generic black square)
 - `public/og.png` — open-graph placeholder
 
@@ -142,6 +152,7 @@ Files this plan creates (no modifications — fresh repo on top of an empty `mai
 ## Task 1: Initialize the Next.js project with strict TypeScript and Tailwind
 
 **Files:**
+
 - Create: `package.json` (via scaffolder)
 - Create: `tsconfig.json` (via scaffolder)
 - Create: `next.config.mjs` (via scaffolder)
@@ -191,6 +202,7 @@ git commit -m "chore: scaffold Next.js 15 + TS + Tailwind project"
 ## Task 2: Install runtime + dev dependencies
 
 **Files:**
+
 - Modify: `package.json`
 
 - [ ] **Step 1: Install runtime dependencies**
@@ -290,6 +302,7 @@ git commit -m "chore: install runtime, dev, and tooling dependencies"
 ## Task 3: Add tsconfig path alias and base TS config
 
 **Files:**
+
 - Modify: `tsconfig.json`
 
 - [ ] **Step 1: Replace the contents of `tsconfig.json`**
@@ -345,6 +358,7 @@ git commit -m "chore: tighten TS config (noUncheckedIndexedAccess, strict)"
 ## Task 4: Author `styles/theme.ts` (single source of theme truth)
 
 **Files:**
+
 - Create: `styles/theme.ts`
 
 - [ ] **Step 1: Write `styles/theme.ts`**
@@ -356,44 +370,44 @@ git commit -m "chore: tighten TS config (noUncheckedIndexedAccess, strict)"
 
 export const colors = {
   // Brand surface
-  'brand-black':    '#050608',
-  'brand-ink':      '#0d0e12',
-  'brand-line':     '#1a1c22',
+  "brand-black": "#050608",
+  "brand-ink": "#0d0e12",
+  "brand-line": "#1a1c22",
   // Brand hero
-  'brand-red':      '#ff1f3a',
-  'brand-red-glow': '#ff3855',
+  "brand-red": "#ff1f3a",
+  "brand-red-glow": "#ff3855",
   // Gameplay quad (used for answer buttons / categories in later plans)
-  'game-red':       '#ff2e3e',
-  'game-blue':      '#1ea7ff',
-  'game-yellow':    '#ffd400',
-  'game-green':     '#1fd66a',
+  "game-red": "#ff2e3e",
+  "game-blue": "#1ea7ff",
+  "game-yellow": "#ffd400",
+  "game-green": "#1fd66a",
   // Text
-  'text-primary':   '#ffffff',
-  'text-muted':     'rgba(255,255,255,0.62)',
-  'text-faint':     'rgba(255,255,255,0.38)',
+  "text-primary": "#ffffff",
+  "text-muted": "rgba(255,255,255,0.62)",
+  "text-faint": "rgba(255,255,255,0.38)",
 } as const;
 
 export const radius = {
-  sm: '6px',
-  md: '10px',
-  lg: '14px',
-  xl: '20px',
-  full: '9999px',
+  sm: "6px",
+  md: "10px",
+  lg: "14px",
+  xl: "20px",
+  full: "9999px",
 } as const;
 
 export const shadow = {
-  soft: '0 8px 24px rgba(0,0,0,0.35)',
-  'glow-red': '0 0 24px rgba(255,31,58,0.55)',
-  'glow-quad-r': '0 0 24px rgba(255,46,62,0.55)',
-  'glow-quad-b': '0 0 24px rgba(30,167,255,0.55)',
-  'glow-quad-y': '0 0 24px rgba(255,212,0,0.55)',
-  'glow-quad-g': '0 0 24px rgba(31,214,106,0.55)',
+  soft: "0 8px 24px rgba(0,0,0,0.35)",
+  "glow-red": "0 0 24px rgba(255,31,58,0.55)",
+  "glow-quad-r": "0 0 24px rgba(255,46,62,0.55)",
+  "glow-quad-b": "0 0 24px rgba(30,167,255,0.55)",
+  "glow-quad-y": "0 0 24px rgba(255,212,0,0.55)",
+  "glow-quad-g": "0 0 24px rgba(31,214,106,0.55)",
 } as const;
 
 export const fontFamily = {
-  display: ['var(--font-anton)', 'Impact', 'system-ui', 'sans-serif'],
-  body: ['var(--font-inter)', 'system-ui', 'sans-serif'],
-  mono: ['var(--font-jetbrains)', 'ui-monospace', 'monospace'],
+  display: ["var(--font-anton)", "Impact", "system-ui", "sans-serif"],
+  body: ["var(--font-inter)", "system-ui", "sans-serif"],
+  mono: ["var(--font-jetbrains)", "ui-monospace", "monospace"],
 } as const;
 
 export const theme = { colors, radius, shadow, fontFamily } as const;
@@ -420,20 +434,21 @@ git commit -m "feat(theme): add theme tokens single source of truth"
 ## Task 5: Wire `tailwind.config.ts` to read from `styles/theme.ts`
 
 **Files:**
+
 - Modify: `tailwind.config.ts`
 
 - [ ] **Step 1: Replace the contents of `tailwind.config.ts`**
 
 ```ts
-import type { Config } from 'tailwindcss';
-import { colors, radius, shadow, fontFamily } from './styles/theme';
+import type { Config } from "tailwindcss";
+import { colors, radius, shadow, fontFamily } from "./styles/theme";
 
 export default {
   content: [
-    './app/**/*.{ts,tsx}',
-    './components/**/*.{ts,tsx}',
-    './hooks/**/*.{ts,tsx}',
-    './lib/**/*.{ts,tsx}',
+    "./app/**/*.{ts,tsx}",
+    "./components/**/*.{ts,tsx}",
+    "./hooks/**/*.{ts,tsx}",
+    "./lib/**/*.{ts,tsx}",
   ],
   theme: {
     extend: {
@@ -442,9 +457,9 @@ export default {
       boxShadow: shadow,
       fontFamily,
       backgroundImage: {
-        'grid-floor':
-          'repeating-linear-gradient(90deg, rgba(255,255,255,0.06) 0 1px, transparent 1px 60px),' +
-          'repeating-linear-gradient(0deg, rgba(255,255,255,0.06) 0 1px, transparent 1px 60px)',
+        "grid-floor":
+          "repeating-linear-gradient(90deg, rgba(255,255,255,0.06) 0 1px, transparent 1px 60px)," +
+          "repeating-linear-gradient(0deg, rgba(255,255,255,0.06) 0 1px, transparent 1px 60px)",
       },
     },
   },
@@ -472,34 +487,39 @@ git commit -m "feat(theme): wire Tailwind to consume theme tokens"
 ## Task 6: Configure fonts via `next/font` and `app/globals.css`
 
 **Files:**
+
 - Create: `styles/fonts.ts`
 
 - [ ] **Step 1: Write `styles/fonts.ts`**
 
 ```ts
 // styles/fonts.ts
-import { Anton, Inter, JetBrains_Mono } from 'next/font/google';
+import { Anton, Inter, JetBrains_Mono } from "next/font/google";
 
 export const anton = Anton({
-  weight: '400',
-  subsets: ['latin'],
-  display: 'swap',
-  variable: '--font-anton',
+  weight: "400",
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-anton",
 });
 
 export const inter = Inter({
-  subsets: ['latin'],
-  display: 'swap',
-  variable: '--font-inter',
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-inter",
 });
 
 export const jetbrains = JetBrains_Mono({
-  subsets: ['latin'],
-  display: 'swap',
-  variable: '--font-jetbrains',
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-jetbrains",
 });
 
-export const fontVariableClassName = [anton.variable, inter.variable, jetbrains.variable].join(' ');
+export const fontVariableClassName = [
+  anton.variable,
+  inter.variable,
+  jetbrains.variable,
+].join(" ");
 ```
 
 - [ ] **Step 2: Typecheck**
@@ -522,6 +542,7 @@ git commit -m "feat(theme): configure Anton, Inter, JetBrains Mono via next/font
 ## Task 7: Author `lib/utils/cn.ts` with TDD
 
 **Files:**
+
 - Create: `lib/utils/cn.ts`
 - Test: `tests/unit/utils/cn.test.ts`
 
@@ -529,20 +550,20 @@ git commit -m "feat(theme): configure Anton, Inter, JetBrains Mono via next/font
 
 ```ts
 // tests/unit/utils/cn.test.ts
-import { describe, it, expect } from 'vitest';
-import { cn } from '@/lib/utils/cn';
+import { describe, it, expect } from "vitest";
+import { cn } from "@/lib/utils/cn";
 
-describe('cn', () => {
-  it('joins truthy class names', () => {
-    expect(cn('a', 'b')).toBe('a b');
+describe("cn", () => {
+  it("joins truthy class names", () => {
+    expect(cn("a", "b")).toBe("a b");
   });
 
-  it('drops falsy values', () => {
-    expect(cn('a', false, undefined, null, 'b')).toBe('a b');
+  it("drops falsy values", () => {
+    expect(cn("a", false, undefined, null, "b")).toBe("a b");
   });
 
-  it('merges conflicting tailwind classes (last wins)', () => {
-    expect(cn('p-2', 'p-4')).toBe('p-4');
+  it("merges conflicting tailwind classes (last wins)", () => {
+    expect(cn("p-2", "p-4")).toBe("p-4");
   });
 });
 ```
@@ -559,8 +580,8 @@ Expected: FAIL — `Cannot find module '@/lib/utils/cn'`.
 
 ```ts
 // lib/utils/cn.ts
-import { clsx, type ClassValue } from 'clsx';
-import { twMerge } from 'tailwind-merge';
+import { clsx, type ClassValue } from "clsx";
+import { twMerge } from "tailwind-merge";
 
 export function cn(...inputs: ClassValue[]): string {
   return twMerge(clsx(inputs));
@@ -587,6 +608,7 @@ git commit -m "feat(utils): add cn() helper with tests"
 ## Task 8: Author `lib/motion/tokens.ts`
 
 **Files:**
+
 - Create: `lib/motion/tokens.ts`
 
 - [ ] **Step 1: Write `lib/motion/tokens.ts`**
@@ -612,10 +634,10 @@ export const easings = {
 } as const;
 
 export const springs = {
-  soft:   { type: 'spring' as const, stiffness: 140, damping: 18, mass: 0.9 },
-  snappy: { type: 'spring' as const, stiffness: 260, damping: 22, mass: 0.8 },
-  bouncy: { type: 'spring' as const, stiffness: 320, damping: 14, mass: 0.9 },
-  heavy:  { type: 'spring' as const, stiffness: 90,  damping: 22, mass: 1.4 },
+  soft: { type: "spring" as const, stiffness: 140, damping: 18, mass: 0.9 },
+  snappy: { type: "spring" as const, stiffness: 260, damping: 22, mass: 0.8 },
+  bouncy: { type: "spring" as const, stiffness: 320, damping: 14, mass: 0.9 },
+  heavy: { type: "spring" as const, stiffness: 90, damping: 22, mass: 1.4 },
 };
 
 export const stagger = {
@@ -649,6 +671,7 @@ git commit -m "feat(motion): add motion tokens (durations, easings, springs, sta
 ## Task 9: Author `lib/motion/reduced-motion.ts` with TDD
 
 **Files:**
+
 - Create: `lib/motion/reduced-motion.ts`
 - Test: `tests/unit/motion/reduced-motion.test.ts`
 
@@ -656,30 +679,30 @@ git commit -m "feat(motion): add motion tokens (durations, easings, springs, sta
 
 ```ts
 // tests/unit/motion/reduced-motion.test.ts
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { prefersReducedMotion } from '@/lib/motion/reduced-motion';
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { prefersReducedMotion } from "@/lib/motion/reduced-motion";
 
-describe('prefersReducedMotion', () => {
+describe("prefersReducedMotion", () => {
   beforeEach(() => {
     vi.unstubAllGlobals();
   });
 
-  it('returns false when matchMedia is undefined (SSR)', () => {
-    vi.stubGlobal('matchMedia', undefined);
+  it("returns false when matchMedia is undefined (SSR)", () => {
+    vi.stubGlobal("matchMedia", undefined);
     expect(prefersReducedMotion()).toBe(false);
   });
 
-  it('returns true when prefers-reduced-motion: reduce matches', () => {
-    vi.stubGlobal('matchMedia', (q: string) => ({
-      matches: q === '(prefers-reduced-motion: reduce)',
+  it("returns true when prefers-reduced-motion: reduce matches", () => {
+    vi.stubGlobal("matchMedia", (q: string) => ({
+      matches: q === "(prefers-reduced-motion: reduce)",
       addEventListener: () => {},
       removeEventListener: () => {},
     }));
     expect(prefersReducedMotion()).toBe(true);
   });
 
-  it('returns false when no preference', () => {
-    vi.stubGlobal('matchMedia', () => ({
+  it("returns false when no preference", () => {
+    vi.stubGlobal("matchMedia", () => ({
       matches: false,
       addEventListener: () => {},
       removeEventListener: () => {},
@@ -702,10 +725,13 @@ Expected: FAIL — module not found.
 ```ts
 // lib/motion/reduced-motion.ts
 export function prefersReducedMotion(): boolean {
-  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
+  if (
+    typeof window === "undefined" ||
+    typeof window.matchMedia !== "function"
+  ) {
     return false;
   }
-  return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
 ```
 
@@ -729,6 +755,7 @@ git commit -m "feat(motion): add prefersReducedMotion helper"
 ## Task 10: Author `lib/motion/tier.ts` with TDD
 
 **Files:**
+
 - Create: `lib/motion/tier.ts`
 - Test: `tests/unit/motion/tier.test.ts`
 
@@ -736,8 +763,8 @@ git commit -m "feat(motion): add prefersReducedMotion helper"
 
 ```ts
 // tests/unit/motion/tier.test.ts
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { detectMotionTier } from '@/lib/motion/tier';
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { detectMotionTier } from "@/lib/motion/tier";
 
 function setup(opts: {
   reduced?: boolean;
@@ -748,57 +775,60 @@ function setup(opts: {
 }) {
   const matchMedia = (q: string) => ({
     matches:
-      (q.includes('reduced-motion') && !!opts.reduced) ||
-      (q.includes('pointer: coarse') && !!opts.coarse),
+      (q.includes("reduced-motion") && !!opts.reduced) ||
+      (q.includes("pointer: coarse") && !!opts.coarse),
     addEventListener: () => {},
     removeEventListener: () => {},
   });
-  vi.stubGlobal('matchMedia', matchMedia);
-  vi.stubGlobal('navigator', {
+  vi.stubGlobal("matchMedia", matchMedia);
+  vi.stubGlobal("navigator", {
     deviceMemory: opts.deviceMemory ?? 8,
     hardwareConcurrency: opts.hardwareConcurrency ?? 8,
     getBattery: opts.battery
-      ? async () => ({ level: opts.battery!.level, charging: opts.battery!.charging })
+      ? async () => ({
+          level: opts.battery!.level,
+          charging: opts.battery!.charging,
+        })
       : undefined,
   });
 }
 
-describe('detectMotionTier', () => {
+describe("detectMotionTier", () => {
   beforeEach(() => vi.unstubAllGlobals());
 
   it('returns "off" when reduced-motion is set', async () => {
     setup({ reduced: true });
-    expect(await detectMotionTier()).toBe('off');
+    expect(await detectMotionTier()).toBe("off");
   });
 
   it('returns "light" on coarse pointer (mobile)', async () => {
     setup({ coarse: true });
-    expect(await detectMotionTier()).toBe('light');
+    expect(await detectMotionTier()).toBe("light");
   });
 
   it('returns "light" on low memory', async () => {
     setup({ deviceMemory: 2 });
-    expect(await detectMotionTier()).toBe('light');
+    expect(await detectMotionTier()).toBe("light");
   });
 
   it('returns "light" on low CPU concurrency', async () => {
     setup({ hardwareConcurrency: 2 });
-    expect(await detectMotionTier()).toBe('light');
+    expect(await detectMotionTier()).toBe("light");
   });
 
   it('returns "light" on low battery not charging', async () => {
     setup({ battery: { level: 0.1, charging: false } });
-    expect(await detectMotionTier()).toBe('light');
+    expect(await detectMotionTier()).toBe("light");
   });
 
   it('returns "full" otherwise', async () => {
     setup({});
-    expect(await detectMotionTier()).toBe('full');
+    expect(await detectMotionTier()).toBe("full");
   });
 
   it('returns "off" in SSR (no window)', async () => {
-    vi.stubGlobal('window', undefined);
-    expect(await detectMotionTier()).toBe('off');
+    vi.stubGlobal("window", undefined);
+    expect(await detectMotionTier()).toBe("off");
   });
 });
 ```
@@ -815,9 +845,9 @@ Expected: FAIL — module not found.
 
 ```ts
 // lib/motion/tier.ts
-import { prefersReducedMotion } from './reduced-motion';
+import { prefersReducedMotion } from "./reduced-motion";
 
-export type MotionTier = 'full' | 'light' | 'off';
+export type MotionTier = "full" | "light" | "off";
 
 interface NavigatorWithExtras extends Navigator {
   deviceMemory?: number;
@@ -825,27 +855,27 @@ interface NavigatorWithExtras extends Navigator {
 }
 
 export async function detectMotionTier(): Promise<MotionTier> {
-  if (typeof window === 'undefined') return 'off';
+  if (typeof window === "undefined") return "off";
 
-  if (prefersReducedMotion()) return 'off';
+  if (prefersReducedMotion()) return "off";
 
-  const coarse = window.matchMedia?.('(pointer: coarse)').matches ?? false;
-  if (coarse) return 'light';
+  const coarse = window.matchMedia?.("(pointer: coarse)").matches ?? false;
+  if (coarse) return "light";
 
   const nav = navigator as NavigatorWithExtras;
-  if ((nav.deviceMemory ?? 8) < 4) return 'light';
-  if ((nav.hardwareConcurrency ?? 8) < 4) return 'light';
+  if ((nav.deviceMemory ?? 8) < 4) return "light";
+  if ((nav.hardwareConcurrency ?? 8) < 4) return "light";
 
-  if (typeof nav.getBattery === 'function') {
+  if (typeof nav.getBattery === "function") {
     try {
       const battery = await nav.getBattery();
-      if (battery.level < 0.2 && !battery.charging) return 'light';
+      if (battery.level < 0.2 && !battery.charging) return "light";
     } catch {
       // battery API failure → ignore, fall through
     }
   }
 
-  return 'full';
+  return "full";
 }
 ```
 
@@ -869,6 +899,7 @@ git commit -m "feat(motion): add detectMotionTier (full/light/off)"
 ## Task 11: Author `hooks/useReducedMotion.ts` and `hooks/useMotionTier.ts`
 
 **Files:**
+
 - Create: `hooks/useReducedMotion.ts`
 - Create: `hooks/useMotionTier.ts`
 
@@ -876,18 +907,18 @@ git commit -m "feat(motion): add detectMotionTier (full/light/off)"
 
 ```ts
 // hooks/useReducedMotion.ts
-'use client';
-import { useEffect, useState } from 'react';
+"use client";
+import { useEffect, useState } from "react";
 
 export function useReducedMotion(): boolean {
   const [reduced, setReduced] = useState(false);
 
   useEffect(() => {
-    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
     setReduced(mq.matches);
     const onChange = () => setReduced(mq.matches);
-    mq.addEventListener('change', onChange);
-    return () => mq.removeEventListener('change', onChange);
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
   }, []);
 
   return reduced;
@@ -898,12 +929,12 @@ export function useReducedMotion(): boolean {
 
 ```ts
 // hooks/useMotionTier.ts
-'use client';
-import { useEffect, useState } from 'react';
-import { detectMotionTier, type MotionTier } from '@/lib/motion/tier';
+"use client";
+import { useEffect, useState } from "react";
+import { detectMotionTier, type MotionTier } from "@/lib/motion/tier";
 
 export function useMotionTier(): MotionTier {
-  const [tier, setTier] = useState<MotionTier>('off'); // SSR-safe default
+  const [tier, setTier] = useState<MotionTier>("off"); // SSR-safe default
 
   useEffect(() => {
     let cancelled = false;
@@ -939,6 +970,7 @@ git commit -m "feat(motion): add useReducedMotion and useMotionTier hooks"
 ## Task 12: Author `lib/avatar/seed.ts` with TDD
 
 **Files:**
+
 - Create: `lib/avatar/seed.ts`
 - Test: `tests/unit/avatar/seed.test.ts`
 
@@ -946,20 +978,20 @@ git commit -m "feat(motion): add useReducedMotion and useMotionTier hooks"
 
 ```ts
 // tests/unit/avatar/seed.test.ts
-import { describe, it, expect } from 'vitest';
-import { seedToGradient, AVATAR_GRADIENTS } from '@/lib/avatar/seed';
+import { describe, it, expect } from "vitest";
+import { seedToGradient, AVATAR_GRADIENTS } from "@/lib/avatar/seed";
 
-describe('seedToGradient', () => {
-  it('returns a known gradient', () => {
-    const g = seedToGradient('user-123');
+describe("seedToGradient", () => {
+  it("returns a known gradient", () => {
+    const g = seedToGradient("user-123");
     expect(AVATAR_GRADIENTS).toContainEqual(g);
   });
 
-  it('is deterministic for the same seed', () => {
-    expect(seedToGradient('abc')).toEqual(seedToGradient('abc'));
+  it("is deterministic for the same seed", () => {
+    expect(seedToGradient("abc")).toEqual(seedToGradient("abc"));
   });
 
-  it('distributes across the gradient set', () => {
+  it("distributes across the gradient set", () => {
     const seen = new Set<string>();
     for (let i = 0; i < 200; i++) {
       seen.add(seedToGradient(`user-${i}`).id);
@@ -968,8 +1000,8 @@ describe('seedToGradient', () => {
     expect(seen.size).toBeGreaterThanOrEqual(6);
   });
 
-  it('handles empty string without throwing', () => {
-    expect(() => seedToGradient('')).not.toThrow();
+  it("handles empty string without throwing", () => {
+    expect(() => seedToGradient("")).not.toThrow();
   });
 });
 ```
@@ -994,14 +1026,14 @@ export interface AvatarGradient {
 }
 
 export const AVATAR_GRADIENTS: readonly AvatarGradient[] = [
-  { id: 'red',     from: '#ff2e3e', to: '#7a0010', text: '#ffffff' },
-  { id: 'blue',    from: '#1ea7ff', to: '#0a3370', text: '#ffffff' },
-  { id: 'green',   from: '#1fd66a', to: '#08401d', text: '#ffffff' },
-  { id: 'gold',    from: '#ffd400', to: '#8a6a00', text: '#111111' },
-  { id: 'magenta', from: '#ff3da3', to: '#5a0a3a', text: '#ffffff' },
-  { id: 'cyan',    from: '#22d3ee', to: '#0a4555', text: '#111111' },
-  { id: 'violet',  from: '#a855f7', to: '#3b0764', text: '#ffffff' },
-  { id: 'amber',   from: '#f97316', to: '#5a2200', text: '#ffffff' },
+  { id: "red", from: "#ff2e3e", to: "#7a0010", text: "#ffffff" },
+  { id: "blue", from: "#1ea7ff", to: "#0a3370", text: "#ffffff" },
+  { id: "green", from: "#1fd66a", to: "#08401d", text: "#ffffff" },
+  { id: "gold", from: "#ffd400", to: "#8a6a00", text: "#111111" },
+  { id: "magenta", from: "#ff3da3", to: "#5a0a3a", text: "#ffffff" },
+  { id: "cyan", from: "#22d3ee", to: "#0a4555", text: "#111111" },
+  { id: "violet", from: "#a855f7", to: "#3b0764", text: "#ffffff" },
+  { id: "amber", from: "#f97316", to: "#5a2200", text: "#ffffff" },
 ];
 
 function hash(s: string): number {
@@ -1015,15 +1047,15 @@ function hash(s: string): number {
 }
 
 export function seedToGradient(seed: string): AvatarGradient {
-  const h = hash(seed || 'default');
+  const h = hash(seed || "default");
   const idx = h % AVATAR_GRADIENTS.length;
   return AVATAR_GRADIENTS[idx]!;
 }
 
 export function initialsFor(firstName: string, lastName: string): string {
-  const f = (firstName?.trim()?.[0] ?? '').toUpperCase();
-  const l = (lastName?.trim()?.[0] ?? '').toUpperCase();
-  return (f + l) || '?';
+  const f = (firstName?.trim()?.[0] ?? "").toUpperCase();
+  const l = (lastName?.trim()?.[0] ?? "").toUpperCase();
+  return f + l || "?";
 }
 ```
 
@@ -1047,48 +1079,50 @@ git commit -m "feat(avatar): add deterministic seed-to-gradient mapping"
 ## Task 13: Author `components/ui/Button.tsx`
 
 **Files:**
+
 - Create: `components/ui/Button.tsx`
 
 - [ ] **Step 1: Write the component**
 
 ```tsx
 // components/ui/Button.tsx
-'use client';
-import * as React from 'react';
-import { Slot } from '@radix-ui/react-slot';
-import { cn } from '@/lib/utils/cn';
+"use client";
+import * as React from "react";
+import { Slot } from "@radix-ui/react-slot";
+import { cn } from "@/lib/utils/cn";
 
 type Variant =
-  | 'primary'
-  | 'secondary'
-  | 'ghost'
-  | 'danger'
-  | 'quad-r'
-  | 'quad-b'
-  | 'quad-y'
-  | 'quad-g';
+  | "primary"
+  | "secondary"
+  | "ghost"
+  | "danger"
+  | "quad-r"
+  | "quad-b"
+  | "quad-y"
+  | "quad-g";
 
-type Size = 'sm' | 'md' | 'lg';
+type Size = "sm" | "md" | "lg";
 
 const variants: Record<Variant, string> = {
   primary:
-    'bg-brand-red text-text-primary hover:shadow-glow-red active:scale-[0.97] transition',
+    "bg-brand-red text-text-primary hover:shadow-glow-red active:scale-[0.97] transition",
   secondary:
-    'bg-brand-ink text-text-primary border border-brand-line hover:border-brand-red transition',
-  ghost:
-    'bg-transparent text-text-primary hover:bg-brand-ink transition',
-  danger:
-    'bg-game-red text-text-primary hover:shadow-glow-quad-r transition',
-  'quad-r': 'bg-game-red text-text-primary hover:shadow-glow-quad-r transition',
-  'quad-b': 'bg-game-blue text-text-primary hover:shadow-glow-quad-b transition',
-  'quad-y': 'bg-game-yellow text-brand-black hover:shadow-glow-quad-y transition',
-  'quad-g': 'bg-game-green text-text-primary hover:shadow-glow-quad-g transition',
+    "bg-brand-ink text-text-primary border border-brand-line hover:border-brand-red transition",
+  ghost: "bg-transparent text-text-primary hover:bg-brand-ink transition",
+  danger: "bg-game-red text-text-primary hover:shadow-glow-quad-r transition",
+  "quad-r": "bg-game-red text-text-primary hover:shadow-glow-quad-r transition",
+  "quad-b":
+    "bg-game-blue text-text-primary hover:shadow-glow-quad-b transition",
+  "quad-y":
+    "bg-game-yellow text-brand-black hover:shadow-glow-quad-y transition",
+  "quad-g":
+    "bg-game-green text-text-primary hover:shadow-glow-quad-g transition",
 };
 
 const sizes: Record<Size, string> = {
-  sm: 'h-9 px-3 text-sm rounded-md',
-  md: 'h-11 px-5 text-base rounded-md',
-  lg: 'h-14 px-7 text-lg rounded-lg',
+  sm: "h-9 px-3 text-sm rounded-md",
+  md: "h-11 px-5 text-base rounded-md",
+  lg: "h-14 px-7 text-lg rounded-lg",
 };
 
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -1098,15 +1132,15 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
 }
 
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant = 'primary', size = 'md', asChild, ...props }, ref) => {
-    const Comp = asChild ? Slot : 'button';
+  ({ className, variant = "primary", size = "md", asChild, ...props }, ref) => {
+    const Comp = asChild ? Slot : "button";
     return (
       <Comp
         ref={ref as never}
         className={cn(
-          'inline-flex items-center justify-center font-semibold select-none',
-          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-red focus-visible:ring-offset-2 focus-visible:ring-offset-brand-black',
-          'disabled:opacity-50 disabled:pointer-events-none',
+          "inline-flex items-center justify-center font-semibold select-none",
+          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-red focus-visible:ring-offset-2 focus-visible:ring-offset-brand-black",
+          "disabled:opacity-50 disabled:pointer-events-none",
           variants[variant],
           sizes[size],
           className,
@@ -1116,7 +1150,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     );
   },
 );
-Button.displayName = 'Button';
+Button.displayName = "Button";
 ```
 
 - [ ] **Step 2: Typecheck**
@@ -1139,15 +1173,16 @@ git commit -m "feat(ui): add Button primitive with variants and sizes"
 ## Task 14: Author `components/ui/Input.tsx`
 
 **Files:**
+
 - Create: `components/ui/Input.tsx`
 
 - [ ] **Step 1: Write the component**
 
 ```tsx
 // components/ui/Input.tsx
-'use client';
-import * as React from 'react';
-import { cn } from '@/lib/utils/cn';
+"use client";
+import * as React from "react";
+import { cn } from "@/lib/utils/cn";
 
 export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string;
@@ -1163,7 +1198,10 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
     return (
       <div className="flex flex-col gap-1.5">
         {label && (
-          <label htmlFor={inputId} className="text-sm font-medium text-text-muted">
+          <label
+            htmlFor={inputId}
+            className="text-sm font-medium text-text-muted"
+          >
             {label}
           </label>
         )}
@@ -1171,13 +1209,15 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
           ref={ref}
           id={inputId}
           aria-invalid={!!error || undefined}
-          aria-describedby={[errorId, hintId].filter(Boolean).join(' ') || undefined}
+          aria-describedby={
+            [errorId, hintId].filter(Boolean).join(" ") || undefined
+          }
           className={cn(
-            'h-11 px-4 rounded-md bg-brand-ink border border-brand-line text-text-primary',
-            'placeholder:text-text-faint',
-            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-red focus-visible:border-brand-red',
-            'aria-[invalid=true]:border-game-red aria-[invalid=true]:ring-game-red',
-            'transition',
+            "h-11 px-4 rounded-md bg-brand-ink border border-brand-line text-text-primary",
+            "placeholder:text-text-faint",
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-red focus-visible:border-brand-red",
+            "aria-[invalid=true]:border-game-red aria-[invalid=true]:ring-game-red",
+            "transition",
             className,
           )}
           {...props}
@@ -1196,7 +1236,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
     );
   },
 );
-Input.displayName = 'Input';
+Input.displayName = "Input";
 ```
 
 - [ ] **Step 2: Typecheck**
@@ -1219,26 +1259,34 @@ git commit -m "feat(ui): add Input primitive with label/error/hint"
 ## Task 15: Author `components/ui/Card.tsx`
 
 **Files:**
+
 - Create: `components/ui/Card.tsx`
 
 - [ ] **Step 1: Write the component**
 
 ```tsx
 // components/ui/Card.tsx
-'use client';
-import * as React from 'react';
-import { cn } from '@/lib/utils/cn';
+"use client";
+import * as React from "react";
+import { cn } from "@/lib/utils/cn";
 
-type Variant = 'default' | 'elevated' | 'neon' | 'quad-r' | 'quad-b' | 'quad-y' | 'quad-g';
+type Variant =
+  | "default"
+  | "elevated"
+  | "neon"
+  | "quad-r"
+  | "quad-b"
+  | "quad-y"
+  | "quad-g";
 
 const variants: Record<Variant, string> = {
-  default:  'bg-brand-ink border border-brand-line',
-  elevated: 'bg-brand-ink border border-brand-line shadow-soft',
-  neon:     'bg-brand-ink border border-brand-red shadow-glow-red',
-  'quad-r': 'bg-brand-ink border border-game-red shadow-glow-quad-r',
-  'quad-b': 'bg-brand-ink border border-game-blue shadow-glow-quad-b',
-  'quad-y': 'bg-brand-ink border border-game-yellow shadow-glow-quad-y',
-  'quad-g': 'bg-brand-ink border border-game-green shadow-glow-quad-g',
+  default: "bg-brand-ink border border-brand-line",
+  elevated: "bg-brand-ink border border-brand-line shadow-soft",
+  neon: "bg-brand-ink border border-brand-red shadow-glow-red",
+  "quad-r": "bg-brand-ink border border-game-red shadow-glow-quad-r",
+  "quad-b": "bg-brand-ink border border-game-blue shadow-glow-quad-b",
+  "quad-y": "bg-brand-ink border border-game-yellow shadow-glow-quad-y",
+  "quad-g": "bg-brand-ink border border-game-green shadow-glow-quad-g",
 };
 
 export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -1247,20 +1295,21 @@ export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
 }
 
 export const Card = React.forwardRef<HTMLDivElement, CardProps>(
-  ({ className, variant = 'default', interactive, ...props }, ref) => (
+  ({ className, variant = "default", interactive, ...props }, ref) => (
     <div
       ref={ref}
       className={cn(
-        'rounded-lg p-5',
+        "rounded-lg p-5",
         variants[variant],
-        interactive && 'transition hover:-translate-y-0.5 hover:shadow-soft cursor-pointer',
+        interactive &&
+          "transition hover:-translate-y-0.5 hover:shadow-soft cursor-pointer",
         className,
       )}
       {...props}
     />
   ),
 );
-Card.displayName = 'Card';
+Card.displayName = "Card";
 ```
 
 - [ ] **Step 2: Typecheck**
@@ -1283,24 +1332,25 @@ git commit -m "feat(ui): add Card primitive with variants"
 ## Task 16: Author `components/ui/Avatar.tsx`
 
 **Files:**
+
 - Create: `components/ui/Avatar.tsx`
 
 - [ ] **Step 1: Write the component**
 
 ```tsx
 // components/ui/Avatar.tsx
-'use client';
-import * as React from 'react';
-import { cn } from '@/lib/utils/cn';
-import { seedToGradient, initialsFor } from '@/lib/avatar/seed';
+"use client";
+import * as React from "react";
+import { cn } from "@/lib/utils/cn";
+import { seedToGradient, initialsFor } from "@/lib/avatar/seed";
 
-type Size = 'xs' | 'sm' | 'md' | 'lg';
+type Size = "xs" | "sm" | "md" | "lg";
 
 const sizes: Record<Size, string> = {
-  xs: 'w-6 h-6 text-[10px]',
-  sm: 'w-9 h-9 text-xs',
-  md: 'w-12 h-12 text-base',
-  lg: 'w-20 h-20 text-2xl',
+  xs: "w-6 h-6 text-[10px]",
+  sm: "w-9 h-9 text-xs",
+  md: "w-12 h-12 text-base",
+  lg: "w-20 h-20 text-2xl",
 };
 
 export interface AvatarProps {
@@ -1311,15 +1361,25 @@ export interface AvatarProps {
   className?: string;
 }
 
-export function Avatar({ seed, firstName = '', lastName = '', size = 'md', className }: AvatarProps) {
+export function Avatar({
+  seed,
+  firstName = "",
+  lastName = "",
+  size = "md",
+  className,
+}: AvatarProps) {
   const g = seedToGradient(seed);
   const initials = initialsFor(firstName, lastName);
   return (
     <div
       role="img"
-      aria-label={firstName || lastName ? `${firstName} ${lastName}`.trim() : 'User avatar'}
+      aria-label={
+        firstName || lastName
+          ? `${firstName} ${lastName}`.trim()
+          : "User avatar"
+      }
       className={cn(
-        'rounded-full inline-flex items-center justify-center font-semibold select-none',
+        "rounded-full inline-flex items-center justify-center font-semibold select-none",
         sizes[size],
         className,
       )}
@@ -1354,36 +1414,44 @@ git commit -m "feat(ui): add Avatar (auto initials + seeded gradient)"
 ## Task 17: Author `components/ui/Badge.tsx`
 
 **Files:**
+
 - Create: `components/ui/Badge.tsx`
 
 - [ ] **Step 1: Write the component**
 
 ```tsx
 // components/ui/Badge.tsx
-import * as React from 'react';
-import { cn } from '@/lib/utils/cn';
+import * as React from "react";
+import { cn } from "@/lib/utils/cn";
 
-type Tone = 'host' | 'captain' | 'pro' | 'pending' | 'neutral' | 'success' | 'error';
+type Tone =
+  | "host"
+  | "captain"
+  | "pro"
+  | "pending"
+  | "neutral"
+  | "success"
+  | "error";
 
 const tones: Record<Tone, string> = {
-  host:    'bg-brand-red/15 text-brand-red border-brand-red/40',
-  captain: 'bg-game-yellow/15 text-game-yellow border-game-yellow/40',
-  pro:     'bg-brand-red/15 text-brand-red border-brand-red/40',
-  pending: 'bg-game-blue/15 text-game-blue border-game-blue/40',
-  neutral: 'bg-brand-line text-text-muted border-brand-line',
-  success: 'bg-game-green/15 text-game-green border-game-green/40',
-  error:   'bg-game-red/15 text-game-red border-game-red/40',
+  host: "bg-brand-red/15 text-brand-red border-brand-red/40",
+  captain: "bg-game-yellow/15 text-game-yellow border-game-yellow/40",
+  pro: "bg-brand-red/15 text-brand-red border-brand-red/40",
+  pending: "bg-game-blue/15 text-game-blue border-game-blue/40",
+  neutral: "bg-brand-line text-text-muted border-brand-line",
+  success: "bg-game-green/15 text-game-green border-game-green/40",
+  error: "bg-game-red/15 text-game-red border-game-red/40",
 };
 
 export interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
   tone?: Tone;
 }
 
-export function Badge({ className, tone = 'neutral', ...props }: BadgeProps) {
+export function Badge({ className, tone = "neutral", ...props }: BadgeProps) {
   return (
     <span
       className={cn(
-        'inline-flex items-center px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wider rounded-full border',
+        "inline-flex items-center px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wider rounded-full border",
         tones[tone],
         className,
       )}
@@ -1413,6 +1481,7 @@ git commit -m "feat(ui): add Badge primitive with tones"
 ## Task 18: Author `components/ui/Toast.tsx` and `ToastProvider.tsx`
 
 **Files:**
+
 - Create: `components/ui/Toast.tsx`
 - Create: `components/ui/ToastProvider.tsx`
 
@@ -1420,18 +1489,18 @@ git commit -m "feat(ui): add Badge primitive with tones"
 
 ```tsx
 // components/ui/Toast.tsx
-'use client';
-import * as ToastPrimitive from '@radix-ui/react-toast';
-import * as React from 'react';
-import { cn } from '@/lib/utils/cn';
+"use client";
+import * as ToastPrimitive from "@radix-ui/react-toast";
+import * as React from "react";
+import { cn } from "@/lib/utils/cn";
 
-type Tone = 'default' | 'success' | 'error' | 'warn';
+type Tone = "default" | "success" | "error" | "warn";
 
 const tones: Record<Tone, string> = {
-  default: 'border-brand-line',
-  success: 'border-game-green',
-  error:   'border-game-red',
-  warn:    'border-game-yellow',
+  default: "border-brand-line",
+  success: "border-game-green",
+  error: "border-game-red",
+  warn: "border-game-yellow",
 };
 
 export interface ToastItemProps {
@@ -1442,20 +1511,30 @@ export interface ToastItemProps {
   onOpenChange: (open: boolean) => void;
 }
 
-export function ToastItem({ title, description, tone = 'default', open, onOpenChange }: ToastItemProps) {
+export function ToastItem({
+  title,
+  description,
+  tone = "default",
+  open,
+  onOpenChange,
+}: ToastItemProps) {
   return (
     <ToastPrimitive.Root
       open={open}
       onOpenChange={onOpenChange}
       duration={4000}
       className={cn(
-        'bg-brand-ink border rounded-md p-4 shadow-soft text-text-primary',
-        'data-[state=open]:animate-[slideIn_180ms_cubic-bezier(0.4,0,0.2,1)]',
-        'data-[state=closed]:animate-[slideOut_180ms_cubic-bezier(0.4,0,1,1)]',
+        "bg-brand-ink border rounded-md p-4 shadow-soft text-text-primary",
+        "data-[state=open]:animate-[slideIn_180ms_cubic-bezier(0.4,0,0.2,1)]",
+        "data-[state=closed]:animate-[slideOut_180ms_cubic-bezier(0.4,0,1,1)]",
         tones[tone],
       )}
     >
-      {title && <ToastPrimitive.Title className="font-semibold">{title}</ToastPrimitive.Title>}
+      {title && (
+        <ToastPrimitive.Title className="font-semibold">
+          {title}
+        </ToastPrimitive.Title>
+      )}
       {description && (
         <ToastPrimitive.Description className="text-sm text-text-muted">
           {description}
@@ -1470,15 +1549,15 @@ export function ToastItem({ title, description, tone = 'default', open, onOpenCh
 
 ```tsx
 // components/ui/ToastProvider.tsx
-'use client';
-import * as ToastPrimitive from '@radix-ui/react-toast';
-import * as React from 'react';
-import { ToastItem } from './Toast';
+"use client";
+import * as ToastPrimitive from "@radix-ui/react-toast";
+import * as React from "react";
+import { ToastItem } from "./Toast";
 
 interface ToastInput {
   title?: string;
   description?: string;
-  tone?: 'default' | 'success' | 'error' | 'warn';
+  tone?: "default" | "success" | "error" | "warn";
 }
 
 interface ToastContextValue {
@@ -1526,7 +1605,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
 
 export function useToast() {
   const ctx = React.useContext(ToastContext);
-  if (!ctx) throw new Error('useToast must be used inside <ToastProvider>');
+  if (!ctx) throw new Error("useToast must be used inside <ToastProvider>");
   return ctx;
 }
 ```
@@ -1551,19 +1630,20 @@ git commit -m "feat(ui): add Toast primitive and ToastProvider"
 ## Task 19: Author `components/ui/index.ts` barrel
 
 **Files:**
+
 - Create: `components/ui/index.ts`
 
 - [ ] **Step 1: Write the barrel**
 
 ```ts
 // components/ui/index.ts
-export { Button, type ButtonProps } from './Button';
-export { Input, type InputProps } from './Input';
-export { Card, type CardProps } from './Card';
-export { Avatar, type AvatarProps } from './Avatar';
-export { Badge, type BadgeProps } from './Badge';
-export { ToastItem, type ToastItemProps } from './Toast';
-export { ToastProvider, useToast } from './ToastProvider';
+export { Button, type ButtonProps } from "./Button";
+export { Input, type InputProps } from "./Input";
+export { Card, type CardProps } from "./Card";
+export { Avatar, type AvatarProps } from "./Avatar";
+export { Badge, type BadgeProps } from "./Badge";
+export { ToastItem, type ToastItemProps } from "./Toast";
+export { ToastProvider, useToast } from "./ToastProvider";
 ```
 
 - [ ] **Step 2: Typecheck**
@@ -1586,22 +1666,25 @@ git commit -m "feat(ui): add barrel export"
 ## Task 20: Author `components/layout/ThemeProvider.tsx`
 
 **Files:**
+
 - Create: `components/layout/ThemeProvider.tsx`
 
 - [ ] **Step 1: Write the component**
 
 ```tsx
 // components/layout/ThemeProvider.tsx
-'use client';
-import * as React from 'react';
-import { useMotionTier } from '@/hooks/useMotionTier';
-import type { MotionTier } from '@/lib/motion/tier';
+"use client";
+import * as React from "react";
+import { useMotionTier } from "@/hooks/useMotionTier";
+import type { MotionTier } from "@/lib/motion/tier";
 
 interface ThemeContextValue {
   motionTier: MotionTier;
 }
 
-const ThemeContext = React.createContext<ThemeContextValue>({ motionTier: 'off' });
+const ThemeContext = React.createContext<ThemeContextValue>({
+  motionTier: "off",
+});
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const motionTier = useMotionTier();
@@ -1638,13 +1721,14 @@ git commit -m "feat(layout): add ThemeProvider exposing motion tier"
 ## Task 21: Author `components/three/StaticGridFloor.tsx` (SVG fallback)
 
 **Files:**
+
 - Create: `components/three/StaticGridFloor.tsx`
 
 - [ ] **Step 1: Write the component**
 
 ```tsx
 // components/three/StaticGridFloor.tsx
-import * as React from 'react';
+import * as React from "react";
 
 export function StaticGridFloor({ className }: { className?: string }) {
   return (
@@ -1652,13 +1736,13 @@ export function StaticGridFloor({ className }: { className?: string }) {
       aria-hidden
       className={className}
       style={{
-        position: 'absolute',
+        position: "absolute",
         inset: 0,
-        backgroundColor: '#050608',
+        backgroundColor: "#050608",
         backgroundImage:
-          'repeating-linear-gradient(90deg, rgba(255,255,255,0.06) 0 1px, transparent 1px 60px),' +
-          'repeating-linear-gradient(0deg, rgba(255,255,255,0.06) 0 1px, transparent 1px 60px),' +
-          'radial-gradient(120% 80% at 50% 100%, rgba(255,31,58,0.18), transparent 60%)',
+          "repeating-linear-gradient(90deg, rgba(255,255,255,0.06) 0 1px, transparent 1px 60px)," +
+          "repeating-linear-gradient(0deg, rgba(255,255,255,0.06) 0 1px, transparent 1px 60px)," +
+          "radial-gradient(120% 80% at 50% 100%, rgba(255,31,58,0.18), transparent 60%)",
       }}
     />
   );
@@ -1685,6 +1769,7 @@ git commit -m "feat(three): add SVG/CSS static grid floor fallback"
 ## Task 22: Author `components/three/GridFloor.tsx` and `components/three/BrandScene.tsx`
 
 **Files:**
+
 - Create: `components/three/GridFloor.tsx`
 - Create: `components/three/BrandScene.tsx`
 
@@ -1692,9 +1777,9 @@ git commit -m "feat(three): add SVG/CSS static grid floor fallback"
 
 ```tsx
 // components/three/GridFloor.tsx
-'use client';
-import * as React from 'react';
-import { useFrame } from '@react-three/fiber';
+"use client";
+import * as React from "react";
+import { useFrame } from "@react-three/fiber";
 
 export function GridFloor() {
   const ref = React.useRef<THREE.GridHelper>(null);
@@ -1707,7 +1792,7 @@ export function GridFloor() {
   return (
     <gridHelper
       ref={ref}
-      args={[40, 40, '#ff1f3a', '#1a1c22']}
+      args={[40, 40, "#ff1f3a", "#1a1c22"]}
       position={[0, -1.2, 0]}
       rotation={[0, 0, 0]}
     />
@@ -1719,22 +1804,25 @@ export function GridFloor() {
 
 ```tsx
 // components/three/BrandScene.tsx
-'use client';
-import * as React from 'react';
-import dynamic from 'next/dynamic';
-import { useMotionTier } from '@/hooks/useMotionTier';
-import { StaticGridFloor } from './StaticGridFloor';
+"use client";
+import * as React from "react";
+import dynamic from "next/dynamic";
+import { useMotionTier } from "@/hooks/useMotionTier";
+import { StaticGridFloor } from "./StaticGridFloor";
 
 // Dynamic-import the R3F Canvas + scene contents so they're never in the critical bundle.
-const FullScene = dynamic(() => import('./FullScene').then((m) => m.FullScene), {
-  ssr: false,
-  loading: () => null,
-});
+const FullScene = dynamic(
+  () => import("./FullScene").then((m) => m.FullScene),
+  {
+    ssr: false,
+    loading: () => null,
+  },
+);
 
 export function BrandScene() {
   const tier = useMotionTier();
 
-  if (tier === 'full') return <FullScene />;
+  if (tier === "full") return <FullScene />;
   return <StaticGridFloor className="absolute inset-0 -z-10" />;
 }
 ```
@@ -1743,10 +1831,10 @@ export function BrandScene() {
 
 ```tsx
 // components/three/FullScene.tsx
-'use client';
-import * as React from 'react';
-import { Canvas } from '@react-three/fiber';
-import { GridFloor } from './GridFloor';
+"use client";
+import * as React from "react";
+import { Canvas } from "@react-three/fiber";
+import { GridFloor } from "./GridFloor";
 
 export function FullScene() {
   return (
@@ -1755,9 +1843,9 @@ export function FullScene() {
         camera={{ position: [0, 1.4, 4], fov: 60 }}
         dpr={[1, 1.6]}
         gl={{ antialias: true, alpha: true }}
-        style={{ background: 'transparent' }}
+        style={{ background: "transparent" }}
       >
-        <color attach="background" args={['#050608']} />
+        <color attach="background" args={["#050608"]} />
         <ambientLight intensity={0.4} />
         <pointLight position={[3, 4, 2]} intensity={2.0} color="#ff1f3a" />
         <GridFloor />
@@ -1787,29 +1875,30 @@ git commit -m "feat(three): add R3F BrandScene with tier-aware fallback"
 ## Task 23: Author `components/motion/MotionPage.tsx` skeleton
 
 **Files:**
+
 - Create: `components/motion/MotionPage.tsx`
 
 - [ ] **Step 1: Write the component**
 
 ```tsx
 // components/motion/MotionPage.tsx
-'use client';
-import * as React from 'react';
-import { motion } from 'framer-motion';
-import { useMotionTier } from '@/hooks/useMotionTier';
-import { durations, easings } from '@/lib/motion/tokens';
+"use client";
+import * as React from "react";
+import { motion } from "framer-motion";
+import { useMotionTier } from "@/hooks/useMotionTier";
+import { durations, easings } from "@/lib/motion/tokens";
 
 // Plan 5 will replace this with full GSAP scene wipes.
 // Plan 1 ships a tier-aware fade so pages don't slam in.
 
 export function MotionPage({ children }: { children: React.ReactNode }) {
   const tier = useMotionTier();
-  if (tier === 'off') {
+  if (tier === "off") {
     return <>{children}</>;
   }
   return (
     <motion.div
-      initial={{ opacity: 0, y: tier === 'full' ? 12 : 0 }}
+      initial={{ opacity: 0, y: tier === "full" ? 12 : 0 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0 }}
       transition={{ duration: durations.base, ease: easings.standard }}
@@ -1840,6 +1929,7 @@ git commit -m "feat(motion): add MotionPage skeleton (tier-aware fade)"
 ## Task 24: Author `app/layout.tsx`, `app/globals.css`, `app/page.tsx`, `app/error.tsx`, `app/not-found.tsx`
 
 **Files:**
+
 - Modify: `app/layout.tsx`
 - Modify: `app/globals.css`
 - Modify: `app/page.tsx`
@@ -1857,23 +1947,38 @@ git commit -m "feat(motion): add MotionPage skeleton (tier-aware fade)"
   color-scheme: dark;
 }
 
-html, body {
+html,
+body {
   background-color: #050608;
   color: #ffffff;
-  font-feature-settings: 'cv11', 'ss01';
+  font-feature-settings: "cv11", "ss01";
 }
 
 @keyframes slideIn {
-  from { transform: translateX(120%); opacity: 0; }
-  to { transform: translateX(0); opacity: 1; }
+  from {
+    transform: translateX(120%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
 }
 @keyframes slideOut {
-  from { transform: translateX(0); opacity: 1; }
-  to { transform: translateX(120%); opacity: 0; }
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(120%);
+    opacity: 0;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
+  *,
+  *::before,
+  *::after {
     animation-duration: 0.001ms !important;
     transition-duration: 0.001ms !important;
     animation-iteration-count: 1 !important;
@@ -1885,25 +1990,31 @@ html, body {
 
 ```tsx
 // app/layout.tsx
-import type { Metadata } from 'next';
-import { fontVariableClassName } from '@/styles/fonts';
-import { ThemeProvider } from '@/components/layout/ThemeProvider';
-import { ToastProvider } from '@/components/ui/ToastProvider';
-import { BrandScene } from '@/components/three/BrandScene';
-import './globals.css';
+import type { Metadata } from "next";
+import { fontVariableClassName } from "@/styles/fonts";
+import { ThemeProvider } from "@/components/layout/ThemeProvider";
+import { ToastProvider } from "@/components/ui/ToastProvider";
+import { BrandScene } from "@/components/three/BrandScene";
+import "./globals.css";
 
 export const metadata: Metadata = {
-  title: 'Trivix',
-  description: 'High-energy trivia for hosts, players, and team captains.',
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'),
+  title: "Trivix",
+  description: "High-energy trivia for hosts, players, and team captains.",
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000",
+  ),
   openGraph: {
-    title: 'Trivix',
-    description: 'High-energy trivia for hosts, players, and team captains.',
-    images: ['/og.png'],
+    title: "Trivix",
+    description: "High-energy trivia for hosts, players, and team captains.",
+    images: ["/og.png"],
   },
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html lang="en" className={fontVariableClassName}>
       <body className="font-body antialiased min-h-screen">
@@ -1925,15 +2036,17 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
 ```tsx
 // app/page.tsx
-import { Button } from '@/components/ui';
+import { Button } from "@/components/ui";
 
 export default function Home() {
   return (
     <main className="min-h-screen flex flex-col items-center justify-center px-6">
-      <p className="text-text-faint uppercase tracking-[6px] text-xs mb-4">Welcome to</p>
+      <p className="text-text-faint uppercase tracking-[6px] text-xs mb-4">
+        Welcome to
+      </p>
       <h1
         className="font-display text-7xl md:text-9xl tracking-[8px] text-text-primary"
-        style={{ textShadow: '0 0 24px rgba(255,31,58,0.55)' }}
+        style={{ textShadow: "0 0 24px rgba(255,31,58,0.55)" }}
       >
         TRIVIX
       </h1>
@@ -1955,9 +2068,9 @@ export default function Home() {
 
 ```tsx
 // app/error.tsx
-'use client';
-import * as React from 'react';
-import { Button } from '@/components/ui';
+"use client";
+import * as React from "react";
+import { Button } from "@/components/ui";
 
 export default function Error({
   error,
@@ -1971,8 +2084,12 @@ export default function Error({
   }, [error]);
   return (
     <main className="min-h-screen flex flex-col items-center justify-center px-6 text-center">
-      <h1 className="font-display text-5xl tracking-widest mb-4">Buzzer broke.</h1>
-      <p className="text-text-muted mb-8">{error.message || 'Something unexpected happened.'}</p>
+      <h1 className="font-display text-5xl tracking-widest mb-4">
+        Buzzer broke.
+      </h1>
+      <p className="text-text-muted mb-8">
+        {error.message || "Something unexpected happened."}
+      </p>
       <Button onClick={reset}>Try again</Button>
     </main>
   );
@@ -1983,8 +2100,8 @@ export default function Error({
 
 ```tsx
 // app/not-found.tsx
-import Link from 'next/link';
-import { Button } from '@/components/ui';
+import Link from "next/link";
+import { Button } from "@/components/ui";
 
 export default function NotFound() {
   return (
@@ -2022,15 +2139,16 @@ git commit -m "feat(app): themed landing, error, and 404 pages"
 ## Task 25: Author `app/api/health/route.ts`
 
 **Files:**
+
 - Create: `app/api/health/route.ts`
 
 - [ ] **Step 1: Write the route**
 
 ```ts
 // app/api/health/route.ts
-import { NextResponse } from 'next/server';
+import { NextResponse } from "next/server";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 export async function GET() {
   return NextResponse.json({ ok: true, ts: Date.now() });
@@ -2060,6 +2178,7 @@ git commit -m "feat(api): add health endpoint"
 ## Task 26: Author Firebase client/admin/session skeletons
 
 **Files:**
+
 - Create: `lib/firebase/client.ts`
 - Create: `lib/firebase/admin.ts`
 - Create: `lib/firebase/session.ts`
@@ -2068,9 +2187,9 @@ git commit -m "feat(api): add health endpoint"
 
 ```ts
 // lib/firebase/client.ts
-import { initializeApp, getApps, getApp, type FirebaseApp } from 'firebase/app';
-import { getAuth, connectAuthEmulator } from 'firebase/auth';
-import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore';
+import { initializeApp, getApps, getApp, type FirebaseApp } from "firebase/app";
+import { getAuth, connectAuthEmulator } from "firebase/auth";
+import { getFirestore, connectFirestoreEmulator } from "firebase/firestore";
 
 const config = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -2091,12 +2210,14 @@ export const firebaseAuth = getAuth(firebaseApp);
 export const firebaseDb = getFirestore(firebaseApp);
 
 if (
-  typeof window !== 'undefined' &&
-  process.env.NEXT_PUBLIC_USE_EMULATORS === 'true' &&
+  typeof window !== "undefined" &&
+  process.env.NEXT_PUBLIC_USE_EMULATORS === "true" &&
   !(globalThis as { __TRIVIX_EMU__?: boolean }).__TRIVIX_EMU__
 ) {
-  connectAuthEmulator(firebaseAuth, 'http://127.0.0.1:9099', { disableWarnings: true });
-  connectFirestoreEmulator(firebaseDb, '127.0.0.1', 8080);
+  connectAuthEmulator(firebaseAuth, "http://127.0.0.1:9099", {
+    disableWarnings: true,
+  });
+  connectFirestoreEmulator(firebaseDb, "127.0.0.1", 8080);
   (globalThis as { __TRIVIX_EMU__?: boolean }).__TRIVIX_EMU__ = true;
 }
 ```
@@ -2105,18 +2226,26 @@ if (
 
 ```ts
 // lib/firebase/admin.ts
-import 'server-only';
-import { getApps, initializeApp, cert, applicationDefault, type App } from 'firebase-admin/app';
-import { getAuth as getAdminAuth } from 'firebase-admin/auth';
-import { getFirestore as getAdminFirestore } from 'firebase-admin/firestore';
+import "server-only";
+import {
+  getApps,
+  initializeApp,
+  cert,
+  applicationDefault,
+  type App,
+} from "firebase-admin/app";
+import { getAuth as getAdminAuth } from "firebase-admin/auth";
+import { getFirestore as getAdminFirestore } from "firebase-admin/firestore";
 
 function getAdminApp(): App {
   if (getApps().length) return getApps()[0]!;
-  const useEmulator = process.env.USE_FIREBASE_EMULATORS === 'true';
+  const useEmulator = process.env.USE_FIREBASE_EMULATORS === "true";
   if (useEmulator) {
-    process.env.FIRESTORE_EMULATOR_HOST ||= '127.0.0.1:8080';
-    process.env.FIREBASE_AUTH_EMULATOR_HOST ||= '127.0.0.1:9099';
-    return initializeApp({ projectId: process.env.FIREBASE_PROJECT_ID || 'trivix-dev' });
+    process.env.FIRESTORE_EMULATOR_HOST ||= "127.0.0.1:8080";
+    process.env.FIREBASE_AUTH_EMULATOR_HOST ||= "127.0.0.1:9099";
+    return initializeApp({
+      projectId: process.env.FIREBASE_PROJECT_ID || "trivix-dev",
+    });
   }
   const sa = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
   if (sa) {
@@ -2134,11 +2263,11 @@ export const adminDb = getAdminFirestore(adminApp);
 
 ```ts
 // lib/firebase/session.ts
-import 'server-only';
-import { cookies } from 'next/headers';
-import { adminAuth } from './admin';
+import "server-only";
+import { cookies } from "next/headers";
+import { adminAuth } from "./admin";
 
-const COOKIE_NAME = '__session';
+const COOKIE_NAME = "__session";
 const FIVE_DAYS_MS = 5 * 24 * 60 * 60 * 1000;
 
 export async function createSessionCookie(idToken: string): Promise<string> {
@@ -2149,9 +2278,9 @@ export async function setSessionCookie(idToken: string): Promise<void> {
   const cookie = await createSessionCookie(idToken);
   (await cookies()).set(COOKIE_NAME, cookie, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    path: '/',
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
     maxAge: FIVE_DAYS_MS / 1000,
   });
 }
@@ -2192,6 +2321,7 @@ git commit -m "feat(firebase): add client, admin, and session helpers"
 ## Task 27: Configure Firebase Emulator Suite
 
 **Files:**
+
 - Create: `firebase.json`
 - Create: `.firebaserc`
 - Create: `firestore.rules`
@@ -2312,6 +2442,7 @@ git commit -m "chore(firebase): emulator suite + default-deny rules baseline"
 ## Task 28: Author Vitest config + setup + emulator bootstrap + emulator smoke test
 
 **Files:**
+
 - Create: `vitest.config.ts`
 - Create: `tests/setup/vitest-setup.ts`
 - Create: `tests/setup/emulator-bootstrap.ts`
@@ -2321,21 +2452,25 @@ git commit -m "chore(firebase): emulator suite + default-deny rules baseline"
 
 ```ts
 // vitest.config.ts
-import { defineConfig } from 'vitest/config';
-import react from '@vitejs/plugin-react';
-import { resolve } from 'node:path';
+import { defineConfig } from "vitest/config";
+import react from "@vitejs/plugin-react";
+import { resolve } from "node:path";
 
 export default defineConfig({
   plugins: [react()],
   resolve: {
-    alias: { '@': resolve(__dirname, '.') },
+    alias: { "@": resolve(__dirname, ".") },
   },
   test: {
     globals: false,
-    environment: 'jsdom',
-    setupFiles: ['./tests/setup/vitest-setup.ts'],
-    include: ['tests/unit/**/*.test.ts', 'tests/unit/**/*.test.tsx', 'tests/integration/**/*.test.ts'],
-    exclude: ['node_modules', '.next', 'tests/e2e/**'],
+    environment: "jsdom",
+    setupFiles: ["./tests/setup/vitest-setup.ts"],
+    include: [
+      "tests/unit/**/*.test.ts",
+      "tests/unit/**/*.test.tsx",
+      "tests/integration/**/*.test.ts",
+    ],
+    exclude: ["node_modules", ".next", "tests/e2e/**"],
   },
 });
 ```
@@ -2344,7 +2479,7 @@ export default defineConfig({
 
 ```ts
 // tests/setup/vitest-setup.ts
-import '@testing-library/jest-dom/vitest';
+import "@testing-library/jest-dom/vitest";
 ```
 
 - [ ] **Step 3: Write `tests/setup/emulator-bootstrap.ts`**
@@ -2352,32 +2487,34 @@ import '@testing-library/jest-dom/vitest';
 ```ts
 // tests/setup/emulator-bootstrap.ts
 // Sets emulator env so Admin SDK / @firebase/rules-unit-testing connect locally.
-process.env.FIRESTORE_EMULATOR_HOST = process.env.FIRESTORE_EMULATOR_HOST ?? '127.0.0.1:8080';
-process.env.FIREBASE_AUTH_EMULATOR_HOST = process.env.FIREBASE_AUTH_EMULATOR_HOST ?? '127.0.0.1:9099';
-process.env.GCLOUD_PROJECT = 'trivix-dev';
-process.env.FIREBASE_PROJECT_ID = 'trivix-dev';
-process.env.USE_FIREBASE_EMULATORS = 'true';
+process.env.FIRESTORE_EMULATOR_HOST =
+  process.env.FIRESTORE_EMULATOR_HOST ?? "127.0.0.1:8080";
+process.env.FIREBASE_AUTH_EMULATOR_HOST =
+  process.env.FIREBASE_AUTH_EMULATOR_HOST ?? "127.0.0.1:9099";
+process.env.GCLOUD_PROJECT = "trivix-dev";
+process.env.FIREBASE_PROJECT_ID = "trivix-dev";
+process.env.USE_FIREBASE_EMULATORS = "true";
 ```
 
 - [ ] **Step 4: Write `tests/integration/firebase/emulator-smoke.test.ts`**
 
 ```ts
 // tests/integration/firebase/emulator-smoke.test.ts
-import '@/tests/setup/emulator-bootstrap';
-import { describe, it, expect, beforeAll } from 'vitest';
-import { initializeApp, deleteApp } from 'firebase-admin/app';
-import { getFirestore } from 'firebase-admin/firestore';
+import "@/tests/setup/emulator-bootstrap";
+import { describe, it, expect, beforeAll } from "vitest";
+import { initializeApp, deleteApp } from "firebase-admin/app";
+import { getFirestore } from "firebase-admin/firestore";
 
 let app: ReturnType<typeof initializeApp>;
 
 beforeAll(() => {
-  app = initializeApp({ projectId: 'trivix-dev' }, 'smoke');
+  app = initializeApp({ projectId: "trivix-dev" }, "smoke");
 });
 
-describe('firebase emulator', () => {
-  it('round-trips a write and read', async () => {
+describe("firebase emulator", () => {
+  it("round-trips a write and read", async () => {
     const db = getFirestore(app);
-    const ref = db.collection('_smoke').doc('hello');
+    const ref = db.collection("_smoke").doc("hello");
     await ref.set({ ok: true });
     const snap = await ref.get();
     expect(snap.data()).toEqual({ ok: true });
@@ -2398,11 +2535,13 @@ Expected: all unit tests pass; the integration test will fail unless the emulato
 - [ ] **Step 6: Run integration test against running emulator**
 
 In one terminal:
+
 ```bash
 npm run emulators
 ```
 
 In another:
+
 ```bash
 npm run test:integration
 ```
@@ -2421,6 +2560,7 @@ git commit -m "test: add Vitest config + emulator bootstrap + smoke test"
 ## Task 29: Author Playwright config + landing/health/axe E2E specs
 
 **Files:**
+
 - Create: `playwright.config.ts`
 - Create: `tests/e2e/landing.spec.ts`
 - Create: `tests/e2e/health.spec.ts`
@@ -2430,34 +2570,34 @@ git commit -m "test: add Vitest config + emulator bootstrap + smoke test"
 
 ```ts
 // playwright.config.ts
-import { defineConfig, devices } from '@playwright/test';
+import { defineConfig, devices } from "@playwright/test";
 
 const PORT = 3000;
 
 export default defineConfig({
-  testDir: './tests/e2e',
+  testDir: "./tests/e2e",
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? 2 : undefined,
-  reporter: [['list'], ['html', { open: 'never' }]],
+  reporter: [["list"], ["html", { open: "never" }]],
   use: {
     baseURL: `http://127.0.0.1:${PORT}`,
-    trace: 'retain-on-failure',
+    trace: "retain-on-failure",
   },
   webServer: {
-    command: 'npm run build && npm run start -- --port 3000',
+    command: "npm run build && npm run start -- --port 3000",
     url: `http://127.0.0.1:${PORT}`,
     reuseExistingServer: !process.env.CI,
     timeout: 180_000,
     env: {
-      NEXT_PUBLIC_USE_EMULATORS: 'false',
+      NEXT_PUBLIC_USE_EMULATORS: "false",
     },
   },
   projects: [
-    { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
-    { name: 'firefox',  use: { ...devices['Desktop Firefox'] } },
-    { name: 'webkit',   use: { ...devices['Desktop Safari'] } },
+    { name: "chromium", use: { ...devices["Desktop Chrome"] } },
+    { name: "firefox", use: { ...devices["Desktop Firefox"] } },
+    { name: "webkit", use: { ...devices["Desktop Safari"] } },
   ],
 });
 ```
@@ -2466,10 +2606,10 @@ export default defineConfig({
 
 ```ts
 // tests/e2e/health.spec.ts
-import { test, expect } from '@playwright/test';
+import { test, expect } from "@playwright/test";
 
-test('health endpoint returns ok', async ({ request }) => {
-  const res = await request.get('/api/health');
+test("health endpoint returns ok", async ({ request }) => {
+  const res = await request.get("/api/health");
   expect(res.ok()).toBe(true);
   const body = await res.json();
   expect(body.ok).toBe(true);
@@ -2480,22 +2620,31 @@ test('health endpoint returns ok', async ({ request }) => {
 
 ```ts
 // tests/e2e/landing.spec.ts
-import { test, expect } from '@playwright/test';
+import { test, expect } from "@playwright/test";
 
-test('landing page renders branded heading and CTAs', async ({ page }) => {
-  await page.goto('/');
-  await expect(page.getByRole('heading', { level: 1, name: /trivix/i })).toBeVisible();
-  await expect(page.getByRole('button', { name: /get started/i })).toBeVisible();
-  await expect(page.getByRole('button', { name: /i'?m a host/i })).toBeVisible();
+test("landing page renders branded heading and CTAs", async ({ page }) => {
+  await page.goto("/");
+  await expect(
+    page.getByRole("heading", { level: 1, name: /trivix/i }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: /get started/i }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: /i'?m a host/i }),
+  ).toBeVisible();
 });
 
-test('respects prefers-reduced-motion', async ({ browser }) => {
-  const context = await browser.newContext({ reducedMotion: 'reduce' });
+test("respects prefers-reduced-motion", async ({ browser }) => {
+  const context = await browser.newContext({ reducedMotion: "reduce" });
   const page = await context.newPage();
-  await page.goto('/');
+  await page.goto("/");
   // motion tier should be 'off'; ThemeProvider sets data-motion-tier
-  const tier = await page.locator('[data-motion-tier]').first().getAttribute('data-motion-tier');
-  expect(tier).toBe('off');
+  const tier = await page
+    .locator("[data-motion-tier]")
+    .first()
+    .getAttribute("data-motion-tier");
+  expect(tier).toBe("off");
   await context.close();
 });
 ```
@@ -2504,24 +2653,32 @@ test('respects prefers-reduced-motion', async ({ browser }) => {
 
 ```ts
 // tests/e2e/axe.spec.ts
-import { test, expect } from '@playwright/test';
-import AxeBuilder from '@axe-core/playwright';
+import { test, expect } from "@playwright/test";
+import AxeBuilder from "@axe-core/playwright";
 
-test('landing page has no serious or critical a11y violations', async ({ page }) => {
-  await page.goto('/');
+test("landing page has no serious or critical a11y violations", async ({
+  page,
+}) => {
+  await page.goto("/");
   const results = await new AxeBuilder({ page })
-    .withTags(['wcag2a', 'wcag2aa', 'wcag21aa', 'best-practice'])
+    .withTags(["wcag2a", "wcag2aa", "wcag21aa", "best-practice"])
     .analyze();
-  const blocking = results.violations.filter((v) => v.impact === 'serious' || v.impact === 'critical');
+  const blocking = results.violations.filter(
+    (v) => v.impact === "serious" || v.impact === "critical",
+  );
   expect(blocking, JSON.stringify(blocking, null, 2)).toEqual([]);
 });
 
-test('404 page has no serious or critical a11y violations', async ({ page }) => {
-  await page.goto('/this-route-does-not-exist');
+test("404 page has no serious or critical a11y violations", async ({
+  page,
+}) => {
+  await page.goto("/this-route-does-not-exist");
   const results = await new AxeBuilder({ page })
-    .withTags(['wcag2a', 'wcag2aa', 'wcag21aa', 'best-practice'])
+    .withTags(["wcag2a", "wcag2aa", "wcag21aa", "best-practice"])
     .analyze();
-  const blocking = results.violations.filter((v) => v.impact === 'serious' || v.impact === 'critical');
+  const blocking = results.violations.filter(
+    (v) => v.impact === "serious" || v.impact === "critical",
+  );
   expect(blocking, JSON.stringify(blocking, null, 2)).toEqual([]);
 });
 ```
@@ -2546,6 +2703,7 @@ git commit -m "test(e2e): add Playwright config with landing, health, and axe sp
 ## Task 30: Author Lighthouse CI config
 
 **Files:**
+
 - Create: `lighthouserc.json`
 
 - [ ] **Step 1: Write `lighthouserc.json`**
@@ -2563,9 +2721,9 @@ git commit -m "test(e2e): add Playwright config with landing, health, and axe sp
     },
     "assert": {
       "assertions": {
-        "categories:performance":   ["warn", { "minScore": 0.85 }],
+        "categories:performance": ["warn", { "minScore": 0.85 }],
         "categories:accessibility": ["error", { "minScore": 0.9 }],
-        "categories:best-practices":["warn", { "minScore": 0.9 }],
+        "categories:best-practices": ["warn", { "minScore": 0.9 }],
         "largest-contentful-paint": ["warn", { "maxNumericValue": 2500 }]
       }
     },
@@ -2597,6 +2755,7 @@ git commit -m "test(lighthouse): add LHCI config (perf warn 0.85, a11y error 0.9
 ## Task 31: Author `.github/workflows/ci.yml`
 
 **Files:**
+
 - Create: `.github/workflows/ci.yml`
 
 - [ ] **Step 1: Write the workflow**
@@ -2645,7 +2804,7 @@ jobs:
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '17'
+          java-version: "17"
       - run: npm ci
       - run: npx firebase emulators:exec --only auth,firestore --project trivix-dev "npx vitest run tests/integration"
 
@@ -2695,6 +2854,7 @@ git commit -m "ci: add GitHub Actions workflow (lint, unit, integration, e2e, li
 ## Task 32: Author `netlify.toml` and verify Netlify deploy
 
 **Files:**
+
 - Create: `netlify.toml`
 
 - [ ] **Step 1: Write `netlify.toml`**
@@ -2746,6 +2906,7 @@ git commit -m "chore(deploy): add Netlify config with Next plugin and security h
 ## Task 33: Author `README.md` quickstart
 
 **Files:**
+
 - Create: `README.md`
 
 - [ ] **Step 1: Write the README**
@@ -2776,21 +2937,21 @@ Visit http://localhost:3000 (app) and http://localhost:4000 (emulator UI).
 
 ## Scripts
 
-| Command | What it does |
-|---|---|
-| `npm run dev` | Next dev server |
-| `npm run dev:emu` | Next dev + Firebase emulators in parallel |
-| `npm run build` | Production build |
-| `npm run start` | Run production build |
-| `npm run typecheck` | tsc --noEmit |
-| `npm run lint` | ESLint |
-| `npm run format` | Prettier write |
-| `npm test` | Vitest unit + integration |
+| Command                    | What it does                                                              |
+| -------------------------- | ------------------------------------------------------------------------- |
+| `npm run dev`              | Next dev server                                                           |
+| `npm run dev:emu`          | Next dev + Firebase emulators in parallel                                 |
+| `npm run build`            | Production build                                                          |
+| `npm run start`            | Run production build                                                      |
+| `npm run typecheck`        | tsc --noEmit                                                              |
+| `npm run lint`             | ESLint                                                                    |
+| `npm run format`           | Prettier write                                                            |
+| `npm test`                 | Vitest unit + integration                                                 |
 | `npm run test:integration` | Vitest integration only (needs emulator running, or use `emulators:exec`) |
-| `npm run test:e2e` | Playwright E2E + axe |
-| `npm run lighthouse` | Lighthouse CI |
-| `npm run emulators` | Firebase Auth + Firestore emulators |
-| `npm run seed` | Seed emulator with fixture users (populated in Plan 2) |
+| `npm run test:e2e`         | Playwright E2E + axe                                                      |
+| `npm run lighthouse`       | Lighthouse CI                                                             |
+| `npm run emulators`        | Firebase Auth + Firestore emulators                                       |
+| `npm run seed`             | Seed emulator with fixture users (populated in Plan 2)                    |
 
 ## Deployment
 
@@ -2907,6 +3068,7 @@ Expected: clean working tree, ~30+ commits on `main`. Ready for Plan 2.
 ## Done
 
 Deliverables of this plan:
+
 1. Themed Trivix landing page renders locally and on Netlify
 2. R3F BrandScene with tier-aware fallback
 3. UI primitives (Button, Input, Card, Avatar, Badge, Toast)

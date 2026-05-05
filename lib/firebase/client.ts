@@ -1,7 +1,7 @@
 // lib/firebase/client.ts
-import { initializeApp, getApps, getApp, type FirebaseApp } from 'firebase/app';
-import { getAuth, connectAuthEmulator } from 'firebase/auth';
-import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore';
+import { initializeApp, getApps, getApp, type FirebaseApp } from "firebase/app";
+import { getAuth, connectAuthEmulator } from "firebase/auth";
+import { getFirestore, connectFirestoreEmulator } from "firebase/firestore";
 
 const config = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -22,11 +22,13 @@ export const firebaseAuth = getAuth(firebaseApp);
 export const firebaseDb = getFirestore(firebaseApp);
 
 if (
-  typeof window !== 'undefined' &&
-  process.env.NEXT_PUBLIC_USE_EMULATORS === 'true' &&
+  typeof window !== "undefined" &&
+  process.env.NEXT_PUBLIC_USE_EMULATORS === "true" &&
   !(globalThis as { __TRIVIX_EMU__?: boolean }).__TRIVIX_EMU__
 ) {
-  connectAuthEmulator(firebaseAuth, 'http://127.0.0.1:9099', { disableWarnings: true });
-  connectFirestoreEmulator(firebaseDb, '127.0.0.1', 8080);
+  connectAuthEmulator(firebaseAuth, "http://127.0.0.1:9099", {
+    disableWarnings: true,
+  });
+  connectFirestoreEmulator(firebaseDb, "127.0.0.1", 8080);
   (globalThis as { __TRIVIX_EMU__?: boolean }).__TRIVIX_EMU__ = true;
 }

@@ -11,6 +11,7 @@
 Trivix is a web app for trivia hosts and players, hosted on Netlify. Comparable: trivtrak.com, but with a high-graphics, motion-rich, "game-show" identity.
 
 **Slice 1 delivers:**
+
 - Project scaffolding (Next.js 15 App Router, TypeScript, Tailwind, Firebase Auth + Firestore, Netlify deploy)
 - Email/password and Google authentication, with email-verification gate and provider linking on email collision
 - Multi-step signup wizard capturing name, unique display name, role intent
@@ -21,6 +22,7 @@ Trivix is a web app for trivia hosts and players, hosted on Netlify. Comparable:
 - Cinematic-overkill motion system (R3F WebGL, Framer Motion, GSAP, Lottie) with three runtime tiers (`full` / `light` / `off`) honoring `prefers-reduced-motion`
 
 **Slice 1 explicitly does NOT include:**
+
 - Live trivia games, real-time question delivery, scoring runtime
 - Public team browsing (invite-code only)
 - User-uploaded avatar photos (curated avatar chooser deferred; auto-initials only for now)
@@ -49,6 +51,7 @@ Trivix is a web app for trivia hosts and players, hosted on Netlify. Comparable:
 - **Emulators:** Firebase Emulator Suite for local dev and CI
 
 **Architectural posture (Hybrid):**
+
 - Client SDK reads user profile, team data, and real-time join-request updates via `onSnapshot`.
 - Admin SDK in Next.js route handlers handles all sensitive writes (role flips, captain transfer, host approval, deletes, account-creation transactions).
 - Firestore security rules act as defense-in-depth, denying any client-side write to sensitive fields.
@@ -58,12 +61,14 @@ Trivix is a web app for trivia hosts and players, hosted on Netlify. Comparable:
 ## 3. Visual & Brand System
 
 **Brand identity (used for marketing, auth, dashboards, settings):**
+
 - Primary surface: deep black (`#050608`) with a recurring perspective grid-floor texture
 - Hero color: brand red (`#ff1f3a`) with neon glow on interactives
 - Type: Anton display, Inter body, white primary text
 - Distinctive, confident, owns the "Trivix" namespace
 
 **Gameplay language (used for answer buttons, category chips, score panels — populated in later slices):**
+
 - Four-color quad: red, blue, yellow, green (familiar Kahoot/HQ Trivia/Trivial Pursuit answer-button language)
 - Each color has a defined role; not used decoratively elsewhere
 - Yellow uses black text (contrast)
@@ -90,6 +95,7 @@ shadow: soft / glow-red / glow-quad-{r|b|y|g}
 ```
 
 **Accessibility baseline (non-negotiable):**
+
 - Contrast ≥ 4.5:1 for all text on each background tier
 - All interactive elements ≥ 44×44 touch target
 - Focus rings visible and themed
@@ -181,6 +187,7 @@ shadow: soft / glow-red / glow-quad-{r|b|y|g}
 ### Write authority
 
 **Server-only (Admin SDK; rules deny client writes):**
+
 - All fields on `users` except none — entire `users` doc is server-written
 - `teams.captainUid`, `teams.memberUids`, team creation, team deletion
 - All `joinRequests` mutations (create allowed for self, see below)
@@ -188,6 +195,7 @@ shadow: soft / glow-red / glow-quad-{r|b|y|g}
 - All `displayNames` sentinel mutations
 
 **Client-allowed (with rules):**
+
 - Create own `joinRequests/{ownUid}` doc with the request payload
 - Read own `users/{uid}` doc
 - Read own current `teams/{teamId}` doc
@@ -197,11 +205,13 @@ shadow: soft / glow-red / glow-quad-{r|b|y|g}
 ### Public vs private profile fields
 
 **Public** (returned by `GET /api/profile/[displayName]` to any signed-in user):
+
 - `displayName`, `avatarSeed`, `createdAt`, role badge if `host`
 - `teamId` (resolved to team name; team page link only if viewer is on the same team)
 - `stats.gamesPlayed`, `stats.gamesWon`, `stats.longestWinStreak`, `stats.highestScore`
 
 **Private** (only visible on owner's `/profile`):
+
 - `firstName`, `lastName`, `email`
 - All other `stats` fields (`totalCorrectAnswers`, `currentWinStreak`, `lastPlayedAt`, `venues`, `favoriteVenueId`, `favoriteTeammateUid`)
 - `teamHistory`
@@ -223,6 +233,7 @@ URL: `/signup?step=N`. Single page, animated transitions between steps. Back/for
 **Step 4 · Verify email.** Firebase email-link verification. Until `emailVerified: true`, user lands on a locked dashboard with a "Resend verification email" button. Team create/join is blocked pre-verification.
 
 After Step 3, the client posts to `POST /api/auth/complete-signup`. The route handler:
+
 - Verifies the Firebase ID token
 - Runs a transaction creating `users/{uid}`, `displayNames/{key}`, and (if hosting) `hostApplications/{uid}` with `status: 'pending'`
 - Fails atomically if the display name was claimed in the meantime
@@ -236,12 +247,14 @@ Email/password OR Google. After auth success, client calls `POST /api/auth/sessi
 Firebase project setting **"One account per email address"** is enabled.
 
 **Case A:** User signed up with email/password on `joe@gmail.com`, then tries Google sign-in on the same email.
+
 - Catch `auth/account-exists-with-different-credential`
-- Show: *"joe@gmail.com is already registered with a password. Sign in with your password to add Google as a sign-in option."*
+- Show: _"joe@gmail.com is already registered with a password. Sign in with your password to add Google as a sign-in option."_
 - On password sign-in success, call `linkWithCredential(pendingGoogleCred)`
 
 **Case B:** User signed up with Google on `joe@gmail.com`, then tries email/password signup on the same email.
-- Surface: *"Use Continue with Google to sign in to joe@gmail.com."*
+
+- Surface: _"Use Continue with Google to sign in to joe@gmail.com."_
 
 A future Settings → "Linked sign-in methods" panel will let users add/remove methods themselves; out of slice 1.
 
@@ -328,6 +341,7 @@ tests/{unit,integration,rules,e2e,fixtures}/
 ```
 
 **Conventions:**
+
 - Route groups isolate motion treatments per area
 - Wizard URL strategy: single `/signup` route + `?step=N` query param
 - No barrel files except `types/`
@@ -366,6 +380,7 @@ Each is a thin themed wrapper, all support the `<Slot>` pattern and forward refs
 - `<TrivixLogoMark3D>` — extruded "T" mark, marketing hero only. Lazy.
 
 Performance discipline:
+
 - One `<Canvas>` per page max
 - Auto-pause when `document.hidden` or `prefers-reduced-motion: reduce`
 - All R3F bundles dynamic-imported, never in critical path
@@ -427,20 +442,20 @@ No magic numbers in components.
 
 ### Slice 1 motion moments
 
-| Moment | Treatment |
-|---|---|
-| Marketing hero load | R3F BrandScene fade-in, KineticHeadline letter-stagger, CTA squish-in |
-| Login form | Split-screen reveal: form slides from left, brand panel from right |
-| Signup wizard step change | GSAP wipe, progress bar morphs |
-| Display-name uniqueness check | Icon morph (spinner → check or X) with color glow |
-| Email verification banner | Pulses red until verified; green confetti micro-burst on verify |
-| Dashboard land | Cards stagger-in; role badge pop-bounce |
-| Team creation success | Brand-red confetti burst + scene flash + invite-code letter-stagger reveal |
-| Captain promotion | Avatar gets crown badge that scales-in with bounce + glow ring |
+| Moment                          | Treatment                                                                    |
+| ------------------------------- | ---------------------------------------------------------------------------- |
+| Marketing hero load             | R3F BrandScene fade-in, KineticHeadline letter-stagger, CTA squish-in        |
+| Login form                      | Split-screen reveal: form slides from left, brand panel from right           |
+| Signup wizard step change       | GSAP wipe, progress bar morphs                                               |
+| Display-name uniqueness check   | Icon morph (spinner → check or X) with color glow                            |
+| Email verification banner       | Pulses red until verified; green confetti micro-burst on verify              |
+| Dashboard land                  | Cards stagger-in; role badge pop-bounce                                      |
+| Team creation success           | Brand-red confetti burst + scene flash + invite-code letter-stagger reveal   |
+| Captain promotion               | Avatar gets crown badge that scales-in with bounce + glow ring               |
 | Join-request approval (captain) | Row slides out, avatar floats up to MembersList, list re-flows with `layout` |
-| Admin approve host | Application row slides out + green flash + toast |
-| Page navigation | GSAP wipe |
-| Reduced-motion fallback | All of the above → instant fade or no transition |
+| Admin approve host              | Application row slides out + green flash + toast                             |
+| Page navigation                 | GSAP wipe                                                                    |
+| Reduced-motion fallback         | All of the above → instant fade or no transition                             |
 
 ### Performance budget
 
@@ -456,6 +471,7 @@ No magic numbers in components.
 **Unit (Vitest):** Pure functions in `lib/` — invite-code generator + collision check, display-name normalization, motion-tier detection, role helpers, Zod schemas, avatar color seeding. Sibling `*.test.ts` for each.
 
 **Integration (Vitest + Firebase Emulator Suite):** Transactional flows where data corruption hides:
+
 - Signup transaction (user + displayName + optional hostApplication, atomic)
 - Display-name race (two concurrent signups, only one wins)
 - Join team flow (request → approve → memberUids + user.teamId set, request deleted, atomic)
@@ -468,6 +484,7 @@ No magic numbers in components.
 Each `app/api/` route handler gets at least one happy-path + one auth-rejection + one validation-rejection test.
 
 **Security rules (`@firebase/rules-unit-testing`):** Defense-in-depth. Per collection, prove:
+
 - Anonymous read/write denied where it should be
 - A user cannot flip own `isAdmin`, `role`, `teamId`, `stats`, or any server-only field
 - A user can read own user doc; cannot read another user's user doc directly (public profile goes through API)
@@ -475,6 +492,7 @@ Each `app/api/` route handler gets at least one happy-path + one auth-rejection 
 - Only admin can read all of `hostApplications`, `users`, `teams`
 
 **E2E (Playwright + axe-core):** Critical journeys against local emulators in CI:
+
 - Signup → email verify → create team → see invite code
 - Player joins via invite code → captain sees request → approves → player sees team
 - Captain transfers role → old captain becomes regular member → new captain sees admin actions
@@ -491,6 +509,7 @@ Axe runs as part of every E2E test; serious/critical violations fail the suite.
 **Test fixtures:** `tests/fixtures/seed.ts` seeds the emulator with known UIDs (`admin`, `pendingHost`, `approvedHost`, `captain`, `player`, `teamlessPlayer`). Same seeder used by `npm run dev:seed` so manual testing matches CI.
 
 **CI pipeline:**
+
 1. Lint + typecheck
 2. Unit
 3. Spin up Firebase emulators
@@ -524,6 +543,7 @@ The Firebase project must be configured with **"One account per email address"**
 ## 12. Success Criteria for Slice 1
 
 A user can:
+
 1. Sign up with email/password or Google, verify email, complete profile wizard with a unique display name.
 2. As a player, create a team or join one via invite code.
 3. As a captain, see pending join requests, approve/deny, transfer the captain role, regenerate the invite code, leave or disband the team.
@@ -532,11 +552,13 @@ A user can:
 6. Apply to be a host at signup, see "pending" status, become an approved host after admin action, see the `/host` placeholder.
 
 An admin can:
+
 1. View pending host applications, approve/deny.
 2. View all users, revoke pro status, delete users.
 3. View all teams, delete teams (cascading correctly).
 
 Cross-cutting:
+
 1. Email verification gates team create/join.
 2. Provider linking handles the email-collision case in both directions.
 3. All motion respects `prefers-reduced-motion`; mobile/low-power devices get the `light` tier; desktop gets `full`.

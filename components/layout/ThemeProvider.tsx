@@ -1,13 +1,15 @@
-'use client';
-import * as React from 'react';
-import { useMotionTier } from '@/hooks/useMotionTier';
-import type { MotionTier } from '@/lib/motion/tier';
+"use client";
+import * as React from "react";
+import { useMotionTier } from "@/hooks/useMotionTier";
+import type { MotionTier } from "@/lib/motion/tier";
 
 interface ThemeContextValue {
   motionTier: MotionTier;
 }
 
-const ThemeContext = React.createContext<ThemeContextValue>({ motionTier: 'off' });
+const ThemeContext = React.createContext<ThemeContextValue>({
+  motionTier: "off",
+});
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const motionTier = useMotionTier();

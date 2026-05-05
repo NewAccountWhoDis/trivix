@@ -41,7 +41,7 @@ jobs:
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '17'
+          java-version: "17"
       - run: npm ci
       - run: npx firebase emulators:exec --only auth,firestore --project trivix-dev "npx vitest run tests/integration"
 

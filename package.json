@@ -7,7 +7,7 @@
     "dev:emu": "concurrently -k -n next,emu \"npm:dev\" \"npm:emulators\"",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "eslint app components hooks lib styles tests",
     "format": "prettier --write .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",

@@ -1,6 +1,6 @@
-'use client';
-import * as React from 'react';
-import { cn } from '@/lib/utils/cn';
+"use client";
+import * as React from "react";
+import { cn } from "@/lib/utils/cn";
 
 export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string;
@@ -17,7 +17,10 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
     return (
       <div className="flex flex-col gap-1.5">
         {label && (
-          <label htmlFor={inputId} className="text-sm font-medium text-text-muted">
+          <label
+            htmlFor={inputId}
+            className="text-sm font-medium text-text-muted"
+          >
             {label}
           </label>
         )}
@@ -25,13 +28,15 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
           ref={ref}
           id={inputId}
           aria-invalid={!!error || undefined}
-          aria-describedby={[errorId, hintId].filter(Boolean).join(' ') || undefined}
+          aria-describedby={
+            [errorId, hintId].filter(Boolean).join(" ") || undefined
+          }
           className={cn(
-            'h-11 px-4 rounded-md bg-brand-ink border border-brand-line text-text-primary',
-            'placeholder:text-text-faint',
-            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-red focus-visible:border-brand-red',
-            'aria-[invalid=true]:border-game-red aria-[invalid=true]:ring-game-red',
-            'transition',
+            "h-11 px-4 rounded-md bg-brand-ink border border-brand-line text-text-primary",
+            "placeholder:text-text-faint",
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-red focus-visible:border-brand-red",
+            "aria-[invalid=true]:border-game-red aria-[invalid=true]:ring-game-red",
+            "transition",
             className,
           )}
           {...props}
@@ -50,4 +55,4 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
     );
   },
 );
-Input.displayName = 'Input';
+Input.displayName = "Input";

@@ -1,12 +1,12 @@
-'use client';
-import * as ToastPrimitive from '@radix-ui/react-toast';
-import * as React from 'react';
-import { ToastItem } from './Toast';
+"use client";
+import * as ToastPrimitive from "@radix-ui/react-toast";
+import * as React from "react";
+import { ToastItem } from "./Toast";
 
 interface ToastInput {
   title?: string;
   description?: string;
-  tone?: 'default' | 'success' | 'error' | 'warn';
+  tone?: "default" | "success" | "error" | "warn";
 }
 
 interface ToastContextValue {
@@ -54,6 +54,6 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
 
 export function useToast() {
   const ctx = React.useContext(ToastContext);
-  if (!ctx) throw new Error('useToast must be used inside <ToastProvider>');
+  if (!ctx) throw new Error("useToast must be used inside <ToastProvider>");
   return ctx;
 }

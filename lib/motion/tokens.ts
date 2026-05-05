@@ -17,10 +17,10 @@ export const easings = {
 } as const;
 
 export const springs = {
-  soft:   { type: 'spring' as const, stiffness: 140, damping: 18, mass: 0.9 },
-  snappy: { type: 'spring' as const, stiffness: 260, damping: 22, mass: 0.8 },
-  bouncy: { type: 'spring' as const, stiffness: 320, damping: 14, mass: 0.9 },
-  heavy:  { type: 'spring' as const, stiffness: 90,  damping: 22, mass: 1.4 },
+  soft: { type: "spring" as const, stiffness: 140, damping: 18, mass: 0.9 },
+  snappy: { type: "spring" as const, stiffness: 260, damping: 22, mass: 0.8 },
+  bouncy: { type: "spring" as const, stiffness: 320, damping: 14, mass: 0.9 },
+  heavy: { type: "spring" as const, stiffness: 90, damping: 22, mass: 1.4 },
 };
 
 export const stagger = {
