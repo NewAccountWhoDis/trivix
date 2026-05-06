@@ -54,6 +54,32 @@ export interface UserDoc {
   updatedAt: FirestoreTimestamp;
 }
 
+/**
+ * Plain-JSON form of UserDoc safe to pass server→client.
+ * Timestamps become epoch milliseconds; nullable timestamps become null.
+ */
+export interface SerializedUser {
+  uid: string;
+  email: string;
+  emailVerified: boolean;
+  firstName: string;
+  lastName: string;
+  displayName: string;
+  displayNameKey: string;
+  avatarSeed: string;
+  role: Role;
+  hostStatus: HostStatus;
+  isAdmin: boolean;
+  teamId: string | null;
+  teamHistory: string[];
+  stats: Omit<UserStats, "lastPlayedAt" | "venues"> & {
+    lastPlayedAt: number | null;
+    venues: Array<Omit<VenueSummary, "lastVisitedAt"> & { lastVisitedAt: number }>;
+  };
+  createdAt: number;
+  updatedAt: number;
+}
+
 /** Public profile payload returned by GET /api/profile/[displayName]. */
 export interface PublicUserProfile {
   uid: string;
