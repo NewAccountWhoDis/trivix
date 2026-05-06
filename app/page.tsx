@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Button } from "@/components/ui";
 
 export default function Home() {
@@ -16,11 +17,21 @@ export default function Home() {
         Trivia, dialed up. Build a team, host a night, and bring the noise.
       </p>
       <div className="mt-10 flex gap-3">
-        <Button size="lg">Get started</Button>
-        <Button size="lg" variant="secondary">
-          I&rsquo;m a host
-        </Button>
+        <Link href="/signup">
+          <Button size="lg">Get started</Button>
+        </Link>
+        <Link href="/signup?step=1&intent=host">
+          <Button size="lg" variant="secondary">
+            I&rsquo;m a host
+          </Button>
+        </Link>
       </div>
+      <p className="mt-6 text-text-faint text-sm">
+        Already have an account?{" "}
+        <Link href="/login" className="text-brand-red hover:underline">
+          Sign in
+        </Link>
+      </p>
     </main>
   );
 }
