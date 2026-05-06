@@ -35,3 +35,24 @@ export async function getSessionUid(): Promise<string | null> {
     return null;
   }
 }
+
+export interface VerifiedSession {
+  uid: string;
+  email: string | null;
+  emailVerified: boolean;
+}
+
+export async function verifySession(): Promise<VerifiedSession | null> {
+  const cookie = (await cookies()).get(COOKIE_NAME)?.value;
+  if (!cookie) return null;
+  try {
+    const decoded = await adminAuth.verifySessionCookie(cookie, true);
+    return {
+      uid: decoded.uid,
+      email: decoded.email ?? null,
+      emailVerified: Boolean(decoded.email_verified),
+    };
+  } catch {
+    return null;
+  }
+}
