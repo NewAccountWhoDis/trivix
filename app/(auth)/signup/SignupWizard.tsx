@@ -38,6 +38,7 @@ export function SignupWizard() {
   const params = useSearchParams();
   const rawStep = Number(params.get("step") ?? "1");
   const step = ([1, 2, 3, 4].includes(rawStep) ? rawStep : 1) as Step;
+  const intent = params.get("intent");
   const { user: firebaseUser } = useAuth();
 
   const [step2, setStep2] = useState<Step2Data>({
@@ -45,7 +46,10 @@ export function SignupWizard() {
     lastName: "",
     displayName: "",
   });
-  const [step3, setStep3] = useState<Step3Data>({ role: "player", reason: "" });
+  const [step3, setStep3] = useState<Step3Data>({
+    role: intent === "host" ? "host" : "player",
+    reason: "",
+  });
 
   const goTo = useCallback(
     (n: Step) => {
