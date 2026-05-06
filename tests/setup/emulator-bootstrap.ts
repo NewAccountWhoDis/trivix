@@ -1,5 +1,6 @@
 // tests/setup/emulator-bootstrap.ts
-// Sets emulator env so Admin SDK / @firebase/rules-unit-testing connect locally.
+// Sets emulator env so Admin SDK / @firebase/rules-unit-testing / Firebase
+// Web SDK all connect locally during tests.
 process.env.FIRESTORE_EMULATOR_HOST =
   process.env.FIRESTORE_EMULATOR_HOST ?? "127.0.0.1:8080";
 process.env.FIREBASE_AUTH_EMULATOR_HOST =
@@ -7,3 +8,10 @@ process.env.FIREBASE_AUTH_EMULATOR_HOST =
 process.env.GCLOUD_PROJECT = "trivix-dev";
 process.env.FIREBASE_PROJECT_ID = "trivix-dev";
 process.env.USE_FIREBASE_EMULATORS = "true";
+
+// Client SDK (consumed by lib/firebase/client.ts on import).
+process.env.NEXT_PUBLIC_USE_EMULATORS = "true";
+process.env.NEXT_PUBLIC_FIREBASE_API_KEY ??= "fake-api-key";
+process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN ??= "trivix-dev.firebaseapp.com";
+process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID ??= "trivix-dev";
+process.env.NEXT_PUBLIC_FIREBASE_APP_ID ??= "1:0:web:0";

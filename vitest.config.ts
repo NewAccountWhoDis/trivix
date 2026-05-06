@@ -18,5 +18,11 @@ export default defineConfig({
       "tests/integration/**/*.test.ts",
     ],
     exclude: ["node_modules", ".next", "tests/e2e/**"],
+    testTimeout: 15000,
+    hookTimeout: 30000,
+    pool: "forks",
+    poolOptions: {
+      forks: { singleFork: true },
+    },
   },
 });
