@@ -1,7 +1,34 @@
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Default deny. Per-collection rules land in Plan 2 / Plan 3 / Plan 4.
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    // users/{uid} — server-written via Admin SDK. Owner can read own doc.
+    match /users/{uid} {
+      allow read: if isOwner(uid);
+      allow write: if false;
+    }
+
+    // displayNames/{key} — uniqueness sentinel; entirely server-side.
+    match /displayNames/{key} {
+      allow read, write: if false;
+    }
+
+    // hostApplications/{uid} — server-written. Owner can read own status.
+    match /hostApplications/{uid} {
+      allow read: if isOwner(uid);
+      allow write: if false;
+    }
+
+    // Default deny (teams, joinRequests, etc. land in Plan 3+).
     match /{document=**} {
       allow read, write: if false;
     }
