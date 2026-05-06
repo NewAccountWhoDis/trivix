@@ -6,7 +6,10 @@ import { resolve } from "node:path";
 export default defineConfig({
   plugins: [react()],
   resolve: {
-    alias: { "@": resolve(__dirname, ".") },
+    alias: {
+      "@": resolve(__dirname, "."),
+      "server-only": resolve(__dirname, "tests/setup/server-only-stub.ts"),
+    },
   },
   test: {
     globals: false,
