@@ -1,0 +1,103 @@
+/**
+ * Firestore document shapes — single source of truth for client and server.
+ * Spec: docs/superpowers/specs/2026-05-04-trivix-foundation-design.md §4.
+ */
+
+export interface FirestoreTimestamp {
+  seconds: number;
+  nanoseconds: number;
+  toDate(): Date;
+  toMillis(): number;
+}
+
+export type Role = "player" | "host";
+export type HostStatus = "none" | "pending" | "approved" | "denied";
+export type HostApplicationStatus = "pending" | "approved" | "denied";
+
+export interface VenueSummary {
+  venueId: string;
+  venueName: string;
+  gamesAttended: number;
+  lastVisitedAt: FirestoreTimestamp;
+}
+
+export interface UserStats {
+  gamesPlayed: number;
+  gamesWon: number;
+  totalCorrectAnswers: number;
+  totalQuestionsAnswered: number;
+  highestScore: number;
+  currentWinStreak: number;
+  longestWinStreak: number;
+  lastPlayedAt: FirestoreTimestamp | null;
+  venues: VenueSummary[];
+  favoriteVenueId: string | null;
+  favoriteTeammateUid: string | null;
+}
+
+export interface UserDoc {
+  uid: string;
+  email: string;
+  emailVerified: boolean;
+  firstName: string;
+  lastName: string;
+  displayName: string;
+  displayNameKey: string;
+  avatarSeed: string;
+  role: Role;
+  hostStatus: HostStatus;
+  isAdmin: boolean;
+  teamId: string | null;
+  teamHistory: string[];
+  stats: UserStats;
+  createdAt: FirestoreTimestamp;
+  updatedAt: FirestoreTimestamp;
+}
+
+/** Public profile payload returned by GET /api/profile/[displayName]. */
+export interface PublicUserProfile {
+  uid: string;
+  displayName: string;
+  avatarSeed: string;
+  createdAt: FirestoreTimestamp;
+  role: Role;
+  hostStatus: HostStatus;
+  teamId: string | null;
+  stats: Pick<
+    UserStats,
+    "gamesPlayed" | "gamesWon" | "longestWinStreak" | "highestScore"
+  >;
+}
+
+/** displayNames/{displayNameKey} — uniqueness sentinel. */
+export interface DisplayNameDoc {
+  uid: string;
+}
+
+export interface HostApplicationDoc {
+  uid: string;
+  email: string;
+  displayName: string;
+  reason: string | null;
+  status: HostApplicationStatus;
+  appliedAt: FirestoreTimestamp;
+  decidedAt: FirestoreTimestamp | null;
+  decidedBy: string | null;
+}
+
+/** Defaults for a freshly-created user (server-side, after signup wizard). */
+export const DEFAULT_USER_STATS: Omit<UserStats, "lastPlayedAt"> & {
+  lastPlayedAt: null;
+} = {
+  gamesPlayed: 0,
+  gamesWon: 0,
+  totalCorrectAnswers: 0,
+  totalQuestionsAnswered: 0,
+  highestScore: 0,
+  currentWinStreak: 0,
+  longestWinStreak: 0,
+  lastPlayedAt: null,
+  venues: [],
+  favoriteVenueId: null,
+  favoriteTeammateUid: null,
+};
