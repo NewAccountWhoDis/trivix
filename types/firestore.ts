@@ -74,7 +74,9 @@ export interface SerializedUser {
   teamHistory: string[];
   stats: Omit<UserStats, "lastPlayedAt" | "venues"> & {
     lastPlayedAt: number | null;
-    venues: Array<Omit<VenueSummary, "lastVisitedAt"> & { lastVisitedAt: number }>;
+    venues: Array<
+      Omit<VenueSummary, "lastVisitedAt"> & { lastVisitedAt: number }
+    >;
   };
   createdAt: number;
   updatedAt: number;

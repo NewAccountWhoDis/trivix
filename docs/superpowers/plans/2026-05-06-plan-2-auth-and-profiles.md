@@ -32,7 +32,7 @@ Numbering picks up from Plan 1 (which ended at Task 34) for continuity.
 - **35. Zod schemas** — `lib/validation/schemas.ts` for signup, profile edit, display-name check. Shared client+server.
 - **36. Firestore types** — populate `types/firestore.ts` with `User`, `DisplayName`, `HostApplication` doc shapes.
 - **37. Firestore rules v2** — replace default-deny with: read-own-user, read-own-host-app, deny everything else (server-only writes). Add unit tests against rules emulator.
-- **38. Composite indexes** — `users` by `displayNameKey`, `users` by `hostStatus`, `hostApplications` by `status` in `firestore.indexes.json`.
+- **38. ~~Composite indexes~~** — verified no-op. Spec §4 indexes are all single-field; Firestore auto-creates them. First composite index lands in Plan 3.
 
 ### Auth plumbing
 

@@ -92,17 +92,26 @@ describe("signupStep2Schema", () => {
         lastName: "Black",
         displayName: "joe_black",
       }),
-    ).toEqual({ firstName: "Joe", lastName: "Black", displayName: "joe_black" });
+    ).toEqual({
+      firstName: "Joe",
+      lastName: "Black",
+      displayName: "joe_black",
+    });
   });
 });
 
 describe("signupStep3Schema", () => {
   it("accepts player without reason", () => {
-    expect(signupStep3Schema.parse({ role: "player" })).toEqual({ role: "player" });
+    expect(signupStep3Schema.parse({ role: "player" })).toEqual({
+      role: "player",
+    });
   });
   it("accepts host with reason", () => {
     expect(
-      signupStep3Schema.parse({ role: "host", reason: "I host weekly at Joe's Pub" }),
+      signupStep3Schema.parse({
+        role: "host",
+        reason: "I host weekly at Joe's Pub",
+      }),
     ).toEqual({ role: "host", reason: "I host weekly at Joe's Pub" });
   });
   it("rejects unknown role", () => {
@@ -156,7 +165,9 @@ describe("loginSchema", () => {
     });
   });
   it("rejects empty password", () => {
-    expect(() => loginSchema.parse({ email: "joe@x.com", password: "" })).toThrow();
+    expect(() =>
+      loginSchema.parse({ email: "joe@x.com", password: "" }),
+    ).toThrow();
   });
 });
 

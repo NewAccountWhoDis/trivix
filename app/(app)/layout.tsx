@@ -5,11 +5,7 @@ import { verifySession } from "@/lib/firebase/session";
 import { serializeUser } from "@/lib/user/serialize";
 import { UserProvider } from "@/components/auth/UserProvider";
 
-export default async function AppLayout({
-  children,
-}: {
-  children: ReactNode;
-}) {
+export default async function AppLayout({ children }: { children: ReactNode }) {
   const session = await verifySession();
   if (!session) {
     redirect("/login");

@@ -13,7 +13,10 @@ function tsToMsOrNull(value: unknown): number | null {
   return tsToMs(value);
 }
 
-export function serializeUser(uid: string, raw: Record<string, unknown>): SerializedUser {
+export function serializeUser(
+  uid: string,
+  raw: Record<string, unknown>,
+): SerializedUser {
   const stats = (raw.stats as Record<string, unknown>) ?? {};
   const venues =
     (stats.venues as Array<Record<string, unknown>> | undefined) ?? [];
@@ -40,7 +43,8 @@ export function serializeUser(uid: string, raw: Record<string, unknown>): Serial
       currentWinStreak: Number(stats.currentWinStreak ?? 0),
       longestWinStreak: Number(stats.longestWinStreak ?? 0),
       lastPlayedAt: tsToMsOrNull(stats.lastPlayedAt),
-      favoriteVenueId: (stats.favoriteVenueId as string | null | undefined) ?? null,
+      favoriteVenueId:
+        (stats.favoriteVenueId as string | null | undefined) ?? null,
       favoriteTeammateUid:
         (stats.favoriteTeammateUid as string | null | undefined) ?? null,
       venues: venues.map((v) => ({

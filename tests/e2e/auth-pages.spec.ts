@@ -6,9 +6,7 @@ test.describe("auth pages render", () => {
     await expect(page.getByRole("heading", { name: /sign in/i })).toBeVisible();
     await expect(page.getByLabel("Email")).toBeVisible();
     await expect(page.getByLabel("Password")).toBeVisible();
-    await expect(
-      page.getByRole("button", { name: /sign in/i }),
-    ).toBeVisible();
+    await expect(page.getByRole("button", { name: /sign in/i })).toBeVisible();
     await expect(
       page.getByRole("button", { name: /continue with google/i }),
     ).toBeVisible();
@@ -66,7 +64,9 @@ test.describe("auth pages render", () => {
     ).toBeVisible();
   });
 
-  test("/reset-password without oobCode shows expired link", async ({ page }) => {
+  test("/reset-password without oobCode shows expired link", async ({
+    page,
+  }) => {
     await page.goto("/reset-password");
     await expect(
       page.getByRole("heading", { name: /link expired/i }),

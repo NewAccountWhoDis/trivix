@@ -18,14 +18,12 @@ import {
 import { linkPendingGoogleCredential } from "@/lib/auth/provider-linking";
 import { loginSchema } from "@/lib/validation/schemas";
 
-type PendingLink =
-  | {
-      kind: "link-required";
-      email: string;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      pendingCred: any;
-    }
-  | null;
+type PendingLink = {
+  kind: "link-required";
+  email: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  pendingCred: any;
+} | null;
 
 export function LoginForm() {
   const router = useRouter();

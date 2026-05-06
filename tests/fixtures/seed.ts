@@ -8,7 +8,11 @@
 
 import { adminAuth, adminDb } from "@/lib/firebase/admin";
 import { FieldValue } from "firebase-admin/firestore";
-import { DEFAULT_USER_STATS, type Role, type HostStatus } from "@/types/firestore";
+import {
+  DEFAULT_USER_STATS,
+  type Role,
+  type HostStatus,
+} from "@/types/firestore";
 
 interface SeedSpec {
   uid: string;
@@ -169,7 +173,11 @@ export async function seedEmulator(): Promise<void> {
 export async function clearSeed(): Promise<void> {
   for (const u of SEED_USERS) {
     await adminAuth.deleteUser(u.uid).catch(() => {});
-    await adminDb.collection("users").doc(u.uid).delete().catch(() => {});
+    await adminDb
+      .collection("users")
+      .doc(u.uid)
+      .delete()
+      .catch(() => {});
     await adminDb
       .collection("displayNames")
       .doc(u.displayName.toLowerCase())

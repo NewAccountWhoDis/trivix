@@ -1,28 +1,17 @@
 import "@/tests/setup/emulator-bootstrap";
-import {
-  afterEach,
-  beforeAll,
-  beforeEach,
-  describe,
-  expect,
-  it,
-} from "vitest";
+import { afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { GoogleAuthProvider } from "firebase/auth";
 import { firebaseAuth } from "@/lib/firebase/client";
-import {
-  signOutClient,
-  signUpWithEmail,
-} from "@/lib/auth/client";
+import { signOutClient, signUpWithEmail } from "@/lib/auth/client";
 import { linkPendingGoogleCredential } from "@/lib/auth/provider-linking";
 
 const EMU = "http://127.0.0.1:9099";
 const PROJECT = "trivix-dev";
 
 async function clearAuthEmulator() {
-  await fetch(
-    `${EMU}/emulator/v1/projects/${PROJECT}/accounts`,
-    { method: "DELETE" },
-  );
+  await fetch(`${EMU}/emulator/v1/projects/${PROJECT}/accounts`, {
+    method: "DELETE",
+  });
 }
 
 function b64url(obj: object): string {
@@ -34,7 +23,10 @@ function b64url(obj: object): string {
 }
 
 /** Fake unsigned Google ID token accepted by the Firebase Auth emulator. */
-function fakeGoogleIdToken(email: string, sub = `google-${Date.now()}`): string {
+function fakeGoogleIdToken(
+  email: string,
+  sub = `google-${Date.now()}`,
+): string {
   const header = b64url({ alg: "none", typ: "JWT" });
   const payload = b64url({
     sub,

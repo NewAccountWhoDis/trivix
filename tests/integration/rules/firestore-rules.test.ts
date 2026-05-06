@@ -17,10 +17,7 @@ beforeAll(async () => {
   env = await initializeTestEnvironment({
     projectId: "trivix-rules-test",
     firestore: {
-      rules: readFileSync(
-        resolve(process.cwd(), "firestore.rules"),
-        "utf-8",
-      ),
+      rules: readFileSync(resolve(process.cwd(), "firestore.rules"), "utf-8"),
       host: "127.0.0.1",
       port: 8080,
     },

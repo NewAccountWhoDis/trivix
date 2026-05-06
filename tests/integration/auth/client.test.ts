@@ -1,12 +1,5 @@
 import "@/tests/setup/emulator-bootstrap";
-import {
-  afterAll,
-  afterEach,
-  beforeAll,
-  describe,
-  expect,
-  it,
-} from "vitest";
+import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { firebaseAuth } from "@/lib/firebase/client";
 import {
   getIdToken,
@@ -20,10 +13,9 @@ const EMU = "http://127.0.0.1:9099";
 const PROJECT = "trivix-dev";
 
 async function clearAuthEmulator() {
-  await fetch(
-    `${EMU}/emulator/v1/projects/${PROJECT}/accounts`,
-    { method: "DELETE" },
-  );
+  await fetch(`${EMU}/emulator/v1/projects/${PROJECT}/accounts`, {
+    method: "DELETE",
+  });
 }
 
 const unique = () => `t${Date.now()}-${Math.floor(Math.random() * 1e6)}`;

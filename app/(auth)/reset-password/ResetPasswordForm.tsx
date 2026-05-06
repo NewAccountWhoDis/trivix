@@ -3,10 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import {
-  confirmPasswordReset,
-  verifyPasswordResetCode,
-} from "firebase/auth";
+import { confirmPasswordReset, verifyPasswordResetCode } from "firebase/auth";
 import { Button } from "@/components/ui";
 import { Input } from "@/components/ui/Input";
 import { firebaseAuth } from "@/lib/firebase/client";
@@ -35,9 +32,7 @@ export function ResetPasswordForm() {
     }
     verifyPasswordResetCode(firebaseAuth, oobCode)
       .then((email) => setVerifiedEmail(email))
-      .catch(() =>
-        setLinkError("This reset link is invalid or has expired."),
-      )
+      .catch(() => setLinkError("This reset link is invalid or has expired."))
       .finally(() => setVerifying(false));
   }, [oobCode]);
 
@@ -68,7 +63,9 @@ export function ResetPasswordForm() {
   if (verifying) {
     return (
       <div>
-        <h1 className="font-display text-4xl tracking-[3px] mb-2">RESET PASSWORD</h1>
+        <h1 className="font-display text-4xl tracking-[3px] mb-2">
+          RESET PASSWORD
+        </h1>
         <p className="text-text-muted">Checking your link…</p>
       </div>
     );
@@ -77,7 +74,9 @@ export function ResetPasswordForm() {
   if (linkError) {
     return (
       <div>
-        <h1 className="font-display text-4xl tracking-[3px] mb-2">LINK EXPIRED</h1>
+        <h1 className="font-display text-4xl tracking-[3px] mb-2">
+          LINK EXPIRED
+        </h1>
         <p className="text-text-muted mb-6">{linkError}</p>
         <Link
           href="/forgot-password"
@@ -105,7 +104,9 @@ export function ResetPasswordForm() {
 
   return (
     <div>
-      <h1 className="font-display text-4xl tracking-[3px] mb-2">NEW PASSWORD</h1>
+      <h1 className="font-display text-4xl tracking-[3px] mb-2">
+        NEW PASSWORD
+      </h1>
       <p className="text-text-muted mb-8">
         Resetting password for <strong>{verifiedEmail}</strong>.
       </p>

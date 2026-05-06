@@ -1,12 +1,6 @@
 // @vitest-environment node
 import "@/tests/setup/emulator-bootstrap";
-import {
-  afterEach,
-  beforeEach,
-  describe,
-  expect,
-  it,
-} from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { POST } from "@/app/api/auth/complete-signup/route";
 import { adminDb } from "@/lib/firebase/admin";
 

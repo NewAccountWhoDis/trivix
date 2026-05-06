@@ -29,7 +29,10 @@ describe("POST /api/profile/check-display-name", () => {
   it("returns available=true for an unused name", async () => {
     const res = await POST(postBody({ displayName: "fresh_name" }));
     expect(res.status).toBe(200);
-    const body = (await res.json()) as { available: boolean; normalized: string };
+    const body = (await res.json()) as {
+      available: boolean;
+      normalized: string;
+    };
     expect(body).toEqual({ available: true, normalized: "fresh_name" });
   });
 
@@ -41,7 +44,10 @@ describe("POST /api/profile/check-display-name", () => {
 
     const res = await POST(postBody({ displayName: "Taken_Name" }));
     expect(res.status).toBe(200);
-    const body = (await res.json()) as { available: boolean; normalized: string };
+    const body = (await res.json()) as {
+      available: boolean;
+      normalized: string;
+    };
     expect(body).toEqual({ available: false, normalized: "taken_name" });
   });
 

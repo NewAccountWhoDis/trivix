@@ -181,7 +181,9 @@ function Step1Account({
 
   return (
     <div>
-      <h1 className="font-display text-4xl tracking-[3px] mb-2">CREATE ACCOUNT</h1>
+      <h1 className="font-display text-4xl tracking-[3px] mb-2">
+        CREATE ACCOUNT
+      </h1>
       <p className="text-text-muted mb-8">
         Have one?{" "}
         <Link href="/login" className="text-brand-red hover:underline">
@@ -325,12 +327,13 @@ function Step2Identity({
           ? "Username isn't available"
           : "3–20 chars; letters, numbers, underscores";
 
-  const dnError =
-    available === false ? "username isn't available" : undefined;
+  const dnError = available === false ? "username isn't available" : undefined;
 
   return (
     <div>
-      <h1 className="font-display text-4xl tracking-[3px] mb-2">YOUR IDENTITY</h1>
+      <h1 className="font-display text-4xl tracking-[3px] mb-2">
+        YOUR IDENTITY
+      </h1>
       <p className="text-text-muted mb-8">How should we know you?</p>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
@@ -351,9 +354,7 @@ function Step2Identity({
         <Input
           label="Username"
           value={value.displayName}
-          onChange={(e) =>
-            onChange({ ...value, displayName: e.target.value })
-          }
+          onChange={(e) => onChange({ ...value, displayName: e.target.value })}
           hint={dnHint}
           error={dnError}
           required
@@ -556,7 +557,9 @@ function Step4Verify() {
 
   return (
     <div>
-      <h1 className="font-display text-4xl tracking-[3px] mb-2">CHECK YOUR EMAIL</h1>
+      <h1 className="font-display text-4xl tracking-[3px] mb-2">
+        CHECK YOUR EMAIL
+      </h1>
       <p className="text-text-muted mb-6">
         We sent a verification link. Click it to unlock your dashboard.
       </p>

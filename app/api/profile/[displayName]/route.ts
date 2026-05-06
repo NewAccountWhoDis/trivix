@@ -24,7 +24,10 @@ export async function GET(
   const { displayName } = await ctx.params;
   const key = toDisplayNameKey(displayName);
   if (!key || key.length < 3) {
-    return NextResponse.json({ error: "Invalid display name" }, { status: 400 });
+    return NextResponse.json(
+      { error: "Invalid display name" },
+      { status: 400 },
+    );
   }
 
   const dnSnap = await adminDb.collection("displayNames").doc(key).get();

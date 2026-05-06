@@ -2,10 +2,7 @@ import { NextResponse } from "next/server";
 import { FieldValue } from "firebase-admin/firestore";
 import { adminDb } from "@/lib/firebase/admin";
 import { verifySession } from "@/lib/firebase/session";
-import {
-  profileEditSchema,
-  toDisplayNameKey,
-} from "@/lib/validation/schemas";
+import { profileEditSchema, toDisplayNameKey } from "@/lib/validation/schemas";
 
 export const runtime = "nodejs";
 

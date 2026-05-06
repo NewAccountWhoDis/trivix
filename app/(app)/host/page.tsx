@@ -16,7 +16,9 @@ export default async function HostPage() {
   if (role !== "host" || hostStatus !== "approved") {
     return (
       <main className="min-h-screen px-6 py-10 md:px-12 md:py-14 max-w-2xl mx-auto">
-        <h1 className="font-display text-4xl tracking-[3px] mb-4">HOST TOOLS</h1>
+        <h1 className="font-display text-4xl tracking-[3px] mb-4">
+          HOST TOOLS
+        </h1>
         <Card>
           <div className="p-6">
             <p className="text-text-muted">
@@ -25,7 +27,10 @@ export default async function HostPage() {
                 : "Host tools are only available to approved hosts."}
             </p>
             <p className="mt-4">
-              <Link href="/dashboard" className="text-brand-red hover:underline">
+              <Link
+                href="/dashboard"
+                className="text-brand-red hover:underline"
+              >
                 Back to dashboard
               </Link>
             </p>

@@ -1,13 +1,6 @@
 // @vitest-environment node
 import "@/tests/setup/emulator-bootstrap";
-import {
-  afterEach,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  vi,
-} from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { GET } from "@/app/api/profile/[displayName]/route";
 import { PATCH } from "@/app/api/profile/route";
 import { adminDb } from "@/lib/firebase/admin";
@@ -24,27 +17,34 @@ async function clearFirestore() {
   );
 }
 
-async function seedUser(uid: string, displayName: string, extra: Record<string, unknown> = {}) {
+async function seedUser(
+  uid: string,
+  displayName: string,
+  extra: Record<string, unknown> = {},
+) {
   const key = displayName.toLowerCase();
-  await adminDb.collection("users").doc(uid).set({
-    uid,
-    email: `${uid}@x.test`,
-    emailVerified: true,
-    firstName: "First",
-    lastName: "Last",
-    displayName,
-    displayNameKey: key,
-    avatarSeed: uid,
-    role: "player",
-    hostStatus: "none",
-    isAdmin: false,
-    teamId: null,
-    teamHistory: [],
-    stats: DEFAULT_USER_STATS,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    ...extra,
-  });
+  await adminDb
+    .collection("users")
+    .doc(uid)
+    .set({
+      uid,
+      email: `${uid}@x.test`,
+      emailVerified: true,
+      firstName: "First",
+      lastName: "Last",
+      displayName,
+      displayNameKey: key,
+      avatarSeed: uid,
+      role: "player",
+      hostStatus: "none",
+      isAdmin: false,
+      teamId: null,
+      teamHistory: [],
+      stats: DEFAULT_USER_STATS,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      ...extra,
+    });
   await adminDb.collection("displayNames").doc(key).set({ uid });
 }
 
@@ -156,7 +156,9 @@ describe("PATCH /api/profile", () => {
 describe("GET /api/profile/[displayName]", () => {
   it("returns 401 without a session", async () => {
     vi.spyOn(session, "verifySession").mockResolvedValueOnce(null);
-    const res = await GET(getReq(), { params: Promise.resolve({ displayName: "alice" }) });
+    const res = await GET(getReq(), {
+      params: Promise.resolve({ displayName: "alice" }),
+    });
     expect(res.status).toBe(401);
   });
 

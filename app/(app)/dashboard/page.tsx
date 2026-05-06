@@ -54,7 +54,10 @@ export default function DashboardPage() {
 
       <div className="grid sm:grid-cols-2 gap-4">
         <Link href="/profile" className="block">
-          <Card variant="elevated" className="p-5 hover:border-brand-red transition cursor-pointer">
+          <Card
+            variant="elevated"
+            className="p-5 hover:border-brand-red transition cursor-pointer"
+          >
             <div className="text-xs uppercase tracking-[3px] text-text-faint mb-2">
               Profile
             </div>

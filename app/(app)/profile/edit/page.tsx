@@ -108,7 +108,9 @@ export default function ProfileEditPage() {
           ← Back to profile
         </Link>
       </div>
-      <h1 className="font-display text-4xl tracking-[3px] mb-8">EDIT PROFILE</h1>
+      <h1 className="font-display text-4xl tracking-[3px] mb-8">
+        EDIT PROFILE
+      </h1>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <div className="grid grid-cols-2 gap-4">
@@ -151,7 +153,12 @@ export default function ProfileEditPage() {
               Cancel
             </Button>
           </Link>
-          <Button type="submit" size="lg" className="flex-1" disabled={submitting}>
+          <Button
+            type="submit"
+            size="lg"
+            className="flex-1"
+            disabled={submitting}
+          >
             {submitting ? "Saving…" : "Save changes"}
           </Button>
         </div>
