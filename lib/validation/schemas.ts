@@ -137,6 +137,50 @@ export const createVenueSchema = z.object({
 
 export const updateVenueSchema = createVenueSchema;
 
+// ── Question sets ───────────────────────────────────────────────────────────
+export const questionSchema = z.object({
+  prompt: z
+    .string()
+    .trim()
+    .min(5, "At least 5 characters")
+    .max(500, "500 characters max"),
+  choices: z
+    .array(
+      z
+        .string()
+        .trim()
+        .min(1, "Required")
+        .max(200, "200 characters max"),
+    )
+    .length(4, "Exactly 4 choices"),
+  correctIndex: z.number().int().min(0).max(3),
+  points: z.number().int().min(1).max(10),
+});
+
+export const questionSetNameSchema = z
+  .string()
+  .trim()
+  .min(2, "At least 2 characters")
+  .max(60, "60 characters max");
+
+export const questionSetDescriptionSchema = z
+  .string()
+  .trim()
+  .max(300, "300 characters max")
+  .optional()
+  .nullable();
+
+export const createQuestionSetSchema = z.object({
+  name: questionSetNameSchema,
+  description: questionSetDescriptionSchema,
+  questions: z
+    .array(questionSchema)
+    .min(1, "At least 1 question")
+    .max(50, "50 questions max"),
+});
+
+export const updateQuestionSetSchema = createQuestionSetSchema;
+
 export type SignupStep1EmailInput = z.infer<typeof signupStep1EmailSchema>;
 export type SignupStep2Input = z.infer<typeof signupStep2Schema>;
 export type SignupStep3Input = z.infer<typeof signupStep3Schema>;
@@ -156,3 +200,6 @@ export type UserActionInput = z.infer<typeof userActionSchema>;
 export type VenueAddressInput = z.infer<typeof venueAddressSchema>;
 export type CreateVenueInput = z.infer<typeof createVenueSchema>;
 export type UpdateVenueInput = z.infer<typeof updateVenueSchema>;
+export type QuestionInput = z.infer<typeof questionSchema>;
+export type CreateQuestionSetInput = z.infer<typeof createQuestionSetSchema>;
+export type UpdateQuestionSetInput = z.infer<typeof updateQuestionSetSchema>;

@@ -171,6 +171,34 @@ export interface SerializedVenue {
   updatedAt: number;
 }
 
+export interface Question {
+  prompt: string;
+  choices: [string, string, string, string];
+  correctIndex: 0 | 1 | 2 | 3;
+  points: number;
+}
+
+export interface QuestionSetDoc {
+  setId: string;
+  ownerUid: string;
+  name: string;
+  description: string | null;
+  questions: Question[];
+  createdAt: FirestoreTimestamp;
+  updatedAt: FirestoreTimestamp;
+}
+
+/** Plain-JSON form of QuestionSetDoc safe to pass server→client. */
+export interface SerializedQuestionSet {
+  setId: string;
+  ownerUid: string;
+  name: string;
+  description: string | null;
+  questions: Question[];
+  createdAt: number;
+  updatedAt: number;
+}
+
 export interface HostApplicationDoc {
   uid: string;
   email: string;

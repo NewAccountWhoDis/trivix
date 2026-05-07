@@ -82,14 +82,14 @@ Numbering picks up from Plan 5 (which ended at Task 129).
 
 ---
 
-## Decisions to lock in before execution
+## Decisions (resolved 2026-05-07)
 
-- **D1.** Question type: 4-option multiple choice only? *Recommend: yes. Open-ended/numeric land in a later slice.*
-- **D2.** Storage: array on the set doc (single Firestore read on game start) vs subcollection (more flexible)? *Recommend: array. With a 50-question cap and 1MB Firestore doc limit, plenty of headroom. Single read keeps Plan 7 game start fast.*
-- **D3.** Limits: name 60 chars, description 300 chars, prompt 5–500 chars, choice 1–200 chars, points 1–10, 1–50 questions per set. *Recommend: yes.*
-- **D4.** Categories / tags? *Recommend: skip for slice 1. Add later if hosts ask.*
-- **D5.** Reordering UX: up/down buttons vs drag-and-drop? *Recommend: up/down. Simple, accessible by default. DnD is polish.*
-- **D6.** Admin can list all sets but cannot edit. *Recommend: yes — admins moderate, don't author.*
+- **D1.** 4-option multiple choice only.
+- **D2.** Questions stored as an array on the set doc (single read at game start).
+- **D3.** Limits: name 60, description 300, prompt 5–500, choice 1–200, points 1–10, 1–50 questions per set.
+- **D4.** No categories or tags.
+- **D5.** Up/down arrow reordering (no drag-and-drop).
+- **D6.** Admins list + delete; cannot edit.
 
 ---
 
