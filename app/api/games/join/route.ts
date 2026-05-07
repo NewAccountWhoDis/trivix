@@ -46,10 +46,7 @@ export async function POST(request: Request): Promise<NextResponse> {
   const status = data.status as string;
 
   if (status === "ended") {
-    return NextResponse.json(
-      { error: "Session has ended" },
-      { status: 409 },
-    );
+    return NextResponse.json({ error: "Session has ended" }, { status: 409 });
   }
 
   // Idempotent: if already in players map, just return ok.

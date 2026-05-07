@@ -15,9 +15,7 @@ describe("createGameSessionSchema", () => {
     ).toEqual({ venueId: "v1", questionSetId: "qs1" });
   });
   it("rejects missing fields", () => {
-    expect(() =>
-      createGameSessionSchema.parse({ venueId: "v1" }),
-    ).toThrow();
+    expect(() => createGameSessionSchema.parse({ venueId: "v1" })).toThrow();
     expect(() => createGameSessionSchema.parse({})).toThrow();
   });
   it("rejects empty strings", () => {

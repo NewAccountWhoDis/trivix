@@ -23,5 +23,6 @@ export const config = {
     "/u/:path*",
     "/host/:path*",
     "/admin/:path*",
+    "/play/:path*",
   ],
 };

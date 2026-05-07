@@ -27,10 +27,7 @@ export async function POST(
     return NextResponse.json({ ok: true, alreadyEnded: true });
   }
   if (snap.data()?.status !== "active") {
-    return NextResponse.json(
-      { error: "Session not active" },
-      { status: 409 },
-    );
+    return NextResponse.json({ error: "Session not active" }, { status: 409 });
   }
 
   await finalizeGameSession(id);

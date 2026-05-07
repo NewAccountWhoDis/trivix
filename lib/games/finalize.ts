@@ -92,8 +92,7 @@ export async function finalizeGameSession(sessionId: string): Promise<void> {
 
     await userRef.update({
       "stats.gamesPlayed": Number(stats.gamesPlayed ?? 0) + 1,
-      "stats.gamesWon":
-        Number(stats.gamesWon ?? 0) + (isWinner ? 1 : 0),
+      "stats.gamesWon": Number(stats.gamesWon ?? 0) + (isWinner ? 1 : 0),
       "stats.totalCorrectAnswers":
         Number(stats.totalCorrectAnswers ?? 0) + sum.correctCount,
       "stats.totalQuestionsAnswered":

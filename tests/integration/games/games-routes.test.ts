@@ -1,13 +1,6 @@
 // @vitest-environment node
 import "@/tests/setup/emulator-bootstrap";
-import {
-  afterEach,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  vi,
-} from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { POST as createGame } from "@/app/api/games/route";
 import { POST as joinGame } from "@/app/api/games/join/route";
 import {
@@ -504,7 +497,11 @@ describe("POST /api/games/[id]/end (force-end + stats)", () => {
     const { sessionId, sessionCode } = await setupHostWithGame();
     await seedUser("bob");
     await seedUser("carol", {
-      stats: { ...DEFAULT_USER_STATS, currentWinStreak: 5, longestWinStreak: 5 },
+      stats: {
+        ...DEFAULT_USER_STATS,
+        currentWinStreak: 5,
+        longestWinStreak: 5,
+      },
     });
     asUser("bob");
     await joinGame(jsonReq("POST", { sessionCode }));

@@ -66,8 +66,7 @@ export async function POST(
         throw new Error("ALREADY_ANSWERED");
       }
 
-      const questions =
-        (data.questions as QuestionLike[] | undefined) ?? [];
+      const questions = (data.questions as QuestionLike[] | undefined) ?? [];
       const q = questions[parsed.data.questionIndex];
       if (!q) throw new Error("NO_SUCH_QUESTION");
 

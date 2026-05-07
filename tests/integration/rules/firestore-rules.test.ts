@@ -438,11 +438,7 @@ describe("firestore.rules — gameSessions/{sessionId}", () => {
     await seedSession({ hostUid: "alice", playerUids: [] });
     const db = env.authenticatedContext("alice").firestore();
     await assertFails(
-      setDoc(
-        doc(db, "gameSessions/g1"),
-        { status: "active" },
-        { merge: true },
-      ),
+      setDoc(doc(db, "gameSessions/g1"), { status: "active" }, { merge: true }),
     );
   });
 });

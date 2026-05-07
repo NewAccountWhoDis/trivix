@@ -87,6 +87,23 @@ export default function DashboardPage() {
           </Card>
         </Link>
 
+        <Link href="/play" className="block">
+          <Card
+            variant="elevated"
+            className="p-5 hover:border-brand-red transition cursor-pointer"
+          >
+            <div className="text-xs uppercase tracking-[3px] text-text-faint mb-2">
+              Play
+            </div>
+            <div className="font-display text-2xl tracking-[2px]">
+              Join a game
+            </div>
+            <p className="text-sm text-text-muted mt-2">
+              Got a code from your host? Hop in.
+            </p>
+          </Card>
+        </Link>
+
         {user.role === "host" && user.hostStatus === "approved" && (
           <Link href="/host" className="block sm:col-span-2">
             <Card variant="neon" className="p-5 cursor-pointer">

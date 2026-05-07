@@ -25,14 +25,12 @@ export async function POST(
     return NextResponse.json({ error: "Host only" }, { status: 403 });
   }
   if (data.status !== "active") {
-    return NextResponse.json(
-      { error: "Session not active" },
-      { status: 409 },
-    );
+    return NextResponse.json({ error: "Session not active" }, { status: 409 });
   }
 
   const currentIndex = Number(data.currentQuestionIndex ?? 0);
-  const totalQuestions = ((data.questions as unknown[] | undefined) ?? []).length;
+  const totalQuestions = ((data.questions as unknown[] | undefined) ?? [])
+    .length;
   const nextIndex = currentIndex + 1;
 
   if (nextIndex >= totalQuestions) {
