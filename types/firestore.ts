@@ -102,6 +102,49 @@ export interface DisplayNameDoc {
   uid: string;
 }
 
+export interface TeamDoc {
+  teamId: string;
+  name: string;
+  inviteCode: string;
+  captainUid: string | null;
+  memberUids: string[];
+  createdBy: string;
+  createdAt: FirestoreTimestamp;
+  updatedAt: FirestoreTimestamp;
+}
+
+export interface JoinRequestDoc {
+  uid: string;
+  displayName: string;
+  requestedAt: FirestoreTimestamp;
+}
+
+/** Plain-JSON form of TeamDoc for client consumption. */
+export interface SerializedTeam {
+  teamId: string;
+  name: string;
+  inviteCode: string;
+  captainUid: string | null;
+  memberUids: string[];
+  createdBy: string;
+  createdAt: number;
+  updatedAt: number;
+}
+
+/** Member summary returned by GET /api/teams/[id] (display-name + avatar only). */
+export interface TeamMemberSummary {
+  uid: string;
+  displayName: string;
+  avatarSeed: string;
+  isCaptain: boolean;
+}
+
+export interface SerializedJoinRequest {
+  uid: string;
+  displayName: string;
+  requestedAt: number;
+}
+
 export interface HostApplicationDoc {
   uid: string;
   email: string;
