@@ -95,9 +95,9 @@ export function ResetPasswordForm() {
         <p className="text-text-muted mb-6">
           Your password is reset. Sign in with your new password.
         </p>
-        <Link href="/login">
-          <Button size="lg">Go to sign in</Button>
-        </Link>
+        <Button size="lg" asChild>
+          <Link href="/login">Go to sign in</Link>
+        </Button>
       </div>
     );
   }

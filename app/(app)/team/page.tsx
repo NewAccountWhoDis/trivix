@@ -108,11 +108,9 @@ export default async function TeamPage() {
         </div>
         <div className="flex flex-col gap-2 items-end">
           {isCaptain && (
-            <Link href="/team/settings">
-              <Button variant="secondary" size="sm">
-                Settings
-              </Button>
-            </Link>
+            <Button variant="secondary" size="sm" asChild>
+              <Link href="/team/settings">Settings</Link>
+            </Button>
           )}
         </div>
       </header>

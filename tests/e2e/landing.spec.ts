@@ -7,10 +7,10 @@ test("landing page renders branded heading and CTAs", async ({ page }) => {
     page.getByRole("heading", { level: 1, name: /trivix/i }),
   ).toBeVisible();
   await expect(
-    page.getByRole("button", { name: /get started/i }),
+    page.getByRole("link", { name: /get started/i }),
   ).toBeVisible();
   await expect(
-    page.getByRole("button", { name: /i.?m a host/i }),
+    page.getByRole("link", { name: /i.?m a host/i }),
   ).toBeVisible();
 });
 

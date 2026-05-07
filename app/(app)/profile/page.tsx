@@ -33,9 +33,9 @@ export default function ProfilePage() {
             {user.isAdmin && <Badge tone="pro">admin</Badge>}
           </div>
         </div>
-        <Link href="/profile/edit">
-          <Button variant="secondary">Edit</Button>
-        </Link>
+        <Button variant="secondary" asChild>
+          <Link href="/profile/edit">Edit</Link>
+        </Button>
       </div>
 
       <Card className="mb-6">

@@ -148,11 +148,9 @@ export default function ProfileEditPage() {
           </div>
         )}
         <div className="flex gap-3">
-          <Link href="/profile">
-            <Button type="button" variant="ghost">
-              Cancel
-            </Button>
-          </Link>
+          <Button type="button" variant="ghost" asChild>
+            <Link href="/profile">Cancel</Link>
+          </Button>
           <Button
             type="submit"
             size="lg"

@@ -54,9 +54,9 @@ export default function TeamPendingPage() {
       </Card>
 
       <div className="mt-8 flex gap-3">
-        <Link href="/dashboard">
-          <Button variant="ghost">Back to dashboard</Button>
-        </Link>
+        <Button variant="ghost" asChild>
+          <Link href="/dashboard">Back to dashboard</Link>
+        </Button>
       </div>
     </main>
   );

@@ -17,18 +17,16 @@ export default function Home() {
         Trivia, dialed up. Build a team, host a night, and bring the noise.
       </p>
       <div className="mt-10 flex gap-3">
-        <Link href="/signup">
-          <Button size="lg">Get started</Button>
-        </Link>
-        <Link href="/signup?step=1&intent=host">
-          <Button size="lg" variant="secondary">
-            I&rsquo;m a host
-          </Button>
-        </Link>
+        <Button size="lg" asChild>
+          <Link href="/signup">Get started</Link>
+        </Button>
+        <Button size="lg" variant="secondary" asChild>
+          <Link href="/signup?step=1&intent=host">I&rsquo;m a host</Link>
+        </Button>
       </div>
-      <p className="mt-6 text-text-faint text-sm">
+      <p className="mt-6 text-text-muted text-sm">
         Already have an account?{" "}
-        <Link href="/login" className="text-brand-red hover:underline">
+        <Link href="/login" className="text-brand-red underline">
           Sign in
         </Link>
       </p>
