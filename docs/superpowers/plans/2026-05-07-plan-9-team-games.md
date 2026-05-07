@@ -6,7 +6,7 @@
 
 Close the loop the spec opens with "build a team, host a night." Right now Plan 3's teams sit unused during a game — players join sessions as individuals. This slice has players play **as their team**, with team-level scores live during the game, team winners on game-end, and `/team` showing recent games + a win-loss record.
 
-End state: when a teamed player joins a game, their `teamId` and team name are snapshotted into the session. Host + player views show a team scoreboard alongside the individual scoreboard. Game-end stats writeback updates per-user *and* per-team aggregates. The team page surfaces the team's last few games.
+End state: when a teamed player joins a game, their `teamId` and team name are snapshotted into the session. Host + player views show a team scoreboard alongside the individual scoreboard. Game-end stats writeback updates per-user _and_ per-team aggregates. The team page surfaces the team's last few games.
 
 ## Out of scope (deferred)
 

@@ -1,10 +1,7 @@
 import "server-only";
 import { FieldValue } from "firebase-admin/firestore";
 import { adminDb } from "@/lib/firebase/admin";
-import {
-  aggregateTeams,
-  uniqueTopRealTeam,
-} from "@/lib/games/team-aggregate";
+import { aggregateTeams, uniqueTopRealTeam } from "@/lib/games/team-aggregate";
 
 const TEAM_RECENT_GAMES_CAP = 25;
 
@@ -119,13 +116,14 @@ export async function finalizeGameSession(sessionId: string): Promise<void> {
   const teamAggregates = aggregateTeams(
     players as Record<
       string,
-      {
-        uid: string;
-        displayName: string;
-        score: number;
-        teamId: string | null;
-        teamNameSnapshot: string | null;
-      } | undefined
+      | {
+          uid: string;
+          displayName: string;
+          score: number;
+          teamId: string | null;
+          teamNameSnapshot: string | null;
+        }
+      | undefined
     >,
   );
   const realTeams = teamAggregates.filter((t) => t.teamId !== null);
@@ -140,8 +138,9 @@ export async function finalizeGameSession(sessionId: string): Promise<void> {
     const teamData = teamSnap.data() ?? {};
     const teamStats =
       (teamData.stats as Record<string, unknown> | undefined) ?? {};
-    const recent =
-      ((teamStats.recentGames as unknown[] | undefined) ?? []).slice();
+    const recent = (
+      (teamStats.recentGames as unknown[] | undefined) ?? []
+    ).slice();
 
     const summary = {
       sessionId,

@@ -158,6 +158,79 @@ export default async function TeamPage() {
         </ul>
       </Card>
 
+      {(() => {
+        const stats =
+          (team.stats as
+            | {
+                gamesPlayed?: number;
+                gamesWon?: number;
+                recentGames?: Array<{
+                  sessionId: string;
+                  venueNameSnapshot: string;
+                  finalRank: number;
+                  totalTeams: number;
+                  teamScore: number;
+                  playedAt: unknown;
+                }>;
+              }
+            | undefined) ?? {};
+        const gamesPlayed = Number(stats.gamesPlayed ?? 0);
+        const gamesWon = Number(stats.gamesWon ?? 0);
+        const recent = (stats.recentGames ?? []).slice(0, 5);
+        return (
+          <>
+            <h2 className="font-display text-2xl tracking-[3px] mb-3 mt-8">
+              RECENT GAMES
+            </h2>
+            <Card className="mb-6">
+              <div className="p-5 flex items-center gap-4 flex-wrap border-b border-brand-line">
+                <div className="text-xs uppercase tracking-[3px] text-text-faint">
+                  Record
+                </div>
+                <div className="font-display text-xl">
+                  {gamesWon}W
+                  <span className="text-text-faint">
+                    {" / "}
+                    {Math.max(0, gamesPlayed - gamesWon)}L
+                  </span>
+                </div>
+                <span className="text-xs text-text-muted">
+                  {gamesPlayed} game{gamesPlayed === 1 ? "" : "s"} total
+                </span>
+              </div>
+              {recent.length === 0 ? (
+                <p className="p-5 text-text-muted text-sm">
+                  No games yet. Hop in a session and your team history will show
+                  up here.
+                </p>
+              ) : (
+                <ul className="divide-y divide-brand-line">
+                  {recent.map((g) => (
+                    <li
+                      key={g.sessionId}
+                      className="flex items-center gap-3 p-4 flex-wrap"
+                    >
+                      <div className="flex-1 min-w-[10rem]">
+                        <div className="text-text-primary">
+                          {g.venueNameSnapshot}
+                        </div>
+                        <div className="text-xs text-text-faint">
+                          Finished #{g.finalRank} of {g.totalTeams} ·{" "}
+                          {g.teamScore} pts
+                        </div>
+                      </div>
+                      {g.finalRank === 1 && (
+                        <Badge tone="success">winner</Badge>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </Card>
+          </>
+        );
+      })()}
+
       <TeamActions
         teamId={teamId}
         isCaptain={isCaptain}

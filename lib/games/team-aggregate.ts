@@ -59,9 +59,7 @@ export function aggregateTeams(
 export function uniqueTopRealTeam(
   aggregates: TeamAggregate[],
 ): TeamAggregate | null {
-  const real = aggregates.filter(
-    (a) => a.teamId !== null && a.score > 0,
-  );
+  const real = aggregates.filter((a) => a.teamId !== null && a.score > 0);
   if (real.length === 0) return null;
   const top = real[0]!.score;
   const tied = real.filter((a) => a.score === top);

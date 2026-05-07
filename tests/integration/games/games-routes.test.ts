@@ -687,15 +687,13 @@ describe("Plan 9 — team integration", () => {
     });
 
     asUser("bob");
-    await submitAnswer(
-      jsonReq("POST", { questionIndex: 0, choiceIndex: 0 }),
-      { params: Promise.resolve({ id: sessionId }) },
-    );
+    await submitAnswer(jsonReq("POST", { questionIndex: 0, choiceIndex: 0 }), {
+      params: Promise.resolve({ id: sessionId }),
+    });
     asUser("carol");
-    await submitAnswer(
-      jsonReq("POST", { questionIndex: 0, choiceIndex: 2 }),
-      { params: Promise.resolve({ id: sessionId }) },
-    );
+    await submitAnswer(jsonReq("POST", { questionIndex: 0, choiceIndex: 2 }), {
+      params: Promise.resolve({ id: sessionId }),
+    });
 
     asUser("alice");
     await endGame(jsonReq("POST"), {
@@ -731,15 +729,13 @@ describe("Plan 9 — team integration", () => {
       params: Promise.resolve({ id: sessionId }),
     });
     asUser("bob");
-    await submitAnswer(
-      jsonReq("POST", { questionIndex: 0, choiceIndex: 0 }),
-      { params: Promise.resolve({ id: sessionId }) },
-    );
+    await submitAnswer(jsonReq("POST", { questionIndex: 0, choiceIndex: 0 }), {
+      params: Promise.resolve({ id: sessionId }),
+    });
     asUser("carol");
-    await submitAnswer(
-      jsonReq("POST", { questionIndex: 0, choiceIndex: 0 }),
-      { params: Promise.resolve({ id: sessionId }) },
-    );
+    await submitAnswer(jsonReq("POST", { questionIndex: 0, choiceIndex: 0 }), {
+      params: Promise.resolve({ id: sessionId }),
+    });
     asUser("alice");
     await endGame(jsonReq("POST"), {
       params: Promise.resolve({ id: sessionId }),
@@ -764,10 +760,9 @@ describe("Plan 9 — team integration", () => {
       params: Promise.resolve({ id: sessionId }),
     });
     asUser("bob");
-    await submitAnswer(
-      jsonReq("POST", { questionIndex: 0, choiceIndex: 0 }),
-      { params: Promise.resolve({ id: sessionId }) },
-    );
+    await submitAnswer(jsonReq("POST", { questionIndex: 0, choiceIndex: 0 }), {
+      params: Promise.resolve({ id: sessionId }),
+    });
 
     await adminDb.collection("teams").doc("t1").delete();
 

@@ -1,8 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  aggregateTeams,
-  uniqueTopRealTeam,
-} from "@/lib/games/team-aggregate";
+import { aggregateTeams, uniqueTopRealTeam } from "@/lib/games/team-aggregate";
 
 const player = (
   uid: string,

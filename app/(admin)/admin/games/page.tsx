@@ -34,6 +34,11 @@ export default async function AdminGamesPage() {
     const data = d.data();
     const players = (data.players as Record<string, unknown>) ?? {};
     const hostUid = String(data.hostUid ?? "");
+    const teamIds = new Set<string>();
+    for (const p of Object.values(players)) {
+      const tid = (p as { teamId?: string | null }).teamId;
+      if (tid) teamIds.add(tid);
+    }
     return {
       sessionId: d.id,
       hostDisplayName: hostMap[hostUid] ?? hostUid,
@@ -42,6 +47,7 @@ export default async function AdminGamesPage() {
       status: (data.status as "lobby" | "active" | "ended") ?? "lobby",
       sessionCode: String(data.sessionCode ?? ""),
       playerCount: Object.keys(players).length,
+      teamCount: teamIds.size,
       createdAt: tsToMs(data.createdAt),
     };
   });
@@ -68,7 +74,15 @@ export default async function AdminGamesPage() {
                   </div>
                   <div className="text-xs text-text-faint">
                     host @{g.hostDisplayName} · {g.playerCount} player
-                    {g.playerCount === 1 ? "" : "s"} ·{" "}
+                    {g.playerCount === 1 ? "" : "s"}
+                    {g.teamCount > 0 && (
+                      <>
+                        {" "}
+                        · {g.teamCount} team
+                        {g.teamCount === 1 ? "" : "s"}
+                      </>
+                    )}{" "}
+                    ·{" "}
                     {g.createdAt ? new Date(g.createdAt).toLocaleString() : "—"}
                   </div>
                 </div>

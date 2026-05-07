@@ -8,11 +8,14 @@ import { Button } from "@/components/ui";
 import { Card } from "@/components/ui/Card";
 import { Countdown } from "@/components/games/Countdown";
 import { useGameSession } from "@/hooks/useGameSession";
+import { aggregateTeams } from "@/lib/games/team-aggregate";
 
 interface PlayerRow {
   uid: string;
   displayName: string;
   score: number;
+  teamId?: string | null;
+  teamNameSnapshot?: string | null;
 }
 
 interface QuestionRow {
@@ -92,9 +95,25 @@ export function HostGameDashboard({
     correctIndex: fullQuestions?.[i]?.correctIndex ?? q.correctIndex ?? null,
   }));
 
-  const players: PlayerRow[] = Object.values(
-    (session.players as Record<string, PlayerRow>) ?? {},
-  ).sort((a, b) => b.score - a.score);
+  const playersMap = (session.players as Record<string, PlayerRow>) ?? {};
+  const players: PlayerRow[] = Object.values(playersMap).sort(
+    (a, b) => b.score - a.score,
+  );
+
+  const teamAggregates = aggregateTeams(
+    Object.fromEntries(
+      Object.entries(playersMap).map(([uid, p]) => [
+        uid,
+        {
+          uid: p.uid,
+          displayName: p.displayName,
+          score: p.score,
+          teamId: p.teamId ?? null,
+          teamNameSnapshot: p.teamNameSnapshot ?? null,
+        },
+      ]),
+    ),
+  );
 
   const currentRendered =
     status === "active" ? questions[currentQuestionIndex] : null;
@@ -251,6 +270,32 @@ export function HostGameDashboard({
             </p>
           </div>
         </Card>
+      )}
+
+      {teamAggregates.length > 0 && (
+        <div>
+          <h2 className="font-display text-xl tracking-[3px] mb-3">TEAMS</h2>
+          <Card>
+            <ul className="divide-y divide-brand-line">
+              {teamAggregates.map((t, i) => (
+                <li
+                  key={t.teamId ?? "solo"}
+                  className="flex items-center gap-3 p-4"
+                >
+                  <span className="text-text-faint w-6">{i + 1}.</span>
+                  <span className="flex-1 text-text-primary">
+                    {t.teamName}
+                    <span className="ml-2 text-xs text-text-faint">
+                      ({t.members.length} player
+                      {t.members.length === 1 ? "" : "s"})
+                    </span>
+                  </span>
+                  <span className="font-display text-xl">{t.score}</span>
+                </li>
+              ))}
+            </ul>
+          </Card>
+        </div>
       )}
 
       <div>
