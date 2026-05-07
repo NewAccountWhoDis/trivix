@@ -69,6 +69,16 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // gameSessionKeys/{sessionId} — host of the matching session or admin
+    // reads. Holds the answer key separated from the player-safe session doc.
+    match /gameSessionKeys/{sessionId} {
+      allow read: if (isSignedIn()
+        && exists(/databases/$(database)/documents/gameSessions/$(sessionId))
+        && get(/databases/$(database)/documents/gameSessions/$(sessionId)).data.hostUid == request.auth.uid)
+        || isAdmin();
+      allow write: if false;
+    }
+
     // teams/{teamId} — members, captain, or admin can read; writes server-only.
     match /teams/{teamId} {
       allow read: if isMemberOfTeam(teamId) || isCaptainOfTeam(teamId) || isAdmin();

@@ -443,6 +443,66 @@ describe("firestore.rules — gameSessions/{sessionId}", () => {
   });
 });
 
+describe("firestore.rules — gameSessionKeys/{sessionId}", () => {
+  async function seed(opts: { hostUid: string; playerUids?: string[] }) {
+    const players: Record<string, unknown> = {};
+    for (const uid of opts.playerUids ?? []) {
+      players[uid] = { uid };
+    }
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      const db = ctx.firestore();
+      await setDoc(doc(db, "gameSessions/g1"), {
+        sessionId: "g1",
+        hostUid: opts.hostUid,
+        status: "lobby",
+        players,
+      });
+      await setDoc(doc(db, "gameSessionKeys/g1"), {
+        sessionId: "g1",
+        hostUid: opts.hostUid,
+        questions: [
+          {
+            prompt: "Q",
+            choices: ["A", "B", "C", "D"],
+            correctIndex: 0,
+            points: 1,
+          },
+        ],
+      });
+    });
+  }
+
+  it("host of the matching session can read the answer key", async () => {
+    await seed({ hostUid: "alice" });
+    const db = env.authenticatedContext("alice").firestore();
+    await assertSucceeds(getDoc(doc(db, "gameSessionKeys/g1")));
+  });
+
+  it("a joined player cannot read the answer key", async () => {
+    await seed({ hostUid: "alice", playerUids: ["bob"] });
+    const db = env.authenticatedContext("bob").firestore();
+    await assertFails(getDoc(doc(db, "gameSessionKeys/g1")));
+  });
+
+  it("an unrelated user cannot read the answer key", async () => {
+    await seed({ hostUid: "alice" });
+    const db = env.authenticatedContext("eve").firestore();
+    await assertFails(getDoc(doc(db, "gameSessionKeys/g1")));
+  });
+
+  it("nobody can write the answer key directly", async () => {
+    await seed({ hostUid: "alice" });
+    const db = env.authenticatedContext("alice").firestore();
+    await assertFails(
+      setDoc(
+        doc(db, "gameSessionKeys/g1"),
+        { questions: [] },
+        { merge: true },
+      ),
+    );
+  });
+});
+
 describe("firestore.rules — admin reads", () => {
   async function seedAdminAndOthers() {
     await env.withSecurityRulesDisabled(async (ctx) => {
