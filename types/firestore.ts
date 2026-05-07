@@ -201,6 +201,37 @@ export interface SerializedQuestionSet {
 
 export type GameSessionStatus = "lobby" | "active" | "ended";
 
+/**
+ * Player-safe question shape stored on `gameSessions/{id}`. `correctIndex`
+ * is null until the host advances past that question; the server then
+ * copies the real value over from `gameSessionKeys/{id}`. Lets players
+ * subscribe via `onSnapshot` without ever seeing future answers.
+ */
+export interface SanitizedQuestion {
+  prompt: string;
+  choices: [string, string, string, string];
+  correctIndex: 0 | 1 | 2 | 3 | null;
+  points: number;
+}
+
+/**
+ * Host/admin-only mirror that holds the full answer key. Server-only
+ * writes; deleted after game-end finalization.
+ */
+export interface GameSessionKeyDoc {
+  sessionId: string;
+  hostUid: string;
+  questions: Question[];
+  createdAt: FirestoreTimestamp;
+}
+
+export interface SerializedGameSessionKey {
+  sessionId: string;
+  hostUid: string;
+  questions: Question[];
+  createdAt: number;
+}
+
 export interface PlayerAnswer {
   choiceIndex: number;
   correct: boolean;
@@ -224,7 +255,8 @@ export interface GameSessionDoc {
   venueNameSnapshot: string;
   questionSetId: string;
   questionSetNameSnapshot: string;
-  questions: Question[];
+  /** Sanitized questions — `correctIndex` filled in only after reveal. */
+  questions: SanitizedQuestion[];
   status: GameSessionStatus;
   /** -1 in lobby; 0..N-1 while active; equals questions.length once ended. */
   currentQuestionIndex: number;
@@ -233,6 +265,8 @@ export interface GameSessionDoc {
   sessionCode: string;
   /** Keyed by player uid — lets us atomically update one player at a time. */
   players: Record<string, GameSessionPlayer>;
+  /** Server-set absolute deadline for the current question. Null in lobby/ended. */
+  currentQuestionDeadline: FirestoreTimestamp | null;
   createdAt: FirestoreTimestamp;
   startedAt: FirestoreTimestamp | null;
   endedAt: FirestoreTimestamp | null;
@@ -261,12 +295,13 @@ export interface SerializedGameSession {
   venueNameSnapshot: string;
   questionSetId: string;
   questionSetNameSnapshot: string;
-  questions: Question[];
+  questions: SanitizedQuestion[];
   status: GameSessionStatus;
   currentQuestionIndex: number;
   revealedIndex: number;
   sessionCode: string;
   players: Record<string, SerializedGameSessionPlayer>;
+  currentQuestionDeadline: number | null;
   createdAt: number;
   startedAt: number | null;
   endedAt: number | null;

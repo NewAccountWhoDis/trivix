@@ -130,32 +130,15 @@ Solution: split into **two collections**.
 
 ---
 
-## Decisions to lock in before execution
+## Decisions (resolved 2026-05-07)
 
-- **D1.** Split `gameSessions` + `gameSessionKeys` collections (vs
-  trying to filter fields some other way)? *Recommend: split. Firestore
-  rules grant whole docs; field-level filtering would mean keeping the
-  API in front of every read, which defeats the point of `onSnapshot`.*
-- **D2.** Default timer length: 30s per question (regardless of
-  difficulty)? *Recommend: 30s. Configurable per question is a
-  follow-up.*
-- **D3.** Timer storage: absolute `currentQuestionDeadline: Timestamp`
-  on the gameSessions doc (vs a duration field + question-started
-  timestamp)? *Recommend: absolute deadline. Clients render directly
-  with no extra math; server cutoff is one comparison.*
-- **D4.** Late-answer enforcement: server rejects with 409 (vs accepts
-  but flags `late: true`)? *Recommend: 409. Cleaner UX; no late-credit
-  ambiguity.*
-- **D5.** Auto-advance on timer expiry: punted to a later slice (needs
-  scheduler). Host still clicks "Next." UI surfaces a visual cue when
-  the timer is up. *Recommend: yes, defer.*
-- **D6.** Clock skew: client uses `currentQuestionDeadline.toMillis()
-  - now()` to render countdown. ~1s skew is fine; no NTP plumbing.
-  *Recommend: yes.*
-- **D7.** Host can read `gameSessionKeys` to see correct answers for
-  upcoming questions? *Recommend: yes. Hosts already snapshot their
-  question set when starting; this just makes the answer key directly
-  visible without round-tripping through the sanitized API.*
+- **D1.** Split into `gameSessions` + `gameSessionKeys`.
+- **D2.** Fixed 30s per question; per-question custom durations are a follow-up.
+- **D3.** Absolute `currentQuestionDeadline: Timestamp` field on `gameSessions`.
+- **D4.** Late answers → 409.
+- **D5.** No auto-advance in this slice (needs Cloud Functions/scheduler). Host still clicks Next; UI surfaces a visual cue once timer expires.
+- **D6.** Client renders countdown from `deadline - now()`; ~1s skew is acceptable.
+- **D7.** Host can read `gameSessionKeys` to preview answer keys before reveal.
 
 ---
 
