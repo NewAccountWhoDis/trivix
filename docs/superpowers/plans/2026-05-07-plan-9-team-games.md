@@ -82,15 +82,15 @@ Numbering picks up from Plan 8 (which ended at Task 186).
 
 ---
 
-## Decisions to lock in before execution
+## Decisions (resolved 2026-05-07)
 
-- **D1.** Free-agent players (no team) allowed in games? *Recommend: yes. Otherwise we'd need to either gate `/api/games/join` on `users.teamId` (UX cliff for solo players) or auto-create a "personal team" (data model bloat). Free agents stay simple.*
-- **D2.** Team score = sum of member scores? *Recommend: yes. Average penalizes larger teams; weighting is overengineering for slice 1.*
-- **D3.** Team-history storage: array on the team doc, capped at 25? *Recommend: yes. One-doc reads for `/team` page; older history archived only if hosts ask.*
-- **D4.** Tie-breaker: unique top team score wins; ties → no team winner. *Recommend: yes — matches Plan 7 D6.*
-- **D5.** Player team membership snapshotted at join time, not at end time? *Recommend: yes. If a player switches teams mid-game (theoretically), they still score for the team they joined as. Cleaner audit trail.*
-- **D6.** Show live team scores during the game (vs only at game end)? *Recommend: yes. Live team scores are the whole point of "team" trivia.*
-- **D7.** When the only player on a team leaves a game (closes browser), their team still appears in the scoreboard with whatever score they earned? *Recommend: yes — nothing in the data model lets a player "leave" a session anyway, and re-entry is by code.*
+- **D1.** Free-agent (no team) players are allowed; they join with `teamId: null` and group under "Solo" in scoreboards.
+- **D2.** Team score = sum of member scores.
+- **D3.** Team history stored as array on the team doc, capped at 25 most recent.
+- **D4.** Unique top team score wins; ties → no team winner.
+- **D5.** Team membership snapshotted on `players[uid]` at join time.
+- **D6.** Team scoreboard rendered live during the game on host + player views.
+- **D7.** Players who leave a session still count for their team's score.
 
 ---
 

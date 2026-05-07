@@ -102,6 +102,23 @@ export interface DisplayNameDoc {
   uid: string;
 }
 
+export interface TeamGameSummary {
+  sessionId: string;
+  venueNameSnapshot: string;
+  finalRank: number;
+  totalTeams: number;
+  teamScore: number;
+  playedAt: FirestoreTimestamp;
+}
+
+export interface TeamStats {
+  gamesPlayed: number;
+  gamesWon: number;
+  lastPlayedAt: FirestoreTimestamp | null;
+  /** Capped at 25 most recent, newest first. */
+  recentGames: TeamGameSummary[];
+}
+
 export interface TeamDoc {
   teamId: string;
   name: string;
@@ -109,14 +126,38 @@ export interface TeamDoc {
   captainUid: string | null;
   memberUids: string[];
   createdBy: string;
+  stats: TeamStats;
   createdAt: FirestoreTimestamp;
   updatedAt: FirestoreTimestamp;
 }
+
+export const DEFAULT_TEAM_STATS: TeamStats = {
+  gamesPlayed: 0,
+  gamesWon: 0,
+  lastPlayedAt: null,
+  recentGames: [],
+};
 
 export interface JoinRequestDoc {
   uid: string;
   displayName: string;
   requestedAt: FirestoreTimestamp;
+}
+
+export interface SerializedTeamGameSummary {
+  sessionId: string;
+  venueNameSnapshot: string;
+  finalRank: number;
+  totalTeams: number;
+  teamScore: number;
+  playedAt: number;
+}
+
+export interface SerializedTeamStats {
+  gamesPlayed: number;
+  gamesWon: number;
+  lastPlayedAt: number | null;
+  recentGames: SerializedTeamGameSummary[];
 }
 
 /** Plain-JSON form of TeamDoc for client consumption. */
@@ -127,6 +168,7 @@ export interface SerializedTeam {
   captainUid: string | null;
   memberUids: string[];
   createdBy: string;
+  stats: SerializedTeamStats;
   createdAt: number;
   updatedAt: number;
 }
@@ -244,6 +286,10 @@ export interface GameSessionPlayer {
   displayName: string;
   joinedAt: FirestoreTimestamp;
   score: number;
+  /** Snapshotted at join time. Null = free agent. */
+  teamId: string | null;
+  /** Snapshotted at join time so a later team rename doesn't desync UI. */
+  teamNameSnapshot: string | null;
   /** Keyed by question index (as string for Firestore map keys). */
   answers: Record<string, PlayerAnswer>;
 }
@@ -284,6 +330,8 @@ export interface SerializedGameSessionPlayer {
   displayName: string;
   joinedAt: number;
   score: number;
+  teamId: string | null;
+  teamNameSnapshot: string | null;
   answers: Record<string, SerializedPlayerAnswer>;
 }
 
