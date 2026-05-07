@@ -6,12 +6,8 @@ test("landing page renders branded heading and CTAs", async ({ page }) => {
   await expect(
     page.getByRole("heading", { level: 1, name: /trivix/i }),
   ).toBeVisible();
-  await expect(
-    page.getByRole("link", { name: /get started/i }),
-  ).toBeVisible();
-  await expect(
-    page.getByRole("link", { name: /i.?m a host/i }),
-  ).toBeVisible();
+  await expect(page.getByRole("link", { name: /get started/i })).toBeVisible();
+  await expect(page.getByRole("link", { name: /i.?m a host/i })).toBeVisible();
 });
 
 test("respects prefers-reduced-motion", async ({ browser }) => {

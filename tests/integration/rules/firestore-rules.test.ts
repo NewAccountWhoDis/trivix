@@ -339,11 +339,7 @@ describe("firestore.rules — admin reads", () => {
     await seedAdminAndOthers();
     const db = env.authenticatedContext("admin1").firestore();
     await assertFails(
-      setDoc(
-        doc(db, "teams/t1"),
-        { name: "Renamed" },
-        { merge: true },
-      ),
+      setDoc(doc(db, "teams/t1"), { name: "Renamed" }, { merge: true }),
     );
   });
 

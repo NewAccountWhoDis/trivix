@@ -1,13 +1,6 @@
 // @vitest-environment node
 import "@/tests/setup/emulator-bootstrap";
-import {
-  afterEach,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  vi,
-} from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { GET as listApps } from "@/app/api/admin/host-applications/route";
 import { POST as actOnApp } from "@/app/api/admin/host-applications/[uid]/route";
 import { GET as listUsers } from "@/app/api/admin/users/route";
@@ -59,16 +52,19 @@ async function seedUser(uid: string, opts: Record<string, unknown> = {}) {
 }
 
 async function seedHostApp(uid: string, status = "pending") {
-  await adminDb.collection("hostApplications").doc(uid).set({
-    uid,
-    email: `${uid}@x.test`,
-    displayName: uid,
-    reason: null,
-    status,
-    appliedAt: new Date(),
-    decidedAt: null,
-    decidedBy: null,
-  });
+  await adminDb
+    .collection("hostApplications")
+    .doc(uid)
+    .set({
+      uid,
+      email: `${uid}@x.test`,
+      displayName: uid,
+      reason: null,
+      status,
+      appliedAt: new Date(),
+      decidedAt: null,
+      decidedBy: null,
+    });
 }
 
 function asAdmin(uid = "admin") {
@@ -237,16 +233,19 @@ describe("POST /api/admin/users/[uid]", () => {
       password: "password123",
     });
     await seedUser("alice", { teamId: "team-alone" });
-    await adminDb.collection("teams").doc("team-alone").set({
-      teamId: "team-alone",
-      name: "Solo",
-      inviteCode: "SOLO23",
-      captainUid: "alice",
-      memberUids: ["alice"],
-      createdBy: "alice",
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    });
+    await adminDb
+      .collection("teams")
+      .doc("team-alone")
+      .set({
+        teamId: "team-alone",
+        name: "Solo",
+        inviteCode: "SOLO23",
+        captainUid: "alice",
+        memberUids: ["alice"],
+        createdBy: "alice",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
     asAdmin();
 
     const res = await actOnUser(postReq({ action: "delete" }), {
@@ -275,16 +274,19 @@ describe("POST /api/admin/users/[uid]", () => {
     });
     await seedUser("alice", { teamId: "t1" });
     await seedUser("bob", { teamId: "t1" });
-    await adminDb.collection("teams").doc("t1").set({
-      teamId: "t1",
-      name: "Crew",
-      inviteCode: "ABCD23",
-      captainUid: "alice",
-      memberUids: ["alice", "bob"],
-      createdBy: "alice",
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    });
+    await adminDb
+      .collection("teams")
+      .doc("t1")
+      .set({
+        teamId: "t1",
+        name: "Crew",
+        inviteCode: "ABCD23",
+        captainUid: "alice",
+        memberUids: ["alice", "bob"],
+        createdBy: "alice",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
     asAdmin();
 
     const res = await actOnUser(postReq({ action: "delete" }), {
@@ -321,16 +323,19 @@ describe("GET /api/admin/teams", () => {
   it("returns team list with member counts and captain names", async () => {
     await seedUser("admin", { isAdmin: true });
     await seedUser("alice");
-    await adminDb.collection("teams").doc("t1").set({
-      teamId: "t1",
-      name: "Crew",
-      inviteCode: "ABCD23",
-      captainUid: "alice",
-      memberUids: ["alice"],
-      createdBy: "alice",
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    });
+    await adminDb
+      .collection("teams")
+      .doc("t1")
+      .set({
+        teamId: "t1",
+        name: "Crew",
+        inviteCode: "ABCD23",
+        captainUid: "alice",
+        memberUids: ["alice"],
+        createdBy: "alice",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
     asAdmin();
 
     const res = await listTeams();
@@ -360,16 +365,19 @@ describe("DELETE /api/admin/teams/[id]", () => {
     await seedUser("admin", { isAdmin: true });
     await seedUser("alice", { teamId: "t1" });
     await seedUser("bob", { teamId: "t1" });
-    await adminDb.collection("teams").doc("t1").set({
-      teamId: "t1",
-      name: "Crew",
-      inviteCode: "ABCD23",
-      captainUid: "alice",
-      memberUids: ["alice", "bob"],
-      createdBy: "alice",
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    });
+    await adminDb
+      .collection("teams")
+      .doc("t1")
+      .set({
+        teamId: "t1",
+        name: "Crew",
+        inviteCode: "ABCD23",
+        captainUid: "alice",
+        memberUids: ["alice", "bob"],
+        createdBy: "alice",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
     asAdmin();
 
     const res = await adminDeleteTeam(new Request("http://localhost/x"), {
@@ -388,16 +396,19 @@ describe("DELETE /api/admin/teams/[id]", () => {
 
   it("403 for non-admin", async () => {
     await seedUser("alice");
-    await adminDb.collection("teams").doc("t1").set({
-      teamId: "t1",
-      name: "Crew",
-      inviteCode: "ABCD23",
-      captainUid: "alice",
-      memberUids: ["alice"],
-      createdBy: "alice",
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    });
+    await adminDb
+      .collection("teams")
+      .doc("t1")
+      .set({
+        teamId: "t1",
+        name: "Crew",
+        inviteCode: "ABCD23",
+        captainUid: "alice",
+        memberUids: ["alice"],
+        createdBy: "alice",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
     asUser("alice");
     const res = await adminDeleteTeam(new Request("http://localhost/x"), {
       params: Promise.resolve({ id: "t1" }),

@@ -7,10 +7,7 @@ import {
   applicationDefault,
   type App,
 } from "firebase-admin/app";
-import {
-  getAuth as getAdminAuth,
-  type Auth,
-} from "firebase-admin/auth";
+import { getAuth as getAdminAuth, type Auth } from "firebase-admin/auth";
 import {
   getFirestore as getAdminFirestore,
   type Firestore,

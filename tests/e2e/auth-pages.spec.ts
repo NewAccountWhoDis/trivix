@@ -103,4 +103,21 @@ test.describe("middleware redirects", () => {
     await page.goto("/admin");
     await expect(page).toHaveURL(/\/login\?next=%2Fadmin/);
   });
+
+  test("/admin/host-applications without cookie redirects", async ({
+    page,
+  }) => {
+    await page.goto("/admin/host-applications");
+    await expect(page).toHaveURL(/\/login\?next=%2Fadmin%2Fhost-applications/);
+  });
+
+  test("/admin/users without cookie redirects", async ({ page }) => {
+    await page.goto("/admin/users");
+    await expect(page).toHaveURL(/\/login\?next=%2Fadmin%2Fusers/);
+  });
+
+  test("/admin/teams without cookie redirects", async ({ page }) => {
+    await page.goto("/admin/teams");
+    await expect(page).toHaveURL(/\/login\?next=%2Fadmin%2Fteams/);
+  });
 });
