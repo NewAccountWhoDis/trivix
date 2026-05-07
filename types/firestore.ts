@@ -145,6 +145,32 @@ export interface SerializedJoinRequest {
   requestedAt: number;
 }
 
+export interface VenueAddress {
+  street: string;
+  city: string;
+  state: string;
+  zip: string;
+}
+
+export interface VenueDoc {
+  venueId: string;
+  ownerUid: string;
+  name: string;
+  address: VenueAddress;
+  createdAt: FirestoreTimestamp;
+  updatedAt: FirestoreTimestamp;
+}
+
+/** Plain-JSON form of VenueDoc safe to pass server→client. */
+export interface SerializedVenue {
+  venueId: string;
+  ownerUid: string;
+  name: string;
+  address: VenueAddress;
+  createdAt: number;
+  updatedAt: number;
+}
+
 export interface HostApplicationDoc {
   uid: string;
   email: string;

@@ -77,13 +77,13 @@ Numbering picks up from Plan 4 (which ended at Task 112).
 
 ---
 
-## Decisions to lock in before execution
+## Decisions (resolved 2026-05-07)
 
-- **D1.** Address shape: single freeform string vs structured (`street, city, state, zip`)? *Recommend: structured. Easier to validate, formatable later for cards/maps. State is 2-letter US, zip is 5-digit (with optional +4).*
-- **D2.** Hard vs soft delete? *Recommend: hard. Plan 7 game sessions will store a `venueName` snapshot at game-start time, so deletes don't break game history.*
-- **D3.** Display-name-style uniqueness on venue names per host? *Recommend: no. Two of a host's venues can share a name (chains). Skip the sentinel collection.*
-- **D4.** Allow admins to create venues? *Recommend: no. Admins manage; hosts own. Keeps the model clean.*
-- **D5.** Field limits — name 60 chars, street 100, city 50, state 2, zip 10. Reasonable defaults.
+- **D1.** Address is structured: `street, city, state (2-letter), zip (5 or 5+4)`. US-only.
+- **D2.** Hard delete. Future game sessions snapshot `{venueId, venueName}` at game-start, so deletion never breaks history.
+- **D3.** No per-host name uniqueness — chains allowed. Address fields disambiguate.
+- **D4.** Admins do not create venues. Hosts own; admins moderate (list + delete only).
+- **D5.** Field limits: name 60 chars, street 100, city 50, state 2, zip 10.
 
 ---
 

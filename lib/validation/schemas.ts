@@ -109,6 +109,34 @@ export const userActionSchema = z.object({
   action: z.enum(["revoke-host", "delete"]),
 });
 
+// ── Venues ──────────────────────────────────────────────────────────────────
+export const venueNameSchema = z
+  .string()
+  .trim()
+  .min(2, "At least 2 characters")
+  .max(60, "60 characters max");
+
+export const venueAddressSchema = z.object({
+  street: z.string().trim().min(2, "Required").max(100, "100 characters max"),
+  city: z.string().trim().min(2, "Required").max(50, "50 characters max"),
+  state: z
+    .string()
+    .trim()
+    .toUpperCase()
+    .regex(/^[A-Z]{2}$/, "Use a 2-letter state code"),
+  zip: z
+    .string()
+    .trim()
+    .regex(/^\d{5}(-\d{4})?$/, "Use a 5-digit ZIP (or ZIP+4 with hyphen)"),
+});
+
+export const createVenueSchema = z.object({
+  name: venueNameSchema,
+  address: venueAddressSchema,
+});
+
+export const updateVenueSchema = createVenueSchema;
+
 export type SignupStep1EmailInput = z.infer<typeof signupStep1EmailSchema>;
 export type SignupStep2Input = z.infer<typeof signupStep2Schema>;
 export type SignupStep3Input = z.infer<typeof signupStep3Schema>;
@@ -125,3 +153,6 @@ export type HostApplicationActionInput = z.infer<
   typeof hostApplicationActionSchema
 >;
 export type UserActionInput = z.infer<typeof userActionSchema>;
+export type VenueAddressInput = z.infer<typeof venueAddressSchema>;
+export type CreateVenueInput = z.infer<typeof createVenueSchema>;
+export type UpdateVenueInput = z.infer<typeof updateVenueSchema>;
