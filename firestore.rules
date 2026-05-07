@@ -11,6 +11,18 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == uid;
     }
 
+    function isMemberOfTeam(teamId) {
+      return isSignedIn() &&
+        request.auth.uid in
+          get(/databases/$(database)/documents/teams/$(teamId)).data.memberUids;
+    }
+
+    function isCaptainOfTeam(teamId) {
+      return isSignedIn() &&
+        request.auth.uid ==
+          get(/databases/$(database)/documents/teams/$(teamId)).data.captainUid;
+    }
+
     // users/{uid} — server-written via Admin SDK. Owner can read own doc.
     match /users/{uid} {
       allow read: if isOwner(uid);
@@ -28,7 +40,26 @@ service cloud.firestore {
       allow write: if false;
     }
 
-    // Default deny (teams, joinRequests, etc. land in Plan 3+).
+    // teams/{teamId} — members can read; all writes server-only.
+    match /teams/{teamId} {
+      allow read: if isMemberOfTeam(teamId) || isCaptainOfTeam(teamId);
+      allow write: if false;
+
+      // joinRequests subcollection.
+      // - Captain can read all pending requests on their team.
+      // - Requester can read their own request.
+      // - Any signed-in user can create their own request doc.
+      // - Updates/deletes server-only (approval/denial cleans up via Admin SDK).
+      match /joinRequests/{uid} {
+        allow read: if isOwner(uid) || isCaptainOfTeam(teamId);
+        allow create: if isOwner(uid)
+          && request.resource.data.uid == uid
+          && request.resource.data.keys().hasOnly(["uid", "displayName", "requestedAt"]);
+        allow update, delete: if false;
+      }
+    }
+
+    // Default deny.
     match /{document=**} {
       allow read, write: if false;
     }

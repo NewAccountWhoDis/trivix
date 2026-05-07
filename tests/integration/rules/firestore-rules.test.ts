@@ -112,6 +112,169 @@ describe("firestore.rules — hostApplications/{uid}", () => {
   });
 });
 
+describe("firestore.rules — teams/{teamId}", () => {
+  async function seedTeam(captainUid: string, memberUids: string[]) {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "teams/t1"), {
+        teamId: "t1",
+        name: "Quiz Crew",
+        inviteCode: "ABC234",
+        captainUid,
+        memberUids,
+        createdBy: captainUid,
+      });
+    });
+  }
+
+  it("captain can read the team doc", async () => {
+    await seedTeam("alice", ["alice", "bob"]);
+    const db = env.authenticatedContext("alice").firestore();
+    await assertSucceeds(getDoc(doc(db, "teams/t1")));
+  });
+
+  it("member can read the team doc", async () => {
+    await seedTeam("alice", ["alice", "bob"]);
+    const db = env.authenticatedContext("bob").firestore();
+    await assertSucceeds(getDoc(doc(db, "teams/t1")));
+  });
+
+  it("non-member cannot read the team doc", async () => {
+    await seedTeam("alice", ["alice", "bob"]);
+    const db = env.authenticatedContext("eve").firestore();
+    await assertFails(getDoc(doc(db, "teams/t1")));
+  });
+
+  it("nobody can write the team doc (server-only)", async () => {
+    await seedTeam("alice", ["alice", "bob"]);
+    const db = env.authenticatedContext("alice").firestore();
+    await assertFails(
+      setDoc(doc(db, "teams/t1"), { name: "Renamed" }, { merge: true }),
+    );
+  });
+});
+
+describe("firestore.rules — teams/{teamId}/joinRequests/{uid}", () => {
+  async function seedTeam() {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "teams/t1"), {
+        teamId: "t1",
+        name: "Quiz Crew",
+        inviteCode: "ABC234",
+        captainUid: "alice",
+        memberUids: ["alice"],
+        createdBy: "alice",
+      });
+    });
+  }
+
+  it("requester can create their own request doc", async () => {
+    await seedTeam();
+    const db = env.authenticatedContext("bob").firestore();
+    await assertSucceeds(
+      setDoc(doc(db, "teams/t1/joinRequests/bob"), {
+        uid: "bob",
+        displayName: "bob",
+        requestedAt: new Date(),
+      }),
+    );
+  });
+
+  it("requester cannot create someone else's request", async () => {
+    await seedTeam();
+    const db = env.authenticatedContext("bob").firestore();
+    await assertFails(
+      setDoc(doc(db, "teams/t1/joinRequests/eve"), {
+        uid: "eve",
+        displayName: "eve",
+        requestedAt: new Date(),
+      }),
+    );
+  });
+
+  it("rejects request with mismatched uid field", async () => {
+    await seedTeam();
+    const db = env.authenticatedContext("bob").firestore();
+    await assertFails(
+      setDoc(doc(db, "teams/t1/joinRequests/bob"), {
+        uid: "alice",
+        displayName: "bob",
+        requestedAt: new Date(),
+      }),
+    );
+  });
+
+  it("rejects request with extra fields", async () => {
+    await seedTeam();
+    const db = env.authenticatedContext("bob").firestore();
+    await assertFails(
+      setDoc(doc(db, "teams/t1/joinRequests/bob"), {
+        uid: "bob",
+        displayName: "bob",
+        requestedAt: new Date(),
+        sneaky: "isAdmin",
+      }),
+    );
+  });
+
+  it("captain can read all pending requests on their team", async () => {
+    await seedTeam();
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "teams/t1/joinRequests/bob"), {
+        uid: "bob",
+        displayName: "bob",
+        requestedAt: new Date(),
+      });
+    });
+    const db = env.authenticatedContext("alice").firestore();
+    await assertSucceeds(getDoc(doc(db, "teams/t1/joinRequests/bob")));
+  });
+
+  it("requester can read their own request", async () => {
+    await seedTeam();
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "teams/t1/joinRequests/bob"), {
+        uid: "bob",
+        displayName: "bob",
+        requestedAt: new Date(),
+      });
+    });
+    const db = env.authenticatedContext("bob").firestore();
+    await assertSucceeds(getDoc(doc(db, "teams/t1/joinRequests/bob")));
+  });
+
+  it("unrelated user cannot read other requests", async () => {
+    await seedTeam();
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "teams/t1/joinRequests/bob"), {
+        uid: "bob",
+        displayName: "bob",
+        requestedAt: new Date(),
+      });
+    });
+    const db = env.authenticatedContext("eve").firestore();
+    await assertFails(getDoc(doc(db, "teams/t1/joinRequests/bob")));
+  });
+
+  it("requester cannot update or delete their own request", async () => {
+    await seedTeam();
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "teams/t1/joinRequests/bob"), {
+        uid: "bob",
+        displayName: "bob",
+        requestedAt: new Date(),
+      });
+    });
+    const db = env.authenticatedContext("bob").firestore();
+    await assertFails(
+      setDoc(
+        doc(db, "teams/t1/joinRequests/bob"),
+        { displayName: "renamed" },
+        { merge: true },
+      ),
+    );
+  });
+});
+
 describe("firestore.rules — default deny", () => {
   it("denies reads on unknown collections", async () => {
     const db = env.authenticatedContext("alice").firestore();
