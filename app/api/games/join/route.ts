@@ -1,0 +1,82 @@
+import { NextResponse } from "next/server";
+import { FieldValue } from "firebase-admin/firestore";
+import { adminDb } from "@/lib/firebase/admin";
+import { verifySession } from "@/lib/firebase/session";
+import { joinGameSessionSchema } from "@/lib/validation/schemas";
+
+export const runtime = "nodejs";
+
+export async function POST(request: Request): Promise<NextResponse> {
+  const session = await verifySession();
+  if (!session) {
+    return NextResponse.json({ error: "Not signed in" }, { status: 401 });
+  }
+  if (!session.emailVerified) {
+    return NextResponse.json(
+      { error: "Verify your email first" },
+      { status: 403 },
+    );
+  }
+
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+  }
+  const parsed = joinGameSessionSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: "Invalid fields", issues: parsed.error.flatten() },
+      { status: 400 },
+    );
+  }
+
+  const found = await adminDb
+    .collection("gameSessions")
+    .where("sessionCode", "==", parsed.data.sessionCode)
+    .limit(1)
+    .get();
+  if (found.empty) {
+    return NextResponse.json({ error: "Session not found" }, { status: 404 });
+  }
+  const sessionDoc = found.docs[0]!;
+  const sessionId = sessionDoc.id;
+  const data = sessionDoc.data();
+  const status = data.status as string;
+
+  if (status === "ended") {
+    return NextResponse.json(
+      { error: "Session has ended" },
+      { status: 409 },
+    );
+  }
+
+  // Idempotent: if already in players map, just return ok.
+  const players = (data.players as Record<string, unknown>) ?? {};
+  if (players[session.uid]) {
+    return NextResponse.json({ ok: true, sessionId, alreadyJoined: true });
+  }
+
+  if (status !== "lobby") {
+    return NextResponse.json(
+      { error: "Game already in progress" },
+      { status: 409 },
+    );
+  }
+
+  const userSnap = await adminDb.collection("users").doc(session.uid).get();
+  const displayName = String(userSnap.data()?.displayName ?? session.uid);
+
+  await sessionDoc.ref.update({
+    [`players.${session.uid}`]: {
+      uid: session.uid,
+      displayName,
+      joinedAt: FieldValue.serverTimestamp(),
+      score: 0,
+      answers: {},
+    },
+  });
+
+  return NextResponse.json({ ok: true, sessionId });
+}
