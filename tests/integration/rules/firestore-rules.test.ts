@@ -275,6 +275,91 @@ describe("firestore.rules — teams/{teamId}/joinRequests/{uid}", () => {
   });
 });
 
+describe("firestore.rules — admin reads", () => {
+  async function seedAdminAndOthers() {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      const db = ctx.firestore();
+      await setDoc(doc(db, "users/admin1"), { uid: "admin1", isAdmin: true });
+      await setDoc(doc(db, "users/alice"), { uid: "alice", isAdmin: false });
+      await setDoc(doc(db, "users/bob"), { uid: "bob", isAdmin: false });
+      await setDoc(doc(db, "teams/t1"), {
+        teamId: "t1",
+        name: "Quiz Crew",
+        inviteCode: "ABC234",
+        captainUid: "alice",
+        memberUids: ["alice"],
+        createdBy: "alice",
+      });
+      await setDoc(doc(db, "hostApplications/bob"), {
+        uid: "bob",
+        status: "pending",
+      });
+      await setDoc(doc(db, "teams/t1/joinRequests/eve"), {
+        uid: "eve",
+        displayName: "eve",
+        requestedAt: new Date(),
+      });
+    });
+  }
+
+  it("admin can read any user doc", async () => {
+    await seedAdminAndOthers();
+    const db = env.authenticatedContext("admin1").firestore();
+    await assertSucceeds(getDoc(doc(db, "users/alice")));
+    await assertSucceeds(getDoc(doc(db, "users/bob")));
+  });
+
+  it("admin can read any team doc (even non-member teams)", async () => {
+    await seedAdminAndOthers();
+    const db = env.authenticatedContext("admin1").firestore();
+    await assertSucceeds(getDoc(doc(db, "teams/t1")));
+  });
+
+  it("admin can read any host application", async () => {
+    await seedAdminAndOthers();
+    const db = env.authenticatedContext("admin1").firestore();
+    await assertSucceeds(getDoc(doc(db, "hostApplications/bob")));
+  });
+
+  it("admin can read any team join request", async () => {
+    await seedAdminAndOthers();
+    const db = env.authenticatedContext("admin1").firestore();
+    await assertSucceeds(getDoc(doc(db, "teams/t1/joinRequests/eve")));
+  });
+
+  it("admin still cannot write users (server-only)", async () => {
+    await seedAdminAndOthers();
+    const db = env.authenticatedContext("admin1").firestore();
+    await assertFails(
+      setDoc(doc(db, "users/alice"), { foo: "bar" }, { merge: true }),
+    );
+  });
+
+  it("admin still cannot write teams or join requests", async () => {
+    await seedAdminAndOthers();
+    const db = env.authenticatedContext("admin1").firestore();
+    await assertFails(
+      setDoc(
+        doc(db, "teams/t1"),
+        { name: "Renamed" },
+        { merge: true },
+      ),
+    );
+  });
+
+  it("non-admin cannot read other users", async () => {
+    await seedAdminAndOthers();
+    const db = env.authenticatedContext("alice").firestore();
+    await assertFails(getDoc(doc(db, "users/bob")));
+  });
+
+  it("user with isAdmin=false on their doc has no admin powers", async () => {
+    await seedAdminAndOthers();
+    const db = env.authenticatedContext("alice").firestore();
+    await assertFails(getDoc(doc(db, "hostApplications/bob")));
+  });
+});
+
 describe("firestore.rules — default deny", () => {
   it("denies reads on unknown collections", async () => {
     const db = env.authenticatedContext("alice").firestore();

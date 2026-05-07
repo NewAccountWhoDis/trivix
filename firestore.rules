@@ -11,6 +11,12 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == uid;
     }
 
+    function isAdmin() {
+      return isSignedIn()
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+    }
+
     function isMemberOfTeam(teamId) {
       return isSignedIn() &&
         request.auth.uid in
@@ -23,9 +29,9 @@ service cloud.firestore {
           get(/databases/$(database)/documents/teams/$(teamId)).data.captainUid;
     }
 
-    // users/{uid} — server-written via Admin SDK. Owner can read own doc.
+    // users/{uid} — owner or admin can read; writes server-only.
     match /users/{uid} {
-      allow read: if isOwner(uid);
+      allow read: if isOwner(uid) || isAdmin();
       allow write: if false;
     }
 
@@ -34,24 +40,20 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
-    // hostApplications/{uid} — server-written. Owner can read own status.
+    // hostApplications/{uid} — owner or admin can read; writes server-only.
     match /hostApplications/{uid} {
-      allow read: if isOwner(uid);
+      allow read: if isOwner(uid) || isAdmin();
       allow write: if false;
     }
 
-    // teams/{teamId} — members can read; all writes server-only.
+    // teams/{teamId} — members, captain, or admin can read; writes server-only.
     match /teams/{teamId} {
-      allow read: if isMemberOfTeam(teamId) || isCaptainOfTeam(teamId);
+      allow read: if isMemberOfTeam(teamId) || isCaptainOfTeam(teamId) || isAdmin();
       allow write: if false;
 
       // joinRequests subcollection.
-      // - Captain can read all pending requests on their team.
-      // - Requester can read their own request.
-      // - Any signed-in user can create their own request doc.
-      // - Updates/deletes server-only (approval/denial cleans up via Admin SDK).
       match /joinRequests/{uid} {
-        allow read: if isOwner(uid) || isCaptainOfTeam(teamId);
+        allow read: if isOwner(uid) || isCaptainOfTeam(teamId) || isAdmin();
         allow create: if isOwner(uid)
           && request.resource.data.uid == uid
           && request.resource.data.keys().hasOnly(["uid", "displayName", "requestedAt"]);
