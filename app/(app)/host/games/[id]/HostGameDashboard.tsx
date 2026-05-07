@@ -1,87 +1,103 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
+import type { Timestamp } from "firebase/firestore";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui";
 import { Card } from "@/components/ui/Card";
+import { Countdown } from "@/components/games/Countdown";
+import { useGameSession } from "@/hooks/useGameSession";
 
-interface SessionState {
-  sessionId: string;
-  hostUid: string;
-  venueNameSnapshot: string;
-  questionSetNameSnapshot: string;
-  status: "lobby" | "active" | "ended";
-  currentQuestionIndex: number;
-  revealedIndex: number;
-  sessionCode: string | null;
-  questions: Array<
-    | { hidden: true }
-    | {
-        prompt: string;
-        choices: string[];
-        points: number;
-        correctIndex: number | null;
-      }
-  >;
-  players: Record<string, { uid: string; displayName: string; score: number }>;
+interface PlayerRow {
+  uid: string;
+  displayName: string;
+  score: number;
 }
 
-export function HostGameDashboard({ sessionId }: { sessionId: string }) {
+interface QuestionRow {
+  prompt: string;
+  choices: string[];
+  points: number;
+  correctIndex: number | null;
+}
+
+function isTimestamp(v: unknown): v is Timestamp {
+  return (
+    typeof v === "object" &&
+    v !== null &&
+    typeof (v as { toMillis?: unknown }).toMillis === "function"
+  );
+}
+
+function tsToMs(value: unknown): number | null {
+  return isTimestamp(value) ? value.toMillis() : null;
+}
+
+export function HostGameDashboard({
+  sessionId,
+  myUid,
+}: {
+  sessionId: string;
+  myUid: string;
+}) {
   const router = useRouter();
-  const [state, setState] = useState<SessionState | null>(null);
+  const { session, answerKey, loading, error } = useGameSession(
+    sessionId,
+    myUid,
+  );
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const refresh = useCallback(async () => {
-    const res = await fetch(`/api/games/${sessionId}`, { cache: "no-store" });
-    if (!res.ok) {
-      setError("Could not load session.");
-      return;
-    }
-    setState((await res.json()) as SessionState);
-  }, [sessionId]);
-
-  /* eslint-disable react-hooks/set-state-in-effect */
-  useEffect(() => {
-    refresh();
-    const t = setInterval(refresh, 3000);
-    return () => clearInterval(t);
-  }, [refresh]);
-  /* eslint-enable react-hooks/set-state-in-effect */
+  const [actionError, setActionError] = useState<string | null>(null);
 
   async function call(
     path: string,
     method: "POST" | "DELETE" = "POST",
   ): Promise<void> {
     setBusy(true);
-    setError(null);
+    setActionError(null);
     try {
       const res = await fetch(path, { method });
       if (!res.ok) {
         const b = (await res.json().catch(() => ({}))) as { error?: string };
         throw new Error(b.error ?? "Action failed");
       }
-      await refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Action failed");
+      setActionError(err instanceof Error ? err.message : "Action failed");
     } finally {
       setBusy(false);
     }
   }
 
-  if (!state) {
-    return <p className="text-text-muted">Loading session…</p>;
+  if (loading) return <p className="text-text-muted">Loading session…</p>;
+  if (error || !session) {
+    return <p className="text-game-red">{error ?? "Session not found."}</p>;
   }
 
-  const players = Object.values(state.players).sort(
-    (a, b) => b.score - a.score,
-  );
-  const currentQ =
-    state.status === "active"
-      ? state.questions[state.currentQuestionIndex]
-      : null;
-  const currentRendered = currentQ && !("hidden" in currentQ) ? currentQ : null;
+  const status = String(session.status ?? "lobby") as
+    | "lobby"
+    | "active"
+    | "ended";
+  const currentQuestionIndex = Number(session.currentQuestionIndex ?? -1);
+  const sessionCode = String(session.sessionCode ?? "");
+  const venueName = String(session.venueNameSnapshot ?? "");
+  const questionSetName = String(session.questionSetNameSnapshot ?? "");
+  const deadline = tsToMs(session.currentQuestionDeadline);
+
+  const sanitizedQuestions =
+    (session.questions as QuestionRow[] | undefined) ?? [];
+  const fullQuestions =
+    (answerKey?.questions as QuestionRow[] | undefined) ?? null;
+  const questions: QuestionRow[] = sanitizedQuestions.map((q, i) => ({
+    ...q,
+    correctIndex: fullQuestions?.[i]?.correctIndex ?? q.correctIndex ?? null,
+  }));
+
+  const players: PlayerRow[] = Object.values(
+    (session.players as Record<string, PlayerRow>) ?? {},
+  ).sort((a, b) => b.score - a.score);
+
+  const currentRendered =
+    status === "active" ? questions[currentQuestionIndex] : null;
 
   return (
     <div className="flex flex-col gap-6">
@@ -89,42 +105,43 @@ export function HostGameDashboard({ sessionId }: { sessionId: string }) {
         <div>
           <p className="text-text-muted text-sm">Game session</p>
           <h1 className="font-display text-3xl tracking-[3px]">
-            {state.venueNameSnapshot.toUpperCase()}
+            {venueName.toUpperCase()}
           </h1>
-          <p className="text-text-faint text-sm mt-1">
-            {state.questionSetNameSnapshot}
-          </p>
+          <p className="text-text-faint text-sm mt-1">{questionSetName}</p>
         </div>
         <div className="flex flex-col items-end gap-2">
           <Badge
             tone={
-              state.status === "ended"
+              status === "ended"
                 ? "neutral"
-                : state.status === "active"
+                : status === "active"
                   ? "success"
                   : "pending"
             }
           >
-            {state.status}
+            {status}
           </Badge>
-          {state.sessionCode && state.status !== "ended" && (
+          {sessionCode && status !== "ended" && (
             <div className="font-display text-3xl tracking-[6px]">
-              {state.sessionCode}
+              {sessionCode}
             </div>
+          )}
+          {status === "active" && (
+            <Countdown deadline={deadline} className="text-2xl" />
           )}
         </div>
       </header>
 
-      {error && (
+      {actionError && (
         <div
           role="alert"
           className="text-sm text-game-red bg-game-red/10 border border-game-red/30 rounded-md px-3 py-2"
         >
-          {error}
+          {actionError}
         </div>
       )}
 
-      {state.status === "lobby" && (
+      {status === "lobby" && (
         <Card>
           <div className="p-5">
             <p className="text-text-muted mb-4">
@@ -157,12 +174,12 @@ export function HostGameDashboard({ sessionId }: { sessionId: string }) {
         </Card>
       )}
 
-      {state.status === "active" && currentRendered && (
+      {status === "active" && currentRendered && (
         <Card variant="neon">
           <div className="p-6">
             <div className="text-xs uppercase tracking-[3px] text-text-faint mb-2">
-              Question {state.currentQuestionIndex + 1} of{" "}
-              {state.questions.length} · {currentRendered.points} pt
+              Question {currentQuestionIndex + 1} of {questions.length} ·{" "}
+              {currentRendered.points} pt
               {currentRendered.points === 1 ? "" : "s"}
             </div>
             <div className="font-display text-2xl tracking-[1px] mb-5">
@@ -195,7 +212,7 @@ export function HostGameDashboard({ sessionId }: { sessionId: string }) {
                 onClick={() => call(`/api/games/${sessionId}/advance`)}
                 disabled={busy}
               >
-                {state.currentQuestionIndex + 1 < state.questions.length
+                {currentQuestionIndex + 1 < questions.length
                   ? "Next question"
                   : "End game"}
               </Button>
@@ -215,7 +232,7 @@ export function HostGameDashboard({ sessionId }: { sessionId: string }) {
         </Card>
       )}
 
-      {state.status === "ended" && (
+      {status === "ended" && (
         <Card>
           <div className="p-6">
             <div className="text-xs uppercase tracking-[3px] text-text-faint mb-2">

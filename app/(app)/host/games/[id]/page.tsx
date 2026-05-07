@@ -31,7 +31,7 @@ export default async function HostGamePage({
           ← Host tools
         </Link>
       </div>
-      <HostGameDashboard sessionId={id} />
+      <HostGameDashboard sessionId={id} myUid={session.uid} />
     </main>
   );
 }

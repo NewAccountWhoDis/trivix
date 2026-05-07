@@ -65,7 +65,7 @@ Solution: split into **two collections**.
   `gameSessionKeys`. Delete the keys doc after finalization (no longer
   needed; saves storage).
 - **175. Strip the role-based response sanitization in `GET
-  /api/games/[id]`** — the doc is already player-safe. Host still gets
+/api/games/[id]`** — the doc is already player-safe. Host still gets
   full session via the same route, but for the answer key the host UI
   reads `gameSessionKeys` directly via `onSnapshot`.
 

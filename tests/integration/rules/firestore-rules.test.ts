@@ -494,11 +494,7 @@ describe("firestore.rules — gameSessionKeys/{sessionId}", () => {
     await seed({ hostUid: "alice" });
     const db = env.authenticatedContext("alice").firestore();
     await assertFails(
-      setDoc(
-        doc(db, "gameSessionKeys/g1"),
-        { questions: [] },
-        { merge: true },
-      ),
+      setDoc(doc(db, "gameSessionKeys/g1"), { questions: [] }, { merge: true }),
     );
   });
 });

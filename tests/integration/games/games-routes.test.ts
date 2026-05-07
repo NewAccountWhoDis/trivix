@@ -153,10 +153,7 @@ describe("POST /api/games (create)", () => {
     const s = await adminDb.collection("gameSessions").doc(sessionId).get();
     expect(s.data()!.questions[0].correctIndex).toBeNull();
     expect(s.data()!.questions[1].correctIndex).toBeNull();
-    const k = await adminDb
-      .collection("gameSessionKeys")
-      .doc(sessionId)
-      .get();
+    const k = await adminDb.collection("gameSessionKeys").doc(sessionId).get();
     expect(k.exists).toBe(true);
     expect(k.data()!.questions[0].correctIndex).toBe(0);
     expect(k.data()!.questions[1].correctIndex).toBe(1);
@@ -609,9 +606,7 @@ describe("Plan 8 — split collection + timer enforcement", () => {
       params: Promise.resolve({ id: sessionId }),
     });
     expect(
-      (
-        await adminDb.collection("gameSessionKeys").doc(sessionId).get()
-      ).exists,
+      (await adminDb.collection("gameSessionKeys").doc(sessionId).get()).exists,
     ).toBe(false);
   });
 
@@ -625,9 +620,7 @@ describe("Plan 8 — split collection + timer enforcement", () => {
       (await adminDb.collection("gameSessions").doc(sessionId).get()).exists,
     ).toBe(false);
     expect(
-      (
-        await adminDb.collection("gameSessionKeys").doc(sessionId).get()
-      ).exists,
+      (await adminDb.collection("gameSessionKeys").doc(sessionId).get()).exists,
     ).toBe(false);
   });
 });

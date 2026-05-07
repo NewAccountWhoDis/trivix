@@ -57,10 +57,7 @@ export async function GET(
   // sanitized) but with future questions hidden.
   let answerKey: QuestionLike[] | null = null;
   if (isHost || admin) {
-    const keysSnap = await adminDb
-      .collection("gameSessionKeys")
-      .doc(id)
-      .get();
+    const keysSnap = await adminDb.collection("gameSessionKeys").doc(id).get();
     if (keysSnap.exists) {
       answerKey = (keysSnap.data()?.questions as QuestionLike[]) ?? null;
     }

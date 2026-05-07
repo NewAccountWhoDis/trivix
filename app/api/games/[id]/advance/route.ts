@@ -44,10 +44,9 @@ export async function POST(
   // Look up the answer key so we can fill in correctIndex on the
   // sanitized session doc for the just-finished question.
   const keysSnap = await keysRef.get();
-  const fullQuestions =
-    keysSnap.exists
-      ? ((keysSnap.data()?.questions as QuestionLike[] | undefined) ?? [])
-      : [];
+  const fullQuestions = keysSnap.exists
+    ? ((keysSnap.data()?.questions as QuestionLike[] | undefined) ?? [])
+    : [];
   const revealCorrect = Number(fullQuestions[currentIndex]?.correctIndex ?? 0);
 
   // Build the updated questions array with the just-finished correctIndex filled in.

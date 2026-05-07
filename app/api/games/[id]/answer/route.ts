@@ -67,7 +67,10 @@ export async function POST(
         throw new Error("ALREADY_ANSWERED");
       }
 
-      const deadline = data.currentQuestionDeadline as Timestamp | null | undefined;
+      const deadline = data.currentQuestionDeadline as
+        | Timestamp
+        | null
+        | undefined;
       if (deadline && Date.now() > deadline.toMillis()) {
         throw new Error("DEADLINE_PASSED");
       }

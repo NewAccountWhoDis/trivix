@@ -1,38 +1,41 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
+import type { Timestamp } from "firebase/firestore";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui";
 import { Card } from "@/components/ui/Card";
+import { Countdown } from "@/components/games/Countdown";
+import { useGameSession } from "@/hooks/useGameSession";
 
-interface PlayerLite {
+interface QuestionRow {
+  prompt: string;
+  choices: string[];
+  points: number;
+  correctIndex: number | null;
+}
+
+interface PlayerRow {
   uid: string;
   displayName: string;
   score: number;
-  answers: Record<
+  answers?: Record<
     string,
     { choiceIndex: number; correct: boolean } | undefined
   >;
 }
 
-interface SessionState {
-  sessionId: string;
-  status: "lobby" | "active" | "ended";
-  currentQuestionIndex: number;
-  revealedIndex: number;
-  questions: Array<
-    | { hidden: true }
-    | {
-        prompt: string;
-        choices: string[];
-        points: number;
-        correctIndex: number | null;
-      }
-  >;
-  players: Record<string, PlayerLite>;
-  isPlayer: boolean;
-  isHost: boolean;
+function isTimestamp(v: unknown): v is Timestamp {
+  return (
+    typeof v === "object" &&
+    v !== null &&
+    typeof (v as { toMillis?: unknown }).toMillis === "function"
+  );
+}
+
+function tsToMs(value: unknown): number | null {
+  return isTimestamp(value) ? value.toMillis() : null;
 }
 
 export function PlayerLiveView({
@@ -42,37 +45,49 @@ export function PlayerLiveView({
   sessionId: string;
   myUid: string;
 }) {
-  const [state, setState] = useState<SessionState | null>(null);
+  const { session, loading, error } = useGameSession(sessionId, myUid);
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [now, setNow] = useState<number>(() => Date.now());
 
-  const refresh = useCallback(async () => {
-    const res = await fetch(`/api/games/${sessionId}`, { cache: "no-store" });
-    if (!res.ok) {
-      setError("Could not load session.");
-      return;
-    }
-    setState((await res.json()) as SessionState);
-  }, [sessionId]);
-
-  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
-    refresh();
-    const t = setInterval(refresh, 3000);
+    const t = setInterval(() => setNow(Date.now()), 500);
     return () => clearInterval(t);
-  }, [refresh]);
-  /* eslint-enable react-hooks/set-state-in-effect */
+  }, []);
+
+  if (loading) return <p className="text-text-muted">Loading…</p>;
+  if (error || !session) {
+    return <p className="text-game-red">{error ?? "Session not found."}</p>;
+  }
+
+  const status = String(session.status ?? "lobby") as
+    | "lobby"
+    | "active"
+    | "ended";
+  const currentQuestionIndex = Number(session.currentQuestionIndex ?? -1);
+  const deadline = tsToMs(session.currentQuestionDeadline);
+  const playersMap = (session.players as Record<string, PlayerRow>) ?? {};
+  const me = playersMap[myUid];
+  const myScore = me?.score ?? 0;
+  const players = Object.values(playersMap).sort((a, b) => b.score - a.score);
+  const myAnswerKey = String(currentQuestionIndex);
+  const myAnswer = me?.answers?.[myAnswerKey];
+
+  const sanitizedQuestions =
+    (session.questions as QuestionRow[] | undefined) ?? [];
+  const currentRendered =
+    status === "active" ? sanitizedQuestions[currentQuestionIndex] : null;
+  const timerExpired = deadline !== null && now > deadline;
 
   async function submit(choiceIndex: number) {
-    if (!state) return;
     setSubmitting(true);
-    setError(null);
+    setSubmitError(null);
     try {
       const res = await fetch(`/api/games/${sessionId}/answer`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          questionIndex: state.currentQuestionIndex,
+          questionIndex: currentQuestionIndex,
           choiceIndex,
         }),
       });
@@ -80,28 +95,12 @@ export function PlayerLiveView({
         const b = (await res.json().catch(() => ({}))) as { error?: string };
         throw new Error(b.error ?? "Submit failed");
       }
-      await refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Submit failed");
+      setSubmitError(err instanceof Error ? err.message : "Submit failed");
     } finally {
       setSubmitting(false);
     }
   }
-
-  if (!state) return <p className="text-text-muted">Loading…</p>;
-
-  const me = state.players[myUid];
-  const myScore = me?.score ?? 0;
-  const players = Object.values(state.players).sort(
-    (a, b) => b.score - a.score,
-  );
-  const myAnswerKey = String(state.currentQuestionIndex);
-  const myAnswer = me?.answers?.[myAnswerKey];
-  const currentQ =
-    state.status === "active"
-      ? state.questions[state.currentQuestionIndex]
-      : null;
-  const renderable = currentQ && !("hidden" in currentQ) ? currentQ : null;
 
   return (
     <div className="flex flex-col gap-6">
@@ -110,24 +109,27 @@ export function PlayerLiveView({
           <p className="text-text-muted text-sm">Live game</p>
           <h1 className="font-display text-3xl tracking-[3px]">YOUR SCORE</h1>
         </div>
-        <div className="text-right">
+        <div className="text-right flex flex-col items-end gap-2">
           <div className="font-display text-5xl">{myScore}</div>
-          <Badge tone={state.status === "ended" ? "neutral" : "success"}>
-            {state.status}
+          <Badge tone={status === "ended" ? "neutral" : "success"}>
+            {status}
           </Badge>
+          {status === "active" && (
+            <Countdown deadline={deadline} className="text-2xl" />
+          )}
         </div>
       </header>
 
-      {error && (
+      {submitError && (
         <div
           role="alert"
           className="text-sm text-game-red bg-game-red/10 border border-game-red/30 rounded-md px-3 py-2"
         >
-          {error}
+          {submitError}
         </div>
       )}
 
-      {state.status === "lobby" && (
+      {status === "lobby" && (
         <Card>
           <div className="p-6 text-text-muted">
             Waiting for the host to start the game…
@@ -135,20 +137,20 @@ export function PlayerLiveView({
         </Card>
       )}
 
-      {state.status === "active" && renderable && (
+      {status === "active" && currentRendered && (
         <Card variant="neon">
           <div className="p-6">
             <div className="text-xs uppercase tracking-[3px] text-text-faint mb-2">
-              Question {state.currentQuestionIndex + 1} · {renderable.points} pt
-              {renderable.points === 1 ? "" : "s"}
+              Question {currentQuestionIndex + 1} · {currentRendered.points} pt
+              {currentRendered.points === 1 ? "" : "s"}
             </div>
             <div className="font-display text-2xl tracking-[1px] mb-5">
-              {renderable.prompt}
+              {currentRendered.prompt}
             </div>
             <div className="grid sm:grid-cols-2 gap-3">
-              {renderable.choices.map((c, i) => {
-                const reveal = renderable.correctIndex !== null;
-                const isCorrect = i === renderable.correctIndex;
+              {currentRendered.choices.map((c, i) => {
+                const reveal = currentRendered.correctIndex !== null;
+                const isCorrect = i === currentRendered.correctIndex;
                 const isMine = myAnswer?.choiceIndex === i;
                 const tone = reveal
                   ? isCorrect
@@ -164,7 +166,9 @@ export function PlayerLiveView({
                     key={i}
                     type="button"
                     onClick={() => submit(i)}
-                    disabled={submitting || Boolean(myAnswer) || reveal}
+                    disabled={
+                      submitting || Boolean(myAnswer) || reveal || timerExpired
+                    }
                     className={`text-left p-4 rounded-md border transition ${tone} disabled:cursor-default`}
                   >
                     <span className="text-text-muted mr-2">
@@ -175,16 +179,21 @@ export function PlayerLiveView({
                 );
               })}
             </div>
-            {myAnswer && !renderable.correctIndex && (
+            {myAnswer && currentRendered.correctIndex === null && (
               <p className="mt-4 text-sm text-text-muted">
                 Locked in. Waiting for the host to reveal.
+              </p>
+            )}
+            {!myAnswer && timerExpired && (
+              <p className="mt-4 text-sm text-game-red">
+                Time&rsquo;s up — no answer locked in.
               </p>
             )}
           </div>
         </Card>
       )}
 
-      {state.status === "ended" && (
+      {status === "ended" && (
         <Card>
           <div className="p-6">
             <div className="text-xs uppercase tracking-[3px] text-text-faint mb-2">
