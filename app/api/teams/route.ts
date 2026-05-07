@@ -4,6 +4,7 @@ import { adminDb } from "@/lib/firebase/admin";
 import { verifySession } from "@/lib/firebase/session";
 import { generateUniqueInviteCode } from "@/lib/teams/invite-code";
 import { createTeamSchema } from "@/lib/validation/schemas";
+import { DEFAULT_TEAM_STATS } from "@/types/firestore";
 
 export const runtime = "nodejs";
 
@@ -66,6 +67,7 @@ export async function POST(request: Request): Promise<NextResponse> {
         captainUid: session.uid,
         memberUids: [session.uid],
         createdBy: session.uid,
+        stats: DEFAULT_TEAM_STATS,
         createdAt: now,
         updatedAt: now,
       });

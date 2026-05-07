@@ -63,7 +63,17 @@ export async function POST(request: Request): Promise<NextResponse> {
   }
 
   const userSnap = await adminDb.collection("users").doc(session.uid).get();
-  const displayName = String(userSnap.data()?.displayName ?? session.uid);
+  const userData = userSnap.data() ?? {};
+  const displayName = String(userData.displayName ?? session.uid);
+  const teamId = (userData.teamId as string | null | undefined) ?? null;
+
+  let teamNameSnapshot: string | null = null;
+  if (teamId) {
+    const teamSnap = await adminDb.collection("teams").doc(teamId).get();
+    if (teamSnap.exists) {
+      teamNameSnapshot = String(teamSnap.data()?.name ?? "");
+    }
+  }
 
   await sessionDoc.ref.update({
     [`players.${session.uid}`]: {
@@ -71,6 +81,8 @@ export async function POST(request: Request): Promise<NextResponse> {
       displayName,
       joinedAt: FieldValue.serverTimestamp(),
       score: 0,
+      teamId,
+      teamNameSnapshot,
       answers: {},
     },
   });

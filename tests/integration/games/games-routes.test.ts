@@ -625,6 +625,162 @@ describe("Plan 8 — split collection + timer enforcement", () => {
   });
 });
 
+describe("Plan 9 — team integration", () => {
+  async function seedTeam(teamId: string, name: string, captainUid: string) {
+    await adminDb
+      .collection("teams")
+      .doc(teamId)
+      .set({
+        teamId,
+        name,
+        inviteCode: "TESTCD",
+        captainUid,
+        memberUids: [captainUid],
+        createdBy: captainUid,
+        stats: {
+          gamesPlayed: 0,
+          gamesWon: 0,
+          lastPlayedAt: null,
+          recentGames: [],
+        },
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+  }
+
+  it("/games/join snapshots teamId + teamNameSnapshot for teamed players", async () => {
+    const { sessionId, sessionCode } = await setupHostWithGame();
+    await seedTeam("t1", "Quiz Crew", "bob");
+    await seedUser("bob", { teamId: "t1" });
+    asUser("bob");
+    await joinGame(jsonReq("POST", { sessionCode }));
+
+    const s = await adminDb.collection("gameSessions").doc(sessionId).get();
+    expect(s.data()!.players.bob.teamId).toBe("t1");
+    expect(s.data()!.players.bob.teamNameSnapshot).toBe("Quiz Crew");
+  });
+
+  it("/games/join records teamId=null for free agents", async () => {
+    const { sessionId, sessionCode } = await setupHostWithGame();
+    await seedUser("bob");
+    asUser("bob");
+    await joinGame(jsonReq("POST", { sessionCode }));
+
+    const s = await adminDb.collection("gameSessions").doc(sessionId).get();
+    expect(s.data()!.players.bob.teamId).toBeNull();
+    expect(s.data()!.players.bob.teamNameSnapshot).toBeNull();
+  });
+
+  it("finalize updates per-team stats; winning team gets gamesWon++", async () => {
+    const { sessionId, sessionCode } = await setupHostWithGame();
+    await seedTeam("t1", "Crew A", "bob");
+    await seedTeam("t2", "Crew B", "carol");
+    await seedUser("bob", { teamId: "t1" });
+    await seedUser("carol", { teamId: "t2" });
+    asUser("bob");
+    await joinGame(jsonReq("POST", { sessionCode }));
+    asUser("carol");
+    await joinGame(jsonReq("POST", { sessionCode }));
+    asUser("alice");
+    await startGame(jsonReq("POST"), {
+      params: Promise.resolve({ id: sessionId }),
+    });
+
+    asUser("bob");
+    await submitAnswer(
+      jsonReq("POST", { questionIndex: 0, choiceIndex: 0 }),
+      { params: Promise.resolve({ id: sessionId }) },
+    );
+    asUser("carol");
+    await submitAnswer(
+      jsonReq("POST", { questionIndex: 0, choiceIndex: 2 }),
+      { params: Promise.resolve({ id: sessionId }) },
+    );
+
+    asUser("alice");
+    await endGame(jsonReq("POST"), {
+      params: Promise.resolve({ id: sessionId }),
+    });
+
+    const t1 = await adminDb.collection("teams").doc("t1").get();
+    const t2 = await adminDb.collection("teams").doc("t2").get();
+    expect(t1.data()!.stats.gamesPlayed).toBe(1);
+    expect(t1.data()!.stats.gamesWon).toBe(1);
+    expect(t1.data()!.stats.recentGames).toHaveLength(1);
+    expect(t1.data()!.stats.recentGames[0]!.finalRank).toBe(1);
+    expect(t1.data()!.stats.recentGames[0]!.totalTeams).toBe(2);
+    expect(t1.data()!.stats.recentGames[0]!.teamScore).toBe(1);
+
+    expect(t2.data()!.stats.gamesPlayed).toBe(1);
+    expect(t2.data()!.stats.gamesWon).toBe(0);
+    expect(t2.data()!.stats.recentGames[0]!.finalRank).toBe(2);
+  });
+
+  it("teams tied for top → no team gets gamesWon++", async () => {
+    const { sessionId, sessionCode } = await setupHostWithGame();
+    await seedTeam("t1", "Crew A", "bob");
+    await seedTeam("t2", "Crew B", "carol");
+    await seedUser("bob", { teamId: "t1" });
+    await seedUser("carol", { teamId: "t2" });
+    asUser("bob");
+    await joinGame(jsonReq("POST", { sessionCode }));
+    asUser("carol");
+    await joinGame(jsonReq("POST", { sessionCode }));
+    asUser("alice");
+    await startGame(jsonReq("POST"), {
+      params: Promise.resolve({ id: sessionId }),
+    });
+    asUser("bob");
+    await submitAnswer(
+      jsonReq("POST", { questionIndex: 0, choiceIndex: 0 }),
+      { params: Promise.resolve({ id: sessionId }) },
+    );
+    asUser("carol");
+    await submitAnswer(
+      jsonReq("POST", { questionIndex: 0, choiceIndex: 0 }),
+      { params: Promise.resolve({ id: sessionId }) },
+    );
+    asUser("alice");
+    await endGame(jsonReq("POST"), {
+      params: Promise.resolve({ id: sessionId }),
+    });
+
+    const t1 = await adminDb.collection("teams").doc("t1").get();
+    const t2 = await adminDb.collection("teams").doc("t2").get();
+    expect(t1.data()!.stats.gamesWon).toBe(0);
+    expect(t2.data()!.stats.gamesWon).toBe(0);
+    expect(t1.data()!.stats.gamesPlayed).toBe(1);
+    expect(t2.data()!.stats.gamesPlayed).toBe(1);
+  });
+
+  it("disbanded team mid-game is silently skipped on finalize", async () => {
+    const { sessionId, sessionCode } = await setupHostWithGame();
+    await seedTeam("t1", "Crew A", "bob");
+    await seedUser("bob", { teamId: "t1" });
+    asUser("bob");
+    await joinGame(jsonReq("POST", { sessionCode }));
+    asUser("alice");
+    await startGame(jsonReq("POST"), {
+      params: Promise.resolve({ id: sessionId }),
+    });
+    asUser("bob");
+    await submitAnswer(
+      jsonReq("POST", { questionIndex: 0, choiceIndex: 0 }),
+      { params: Promise.resolve({ id: sessionId }) },
+    );
+
+    await adminDb.collection("teams").doc("t1").delete();
+
+    asUser("alice");
+    const res = await endGame(jsonReq("POST"), {
+      params: Promise.resolve({ id: sessionId }),
+    });
+    expect(res.status).toBe(200);
+    const userBob = await adminDb.collection("users").doc("bob").get();
+    expect(userBob.data()!.stats.gamesPlayed).toBe(1);
+  });
+});
+
 describe("DELETE /api/games/[id] (cancel)", () => {
   it("host cancels session in lobby", async () => {
     const { sessionId } = await setupHostWithGame();

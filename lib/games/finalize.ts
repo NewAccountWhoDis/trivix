@@ -1,6 +1,12 @@
 import "server-only";
 import { FieldValue } from "firebase-admin/firestore";
 import { adminDb } from "@/lib/firebase/admin";
+import {
+  aggregateTeams,
+  uniqueTopRealTeam,
+} from "@/lib/games/team-aggregate";
+
+const TEAM_RECENT_GAMES_CAP = 25;
 
 interface PlayerAggregate {
   uid: string;
@@ -105,6 +111,58 @@ export async function finalizeGameSession(sessionId: string): Promise<void> {
       "stats.longestWinStreak": newLongestStreak,
       "stats.lastPlayedAt": now,
       "stats.venues": venues,
+      updatedAt: now,
+    });
+  }
+
+  // ── Team writeback ──
+  const teamAggregates = aggregateTeams(
+    players as Record<
+      string,
+      {
+        uid: string;
+        displayName: string;
+        score: number;
+        teamId: string | null;
+        teamNameSnapshot: string | null;
+      } | undefined
+    >,
+  );
+  const realTeams = teamAggregates.filter((t) => t.teamId !== null);
+  const totalTeams = realTeams.length;
+  const winnerTeam = uniqueTopRealTeam(teamAggregates);
+
+  for (let rank = 0; rank < realTeams.length; rank++) {
+    const t = realTeams[rank]!;
+    const teamRef = adminDb.collection("teams").doc(t.teamId!);
+    const teamSnap = await teamRef.get();
+    if (!teamSnap.exists) continue; // disbanded mid-game; skip silently
+    const teamData = teamSnap.data() ?? {};
+    const teamStats =
+      (teamData.stats as Record<string, unknown> | undefined) ?? {};
+    const recent =
+      ((teamStats.recentGames as unknown[] | undefined) ?? []).slice();
+
+    const summary = {
+      sessionId,
+      venueNameSnapshot: venueName,
+      finalRank: rank + 1,
+      totalTeams,
+      teamScore: t.score,
+      playedAt: nowMs,
+    };
+    recent.unshift(summary);
+    if (recent.length > TEAM_RECENT_GAMES_CAP) {
+      recent.length = TEAM_RECENT_GAMES_CAP;
+    }
+
+    const isTeamWinner = winnerTeam?.teamId === t.teamId;
+    await teamRef.update({
+      "stats.gamesPlayed": Number(teamStats.gamesPlayed ?? 0) + 1,
+      "stats.gamesWon":
+        Number(teamStats.gamesWon ?? 0) + (isTeamWinner ? 1 : 0),
+      "stats.lastPlayedAt": now,
+      "stats.recentGames": recent,
       updatedAt: now,
     });
   }
