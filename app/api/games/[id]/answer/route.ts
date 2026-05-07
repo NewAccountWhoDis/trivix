@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { FieldValue } from "firebase-admin/firestore";
+import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import { adminDb } from "@/lib/firebase/admin";
 import { verifySession } from "@/lib/firebase/session";
 import { submitAnswerSchema } from "@/lib/validation/schemas";
@@ -42,6 +42,7 @@ export async function POST(
 
   const { id } = await ctx.params;
   const ref = adminDb.collection("gameSessions").doc(id);
+  const keysRef = adminDb.collection("gameSessionKeys").doc(id);
 
   try {
     await adminDb.runTransaction(async (tx) => {
@@ -66,8 +67,16 @@ export async function POST(
         throw new Error("ALREADY_ANSWERED");
       }
 
-      const questions = (data.questions as QuestionLike[] | undefined) ?? [];
-      const q = questions[parsed.data.questionIndex];
+      const deadline = data.currentQuestionDeadline as Timestamp | null | undefined;
+      if (deadline && Date.now() > deadline.toMillis()) {
+        throw new Error("DEADLINE_PASSED");
+      }
+
+      const keysSnap = await tx.get(keysRef);
+      if (!keysSnap.exists) throw new Error("KEYS_MISSING");
+      const fullQuestions =
+        (keysSnap.data()?.questions as QuestionLike[] | undefined) ?? [];
+      const q = fullQuestions[parsed.data.questionIndex];
       if (!q) throw new Error("NO_SUCH_QUESTION");
 
       const correct = parsed.data.choiceIndex === Number(q.correctIndex ?? -1);
@@ -93,6 +102,8 @@ export async function POST(
       WRONG_QUESTION: [409, "That isn't the current question"],
       ALREADY_ANSWERED: [409, "Already answered this question"],
       NO_SUCH_QUESTION: [404, "Question not found"],
+      DEADLINE_PASSED: [409, "Time is up"],
+      KEYS_MISSING: [500, "Answer key missing"],
     };
     const entry = map[msg];
     if (entry) {

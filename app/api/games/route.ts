@@ -59,25 +59,46 @@ export async function POST(request: Request): Promise<NextResponse> {
   const sessionCode = await generateUniqueSessionCode();
   const ref = adminDb.collection("gameSessions").doc();
   const sessionId = ref.id;
+  const keysRef = adminDb.collection("gameSessionKeys").doc(sessionId);
   const now = FieldValue.serverTimestamp();
 
-  await ref.set({
+  // Strip correctIndex from the player-safe session doc — fill back in
+  // per question only when the host advances past it.
+  const sanitizedQuestions = (questions as Array<Record<string, unknown>>).map(
+    (q) => ({
+      prompt: q.prompt,
+      choices: q.choices,
+      points: q.points,
+      correctIndex: null,
+    }),
+  );
+
+  const batch = adminDb.batch();
+  batch.set(ref, {
     sessionId,
     hostUid: auth.uid,
     venueId: parsed.data.venueId,
     venueNameSnapshot: String(venueSnap.data()?.name ?? ""),
     questionSetId: parsed.data.questionSetId,
     questionSetNameSnapshot: String(setSnap.data()?.name ?? ""),
-    questions,
+    questions: sanitizedQuestions,
     status: "lobby",
     currentQuestionIndex: -1,
     revealedIndex: -1,
     sessionCode,
     players: {},
+    currentQuestionDeadline: null,
     createdAt: now,
     startedAt: null,
     endedAt: null,
   });
+  batch.set(keysRef, {
+    sessionId,
+    hostUid: auth.uid,
+    questions,
+    createdAt: now,
+  });
+  await batch.commit();
 
   return NextResponse.json({ ok: true, sessionId, sessionCode });
 }

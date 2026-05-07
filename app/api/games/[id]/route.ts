@@ -8,7 +8,7 @@ export const runtime = "nodejs";
 interface QuestionLike {
   prompt?: string;
   choices?: string[];
-  correctIndex?: number;
+  correctIndex?: number | null;
   points?: number;
 }
 
@@ -52,20 +52,35 @@ export async function GET(
   const revealedIndex = Number(s.revealedIndex ?? -1);
   const rawQuestions = (s.questions as QuestionLike[] | undefined) ?? [];
 
-  // Sanitize question payload based on role:
-  // - host or admin: full questions including correctIndex
-  // - player: hide future questions; hide correctIndex on unrevealed
-  const questions = rawQuestions.map((q, i) => {
-    const showCorrect = isHost || admin || i <= revealedIndex;
-    const isFuture = !isHost && !admin && i > currentQuestionIndex;
-    if (isFuture) {
-      return { hidden: true } as const;
+  // Host/admin can also see correctIndex for unrevealed questions by
+  // merging from gameSessionKeys. Player sees the doc as-is (already
+  // sanitized) but with future questions hidden.
+  let answerKey: QuestionLike[] | null = null;
+  if (isHost || admin) {
+    const keysSnap = await adminDb
+      .collection("gameSessionKeys")
+      .doc(id)
+      .get();
+    if (keysSnap.exists) {
+      answerKey = (keysSnap.data()?.questions as QuestionLike[]) ?? null;
     }
+  }
+
+  const questions = rawQuestions.map((q, i) => {
+    const isFuture = !isHost && !admin && i > currentQuestionIndex;
+    if (isFuture) return { hidden: true } as const;
+    const correctFromKey = answerKey?.[i]?.correctIndex;
+    const correctIndex =
+      isHost || admin
+        ? typeof correctFromKey === "number"
+          ? correctFromKey
+          : (q.correctIndex ?? null)
+        : (q.correctIndex ?? null);
     return {
       prompt: String(q.prompt ?? ""),
       choices: (q.choices as string[]) ?? [],
       points: Number(q.points ?? 0),
-      correctIndex: showCorrect ? Number(q.correctIndex ?? 0) : null,
+      correctIndex,
     };
   });
 
@@ -84,6 +99,7 @@ export async function GET(
     players,
     isHost,
     isPlayer,
+    currentQuestionDeadline: tsToMs(s.currentQuestionDeadline),
     createdAt: tsToMs(s.createdAt),
     startedAt: tsToMs(s.startedAt),
     endedAt: tsToMs(s.endedAt),
@@ -115,6 +131,10 @@ export async function DELETE(
     );
   }
 
-  await ref.delete();
+  // Cancel deletes the session AND its key doc.
+  const batch = adminDb.batch();
+  batch.delete(ref);
+  batch.delete(adminDb.collection("gameSessionKeys").doc(id));
+  await batch.commit();
   return NextResponse.json({ ok: true });
 }

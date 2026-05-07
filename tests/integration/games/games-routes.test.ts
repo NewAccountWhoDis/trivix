@@ -12,6 +12,7 @@ import { POST as advanceGame } from "@/app/api/games/[id]/advance/route";
 import { POST as submitAnswer } from "@/app/api/games/[id]/answer/route";
 import { POST as endGame } from "@/app/api/games/[id]/end/route";
 import { GET as adminListGames } from "@/app/api/admin/games/route";
+import { Timestamp } from "firebase-admin/firestore";
 import { adminDb } from "@/lib/firebase/admin";
 import { DEFAULT_USER_STATS } from "@/types/firestore";
 import * as session from "@/lib/firebase/session";
@@ -145,6 +146,20 @@ describe("POST /api/games (create)", () => {
     expect(s.data()!.hostUid).toBe("alice");
     expect(s.data()!.venueNameSnapshot).toBe("Joe's Pub");
     expect(s.data()!.questions).toHaveLength(2);
+  });
+
+  it("strips correctIndex from gameSessions and writes it to gameSessionKeys", async () => {
+    const { sessionId } = await setupHostWithGame();
+    const s = await adminDb.collection("gameSessions").doc(sessionId).get();
+    expect(s.data()!.questions[0].correctIndex).toBeNull();
+    expect(s.data()!.questions[1].correctIndex).toBeNull();
+    const k = await adminDb
+      .collection("gameSessionKeys")
+      .doc(sessionId)
+      .get();
+    expect(k.exists).toBe(true);
+    expect(k.data()!.questions[0].correctIndex).toBe(0);
+    expect(k.data()!.questions[1].correctIndex).toBe(1);
   });
 
   it("404 if venue is not the host's", async () => {
@@ -533,6 +548,87 @@ describe("POST /api/games/[id]/end (force-end + stats)", () => {
     expect(userBob.data()!.stats.currentWinStreak).toBe(1);
     expect(userCarol.data()!.stats.currentWinStreak).toBe(0);
     expect(userCarol.data()!.stats.longestWinStreak).toBe(5);
+  });
+});
+
+describe("Plan 8 — split collection + timer enforcement", () => {
+  it("/advance copies correctIndex into gameSessions on reveal", async () => {
+    const { sessionId } = await setupHostWithGame();
+    asUser("alice");
+    await startGame(jsonReq("POST"), {
+      params: Promise.resolve({ id: sessionId }),
+    });
+    let s = await adminDb.collection("gameSessions").doc(sessionId).get();
+    expect(s.data()!.questions[0].correctIndex).toBeNull();
+
+    await advanceGame(jsonReq("POST"), {
+      params: Promise.resolve({ id: sessionId }),
+    });
+    s = await adminDb.collection("gameSessions").doc(sessionId).get();
+    expect(s.data()!.questions[0].correctIndex).toBe(0);
+    // Question 1 (next, not yet revealed) still null.
+    expect(s.data()!.questions[1].correctIndex).toBeNull();
+  });
+
+  it("/answer rejects after currentQuestionDeadline with 409", async () => {
+    const { sessionId, sessionCode } = await setupHostWithGame();
+    await seedUser("bob");
+    asUser("bob");
+    await joinGame(jsonReq("POST", { sessionCode }));
+    asUser("alice");
+    await startGame(jsonReq("POST"), {
+      params: Promise.resolve({ id: sessionId }),
+    });
+
+    // Backdate the deadline by 5 seconds.
+    await adminDb
+      .collection("gameSessions")
+      .doc(sessionId)
+      .update({
+        currentQuestionDeadline: Timestamp.fromMillis(Date.now() - 5000),
+      });
+
+    asUser("bob");
+    const res = await submitAnswer(
+      jsonReq("POST", { questionIndex: 0, choiceIndex: 0 }),
+      { params: Promise.resolve({ id: sessionId }) },
+    );
+    expect(res.status).toBe(409);
+  });
+
+  it("finalize deletes gameSessionKeys when game ends", async () => {
+    const { sessionId, sessionCode } = await setupHostWithGame();
+    await seedUser("bob");
+    asUser("bob");
+    await joinGame(jsonReq("POST", { sessionCode }));
+    asUser("alice");
+    await startGame(jsonReq("POST"), {
+      params: Promise.resolve({ id: sessionId }),
+    });
+    await endGame(jsonReq("POST"), {
+      params: Promise.resolve({ id: sessionId }),
+    });
+    expect(
+      (
+        await adminDb.collection("gameSessionKeys").doc(sessionId).get()
+      ).exists,
+    ).toBe(false);
+  });
+
+  it("DELETE cancel removes both gameSessions and gameSessionKeys", async () => {
+    const { sessionId } = await setupHostWithGame();
+    asUser("alice");
+    await cancelGame(jsonReq("DELETE"), {
+      params: Promise.resolve({ id: sessionId }),
+    });
+    expect(
+      (await adminDb.collection("gameSessions").doc(sessionId).get()).exists,
+    ).toBe(false);
+    expect(
+      (
+        await adminDb.collection("gameSessionKeys").doc(sessionId).get()
+      ).exists,
+    ).toBe(false);
   });
 });
 

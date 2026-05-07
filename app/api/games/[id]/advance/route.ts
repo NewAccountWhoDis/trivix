@@ -1,9 +1,15 @@
 import { NextResponse } from "next/server";
+import { Timestamp } from "firebase-admin/firestore";
 import { adminDb } from "@/lib/firebase/admin";
 import { verifySession } from "@/lib/firebase/session";
+import { QUESTION_DURATION_MS } from "@/lib/games/config";
 import { finalizeGameSession } from "@/lib/games/finalize";
 
 export const runtime = "nodejs";
+
+interface QuestionLike {
+  correctIndex?: number;
+}
 
 export async function POST(
   _request: Request,
@@ -16,6 +22,7 @@ export async function POST(
 
   const { id } = await ctx.params;
   const ref = adminDb.collection("gameSessions").doc(id);
+  const keysRef = adminDb.collection("gameSessionKeys").doc(id);
   const snap = await ref.get();
   if (!snap.exists) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
@@ -29,23 +36,42 @@ export async function POST(
   }
 
   const currentIndex = Number(data.currentQuestionIndex ?? 0);
-  const totalQuestions = ((data.questions as unknown[] | undefined) ?? [])
-    .length;
+  const sanitizedQuestions =
+    (data.questions as Array<Record<string, unknown>> | undefined) ?? [];
+  const totalQuestions = sanitizedQuestions.length;
   const nextIndex = currentIndex + 1;
 
+  // Look up the answer key so we can fill in correctIndex on the
+  // sanitized session doc for the just-finished question.
+  const keysSnap = await keysRef.get();
+  const fullQuestions =
+    keysSnap.exists
+      ? ((keysSnap.data()?.questions as QuestionLike[] | undefined) ?? [])
+      : [];
+  const revealCorrect = Number(fullQuestions[currentIndex]?.correctIndex ?? 0);
+
+  // Build the updated questions array with the just-finished correctIndex filled in.
+  const updatedQuestions = sanitizedQuestions.map((q, i) =>
+    i === currentIndex ? { ...q, correctIndex: revealCorrect } : q,
+  );
+
   if (nextIndex >= totalQuestions) {
-    // Reveal the last question, then end + run stats writeback.
     await ref.update({
       revealedIndex: currentIndex,
       currentQuestionIndex: totalQuestions,
+      currentQuestionDeadline: null,
+      questions: updatedQuestions,
     });
     await finalizeGameSession(id);
     return NextResponse.json({ ok: true, ended: true });
   }
 
+  const deadline = Timestamp.fromMillis(Date.now() + QUESTION_DURATION_MS);
   await ref.update({
     revealedIndex: currentIndex,
     currentQuestionIndex: nextIndex,
+    currentQuestionDeadline: deadline,
+    questions: updatedQuestions,
   });
   return NextResponse.json({ ok: true, ended: false });
 }

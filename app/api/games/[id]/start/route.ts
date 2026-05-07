@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
-import { FieldValue } from "firebase-admin/firestore";
+import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import { adminDb } from "@/lib/firebase/admin";
 import { verifySession } from "@/lib/firebase/session";
+import { QUESTION_DURATION_MS } from "@/lib/games/config";
 
 export const runtime = "nodejs";
 
@@ -30,9 +31,11 @@ export async function POST(
     );
   }
 
+  const deadline = Timestamp.fromMillis(Date.now() + QUESTION_DURATION_MS);
   await ref.update({
     status: "active",
     currentQuestionIndex: 0,
+    currentQuestionDeadline: deadline,
     startedAt: FieldValue.serverTimestamp(),
   });
 

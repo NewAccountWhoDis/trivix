@@ -109,5 +109,18 @@ export async function finalizeGameSession(sessionId: string): Promise<void> {
     });
   }
 
-  await sessionRef.update({ status: "ended", endedAt: now });
+  await sessionRef.update({
+    status: "ended",
+    endedAt: now,
+    currentQuestionDeadline: null,
+  });
+
+  // Drop the answer-key doc — no longer needed once the game is over.
+  await adminDb
+    .collection("gameSessionKeys")
+    .doc(sessionId)
+    .delete()
+    .catch(() => {
+      // Already deleted (e.g., re-finalize) — ignore.
+    });
 }
