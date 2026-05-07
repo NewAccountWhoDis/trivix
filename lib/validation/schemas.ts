@@ -145,13 +145,7 @@ export const questionSchema = z.object({
     .min(5, "At least 5 characters")
     .max(500, "500 characters max"),
   choices: z
-    .array(
-      z
-        .string()
-        .trim()
-        .min(1, "Required")
-        .max(200, "200 characters max"),
-    )
+    .array(z.string().trim().min(1, "Required").max(200, "200 characters max"))
     .length(4, "Exactly 4 choices"),
   correctIndex: z.number().int().min(0).max(3),
   points: z.number().int().min(1).max(10),

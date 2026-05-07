@@ -71,6 +71,20 @@ export default async function HostPage() {
 
   return (
     <main className="min-h-screen px-6 py-10 md:px-12 md:py-14 max-w-3xl mx-auto">
+      <nav className="mb-6 flex gap-3 text-sm">
+        <Link
+          href="/host"
+          className="px-3 py-1 rounded-md bg-brand-ink border border-brand-line text-text-primary"
+        >
+          Venues
+        </Link>
+        <Link
+          href="/host/question-sets"
+          className="px-3 py-1 rounded-md text-text-muted hover:text-text-primary transition"
+        >
+          Question sets
+        </Link>
+      </nav>
       <header className="flex items-start justify-between gap-4 mb-8 flex-wrap">
         <div>
           <p className="text-text-muted text-sm">Host tools</p>

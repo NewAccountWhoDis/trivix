@@ -1,21 +1,16 @@
-import { NextResponse } from "next/server";
 import { Timestamp } from "firebase-admin/firestore";
 import { adminDb } from "@/lib/firebase/admin";
-import { requireAdmin } from "@/lib/admin/auth";
-
-export const runtime = "nodejs";
+import {
+  AdminQuestionSetsTable,
+  type AdminQuestionSetRow,
+} from "./QuestionSetsTable";
 
 function tsToMs(value: unknown): number {
   if (value instanceof Timestamp) return value.toMillis();
   return 0;
 }
 
-export async function GET(): Promise<NextResponse> {
-  const auth = await requireAdmin();
-  if (!auth.ok) {
-    return NextResponse.json({ error: auth.error }, { status: auth.status });
-  }
-
+export default async function AdminQuestionSetsPage() {
   const snap = await adminDb
     .collection("questionSets")
     .orderBy("createdAt", "asc")
@@ -36,7 +31,7 @@ export async function GET(): Promise<NextResponse> {
     }),
   );
 
-  const sets = snap.docs.map((d) => {
+  const sets: AdminQuestionSetRow[] = snap.docs.map((d) => {
     const data = d.data();
     const ownerUid = String(data.ownerUid ?? "");
     const questions = (data.questions as unknown[] | undefined) ?? [];
@@ -48,9 +43,15 @@ export async function GET(): Promise<NextResponse> {
       description: (data.description as string | null) ?? null,
       questionCount: questions.length,
       createdAt: tsToMs(data.createdAt),
-      updatedAt: tsToMs(data.updatedAt),
     };
   });
 
-  return NextResponse.json({ sets });
+  return (
+    <div>
+      <h1 className="font-display text-3xl tracking-[3px] mb-6">
+        QUESTION SETS
+      </h1>
+      <AdminQuestionSetsTable sets={sets} />
+    </div>
+  );
 }

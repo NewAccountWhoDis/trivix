@@ -365,11 +365,7 @@ describe("firestore.rules — questionSets/{setId}", () => {
     await seedSet("alice");
     const db = env.authenticatedContext("alice").firestore();
     await assertFails(
-      setDoc(
-        doc(db, "questionSets/qs1"),
-        { name: "Renamed" },
-        { merge: true },
-      ),
+      setDoc(doc(db, "questionSets/qs1"), { name: "Renamed" }, { merge: true }),
     );
   });
 

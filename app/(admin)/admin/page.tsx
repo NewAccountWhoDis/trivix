@@ -3,16 +3,18 @@ import { adminDb } from "@/lib/firebase/admin";
 import { Card } from "@/components/ui/Card";
 
 export default async function AdminOverviewPage() {
-  const [pendingApps, allUsers, allTeams, allVenues] = await Promise.all([
-    adminDb
-      .collection("hostApplications")
-      .where("status", "==", "pending")
-      .count()
-      .get(),
-    adminDb.collection("users").count().get(),
-    adminDb.collection("teams").count().get(),
-    adminDb.collection("venues").count().get(),
-  ]);
+  const [pendingApps, allUsers, allTeams, allVenues, allSets] =
+    await Promise.all([
+      adminDb
+        .collection("hostApplications")
+        .where("status", "==", "pending")
+        .count()
+        .get(),
+      adminDb.collection("users").count().get(),
+      adminDb.collection("teams").count().get(),
+      adminDb.collection("venues").count().get(),
+      adminDb.collection("questionSets").count().get(),
+    ]);
 
   const stats = [
     {
@@ -34,6 +36,11 @@ export default async function AdminOverviewPage() {
       label: "Venues",
       value: allVenues.data().count,
       href: "/admin/venues",
+    },
+    {
+      label: "Question sets",
+      value: allSets.data().count,
+      href: "/admin/question-sets",
     },
   ];
 

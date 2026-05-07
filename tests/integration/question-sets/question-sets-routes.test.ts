@@ -1,13 +1,6 @@
 // @vitest-environment node
 import "@/tests/setup/emulator-bootstrap";
-import {
-  afterEach,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  vi,
-} from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   POST as createSet,
   GET as listMine,
@@ -139,7 +132,10 @@ describe("POST /api/question-sets", () => {
     await seedUser("alice", { role: "host", hostStatus: "approved" });
     asUser("alice");
     const res = await createSet(
-      jsonReq("POST", { ...VALID_BODY, questions: [{ ...Q(), correctIndex: 4 }] }),
+      jsonReq("POST", {
+        ...VALID_BODY,
+        questions: [{ ...Q(), correctIndex: 4 }],
+      }),
     );
     expect(res.status).toBe(400);
   });
