@@ -115,27 +115,29 @@ export function PresenterView({
   if (status === "lobby") {
     const joinUrl = origin ? buildJoinUrl(origin, sessionCode) : "";
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center px-8 py-10 gap-10">
+      <div className="min-h-screen flex flex-col items-center justify-center px-8 py-10 gap-12">
         {venueName && (
           <p className="font-display text-3xl md:text-5xl tracking-[6px] text-text-muted uppercase">
             {venueName}
           </p>
         )}
-        <p className="text-2xl md:text-4xl text-text-muted">
+        <p className="text-2xl md:text-4xl text-text-muted tracking-wide">
           Join with this code
         </p>
-        <div className="font-display text-[12rem] md:text-[18rem] leading-none tracking-[16px] text-text-primary">
-          {sessionCode}
-        </div>
-        {joinUrl && (
-          <div className="flex flex-col items-center gap-4">
-            <QrCode value={joinUrl} size={384} />
-            <p className="text-xl text-text-faint tracking-wider">
-              or scan to join
-            </p>
+        <div className="flex flex-col xl:flex-row items-center gap-12 xl:gap-20">
+          <div className="font-display text-[10rem] md:text-[14rem] xl:text-[18rem] leading-none tracking-[12px] text-text-primary tabular-nums">
+            {sessionCode}
           </div>
-        )}
-        <p className="text-3xl md:text-4xl font-display tracking-[4px]">
+          {joinUrl && (
+            <div className="flex flex-col items-center gap-3">
+              <QrCode value={joinUrl} size={384} />
+              <p className="text-xl text-text-faint tracking-wider uppercase">
+                or scan to join
+              </p>
+            </div>
+          )}
+        </div>
+        <p className="text-3xl md:text-4xl font-display tracking-[4px] tabular-nums">
           {players.length} {players.length === 1 ? "PLAYER" : "PLAYERS"} IN
         </p>
       </div>
@@ -147,13 +149,16 @@ export function PresenterView({
     return (
       <div className="min-h-screen flex flex-col px-10 py-10 gap-10">
         <div className="flex items-center justify-between">
-          <p className="font-display text-2xl md:text-4xl tracking-[6px] text-text-faint uppercase">
+          <p className="font-display text-2xl md:text-4xl tracking-[6px] text-text-faint uppercase tabular-nums">
             Question {currentQuestionIndex + 1} / {questions.length}
           </p>
-          <Countdown deadline={deadline} className="text-7xl md:text-9xl" />
+          <Countdown
+            deadline={deadline}
+            className="text-7xl md:text-9xl xl:text-[10rem] tabular-nums"
+          />
         </div>
         <div className="flex-1 flex items-center justify-center">
-          <h1 className="font-display text-5xl md:text-8xl tracking-[2px] text-center leading-tight max-w-7xl">
+          <h1 className="font-display text-5xl md:text-7xl xl:text-8xl 2xl:text-9xl tracking-[2px] text-center leading-[1.05] max-w-7xl break-words">
             {current.prompt}
           </h1>
         </div>
@@ -163,7 +168,7 @@ export function PresenterView({
               {({ state, style }) => (
                 <li
                   style={style}
-                  className={`p-8 rounded-xl border-2 ${
+                  className={`p-6 md:p-8 rounded-xl border-2 ${
                     state === "correct"
                       ? "border-game-green bg-game-green/15"
                       : state === "incorrect"
@@ -173,7 +178,7 @@ export function PresenterView({
                 >
                   <div className="flex items-baseline gap-6">
                     <span
-                      className={`font-display text-5xl md:text-7xl tracking-[4px] ${
+                      className={`font-display text-5xl md:text-7xl xl:text-8xl tracking-[4px] shrink-0 ${
                         state === "correct"
                           ? "text-game-green"
                           : "text-text-faint"
@@ -181,7 +186,7 @@ export function PresenterView({
                     >
                       {String.fromCharCode(65 + i)}
                     </span>
-                    <span className="text-3xl md:text-5xl leading-tight">
+                    <span className="text-3xl md:text-4xl xl:text-5xl leading-tight break-words min-w-0">
                       {c}
                     </span>
                   </div>
@@ -200,23 +205,25 @@ export function PresenterView({
     const winner = topPlayers[0];
     return (
       <div className="min-h-screen flex flex-col items-center px-10 py-12 gap-10">
-        <p className="font-display text-3xl md:text-5xl tracking-[8px] text-text-faint uppercase">
+        <p className="font-display text-3xl md:text-5xl xl:text-6xl tracking-[8px] text-text-faint uppercase">
           Final Results
         </p>
         {winner && (
           <div className="flex flex-col items-center gap-3">
-            <p className="text-2xl md:text-3xl text-text-muted">Winner</p>
-            <p className="font-display text-7xl md:text-9xl tracking-[4px] text-game-green">
+            <p className="text-2xl md:text-3xl text-text-muted tracking-wide uppercase">
+              Winner
+            </p>
+            <p className="font-display text-7xl md:text-9xl xl:text-[10rem] tracking-[4px] text-game-green leading-none break-words text-center max-w-[16ch]">
               @{winner.displayName}
             </p>
-            <p className="font-display text-4xl text-text-primary">
+            <p className="font-display text-4xl xl:text-5xl text-text-primary tabular-nums">
               {winner.score} pts
             </p>
           </div>
         )}
         <div className="grid md:grid-cols-2 gap-10 w-full max-w-7xl">
           <div>
-            <h2 className="font-display text-3xl md:text-4xl tracking-[6px] mb-5 text-text-muted">
+            <h2 className="font-display text-3xl md:text-4xl xl:text-5xl tracking-[6px] mb-5 text-text-muted">
               TEAMS
             </h2>
             <ul className="flex flex-col gap-3">
@@ -225,13 +232,13 @@ export function PresenterView({
                   key={t.teamId ?? "solo"}
                   className="flex items-center gap-5 px-5 py-4 rounded-lg bg-brand-line/30"
                 >
-                  <span className="font-display text-3xl text-text-faint w-10">
+                  <span className="font-display text-3xl xl:text-4xl text-text-faint w-10 tabular-nums">
                     {i + 1}
                   </span>
-                  <span className="flex-1 text-2xl md:text-3xl truncate">
+                  <span className="flex-1 text-2xl md:text-3xl xl:text-4xl truncate">
                     {t.teamName}
                   </span>
-                  <span className="font-display text-3xl md:text-4xl">
+                  <span className="font-display text-3xl md:text-4xl xl:text-5xl tabular-nums">
                     {t.score}
                   </span>
                 </li>
@@ -239,7 +246,7 @@ export function PresenterView({
             </ul>
           </div>
           <div>
-            <h2 className="font-display text-3xl md:text-4xl tracking-[6px] mb-5 text-text-muted">
+            <h2 className="font-display text-3xl md:text-4xl xl:text-5xl tracking-[6px] mb-5 text-text-muted">
               PLAYERS
             </h2>
             <ul className="flex flex-col gap-3">
@@ -248,13 +255,13 @@ export function PresenterView({
                   key={p.uid}
                   className="flex items-center gap-5 px-5 py-4 rounded-lg bg-brand-line/30"
                 >
-                  <span className="font-display text-3xl text-text-faint w-10">
+                  <span className="font-display text-3xl xl:text-4xl text-text-faint w-10 tabular-nums">
                     {i + 1}
                   </span>
-                  <span className="flex-1 text-2xl md:text-3xl truncate">
+                  <span className="flex-1 text-2xl md:text-3xl xl:text-4xl truncate">
                     @{p.displayName}
                   </span>
-                  <span className="font-display text-3xl md:text-4xl">
+                  <span className="font-display text-3xl md:text-4xl xl:text-5xl tabular-nums">
                     {p.score}
                   </span>
                 </li>
