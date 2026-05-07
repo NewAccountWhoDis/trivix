@@ -336,6 +336,57 @@ describe("firestore.rules — venues/{venueId}", () => {
   });
 });
 
+describe("firestore.rules — questionSets/{setId}", () => {
+  async function seedSet(ownerUid: string, setId = "qs1") {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), `questionSets/${setId}`), {
+        setId,
+        ownerUid,
+        name: "Capitals",
+        description: null,
+        questions: [],
+      });
+    });
+  }
+
+  it("owner host can read own set", async () => {
+    await seedSet("alice");
+    const db = env.authenticatedContext("alice").firestore();
+    await assertSucceeds(getDoc(doc(db, "questionSets/qs1")));
+  });
+
+  it("non-owner cannot read another host's set", async () => {
+    await seedSet("alice");
+    const db = env.authenticatedContext("bob").firestore();
+    await assertFails(getDoc(doc(db, "questionSets/qs1")));
+  });
+
+  it("nobody can write question sets directly", async () => {
+    await seedSet("alice");
+    const db = env.authenticatedContext("alice").firestore();
+    await assertFails(
+      setDoc(
+        doc(db, "questionSets/qs1"),
+        { name: "Renamed" },
+        { merge: true },
+      ),
+    );
+  });
+
+  it("client cannot create a question set directly", async () => {
+    const db = env.authenticatedContext("alice").firestore();
+    await assertFails(
+      setDoc(doc(db, "questionSets/new"), {
+        setId: "new",
+        ownerUid: "alice",
+        name: "X",
+        description: null,
+        questions: [],
+      }),
+    );
+  });
+});
+
 describe("firestore.rules — admin reads", () => {
   async function seedAdminAndOthers() {
     await env.withSecurityRulesDisabled(async (ctx) => {
@@ -371,6 +422,13 @@ describe("firestore.rules — admin reads", () => {
           zip: "12207",
         },
       });
+      await setDoc(doc(db, "questionSets/qs1"), {
+        setId: "qs1",
+        ownerUid: "bob",
+        name: "Capitals",
+        description: null,
+        questions: [],
+      });
     });
   }
 
@@ -403,6 +461,12 @@ describe("firestore.rules — admin reads", () => {
     await seedAdminAndOthers();
     const db = env.authenticatedContext("admin1").firestore();
     await assertSucceeds(getDoc(doc(db, "venues/v1")));
+  });
+
+  it("admin can read any question set", async () => {
+    await seedAdminAndOthers();
+    const db = env.authenticatedContext("admin1").firestore();
+    await assertSucceeds(getDoc(doc(db, "questionSets/qs1")));
   });
 
   it("admin still cannot write users (server-only)", async () => {
