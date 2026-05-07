@@ -1,7 +1,12 @@
 import { NextResponse } from "next/server";
-import { Timestamp } from "firebase-admin/firestore";
+import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import { adminDb } from "@/lib/firebase/admin";
 import { verifySession } from "@/lib/firebase/session";
+import {
+  isCaptain,
+  loadTeam,
+  requireVerifiedSession,
+} from "@/lib/teams/auth";
 import type { TeamMemberSummary } from "@/types/firestore";
 
 export const runtime = "nodejs";
@@ -30,9 +35,9 @@ export async function GET(
 
   const memberUids = (t.memberUids as string[] | undefined) ?? [];
   const captainUid = (t.captainUid as string | null | undefined) ?? null;
-  const isMember = memberUids.includes(session.uid);
-  const isCaptain = captainUid === session.uid;
-  if (!isMember && !isCaptain) {
+  const callerIsMember = memberUids.includes(session.uid);
+  const callerIsCaptain = captainUid === session.uid;
+  if (!callerIsMember && !callerIsCaptain) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -60,7 +65,8 @@ export async function GET(
   return NextResponse.json({
     teamId: id,
     name: String(t.name ?? ""),
-    inviteCode: isMember || isCaptain ? String(t.inviteCode ?? "") : null,
+    inviteCode:
+      callerIsMember || callerIsCaptain ? String(t.inviteCode ?? "") : null,
     captainUid,
     memberUids,
     createdBy: String(t.createdBy ?? ""),
@@ -68,4 +74,41 @@ export async function GET(
     updatedAt: tsToMs(t.updatedAt),
     members,
   });
+}
+
+export async function DELETE(
+  _request: Request,
+  ctx: { params: Promise<{ id: string }> },
+): Promise<NextResponse> {
+  const session = await requireVerifiedSession();
+  if (!session.ok) {
+    return NextResponse.json({ error: session.error }, { status: session.status });
+  }
+  const { uid } = session.value;
+
+  const { id } = await ctx.params;
+  const { ref: teamRef, snap: teamSnap } = await loadTeam(id);
+  if (!teamSnap.exists) {
+    return NextResponse.json({ error: "Team not found" }, { status: 404 });
+  }
+  if (!isCaptain(teamSnap, uid)) {
+    return NextResponse.json({ error: "Captain only" }, { status: 403 });
+  }
+
+  const memberUids = (teamSnap.data()?.memberUids as string[] | undefined) ?? [];
+  const now = FieldValue.serverTimestamp();
+
+  const reqs = await teamRef.collection("joinRequests").get();
+  const batch = adminDb.batch();
+  reqs.forEach((d) => batch.delete(d.ref));
+  for (const memberUid of memberUids) {
+    batch.update(adminDb.collection("users").doc(memberUid), {
+      teamId: null,
+      updatedAt: now,
+    });
+  }
+  batch.delete(teamRef);
+  await batch.commit();
+
+  return NextResponse.json({ ok: true });
 }
