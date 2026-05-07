@@ -80,15 +80,15 @@ Numbering picks up from Plan 9 (which ended at Task 199).
 
 ---
 
-## Decisions to lock in before execution
+## Decisions (resolved 2026-05-07)
 
-- **D1.** QR encodes a full URL (`https://triviax.netlify.app/play?code=ABCD23`) so it works from any QR scanner? *Recommend: yes. Short-form `trivix://` deep-links require app installation; we're a web app.*
-- **D2.** QR library: `qrcode` npm package (small, SVG output) vs pure JS implementation? *Recommend: `qrcode`. Battle-tested, ~30kb gzipped, generates SVG so we get crisp scaling.*
-- **D3.** `/play?code=X` auto-submits join, or just pre-fills the input? *Recommend: auto-submit. The whole point of QR is one-tap.*
-- **D4.** Presenter view auth: same `hostUid === session.uid` check as the dashboard? *Recommend: yes. No co-host concept yet.*
-- **D5.** Animation library: lean on CSS transitions/keyframes vs GSAP (already in deps)? *Recommend: CSS for the choice reveal. GSAP is overkill for a 200ms transition; keep the bundle small. GSAP stays available for future big motion (presenter scene wipes etc.).*
-- **D6.** Honor `prefers-reduced-motion` and motion tier (`full | light | off`) on animations? *Recommend: yes — Plan 1 already wired the system; reuse it.*
-- **D7.** Wakelock: noop silently on unsupported browsers (Safari pre-16.4, all Firefox)? *Recommend: yes; not worth the polyfill complexity.*
+- **D1.** QR encodes a full URL with origin (`/play?code=...`).
+- **D2.** Use the `qrcode` npm package; SVG output.
+- **D3.** `/play?code=X` auto-submits the join.
+- **D4.** Presenter view is host-only.
+- **D5.** CSS transitions for the choice reveal; GSAP reserved for bigger motion later.
+- **D6.** Honor `prefers-reduced-motion` + the motion tier system.
+- **D7.** Wakelock fails silently on unsupported browsers.
 
 ---
 
