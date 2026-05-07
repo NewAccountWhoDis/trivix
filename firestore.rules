@@ -60,6 +60,15 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // gameSessions/{sessionId} — host, any joined player, or admin reads.
+    match /gameSessions/{sessionId} {
+      allow read: if (isSignedIn() && (
+        resource.data.hostUid == request.auth.uid
+        || request.auth.uid in resource.data.players
+      )) || isAdmin();
+      allow write: if false;
+    }
+
     // teams/{teamId} — members, captain, or admin can read; writes server-only.
     match /teams/{teamId} {
       allow read: if isMemberOfTeam(teamId) || isCaptainOfTeam(teamId) || isAdmin();

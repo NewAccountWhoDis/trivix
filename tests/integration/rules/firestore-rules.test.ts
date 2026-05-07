@@ -383,6 +383,70 @@ describe("firestore.rules — questionSets/{setId}", () => {
   });
 });
 
+describe("firestore.rules — gameSessions/{sessionId}", () => {
+  async function seedSession(opts: {
+    hostUid: string;
+    playerUids: string[];
+    sessionId?: string;
+  }) {
+    const players: Record<string, unknown> = {};
+    for (const uid of opts.playerUids) {
+      players[uid] = {
+        uid,
+        displayName: uid,
+        joinedAt: new Date(),
+        score: 0,
+        answers: {},
+      };
+    }
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(
+        doc(ctx.firestore(), `gameSessions/${opts.sessionId ?? "g1"}`),
+        {
+          sessionId: opts.sessionId ?? "g1",
+          hostUid: opts.hostUid,
+          status: "lobby",
+          players,
+          sessionCode: "ABCD23",
+          questions: [],
+          currentQuestionIndex: -1,
+          revealedIndex: -1,
+        },
+      );
+    });
+  }
+
+  it("host can read own session", async () => {
+    await seedSession({ hostUid: "alice", playerUids: [] });
+    const db = env.authenticatedContext("alice").firestore();
+    await assertSucceeds(getDoc(doc(db, "gameSessions/g1")));
+  });
+
+  it("a joined player can read the session", async () => {
+    await seedSession({ hostUid: "alice", playerUids: ["bob", "carol"] });
+    const db = env.authenticatedContext("bob").firestore();
+    await assertSucceeds(getDoc(doc(db, "gameSessions/g1")));
+  });
+
+  it("non-host non-player cannot read", async () => {
+    await seedSession({ hostUid: "alice", playerUids: ["bob"] });
+    const db = env.authenticatedContext("eve").firestore();
+    await assertFails(getDoc(doc(db, "gameSessions/g1")));
+  });
+
+  it("nobody can write game sessions directly", async () => {
+    await seedSession({ hostUid: "alice", playerUids: [] });
+    const db = env.authenticatedContext("alice").firestore();
+    await assertFails(
+      setDoc(
+        doc(db, "gameSessions/g1"),
+        { status: "active" },
+        { merge: true },
+      ),
+    );
+  });
+});
+
 describe("firestore.rules — admin reads", () => {
   async function seedAdminAndOthers() {
     await env.withSecurityRulesDisabled(async (ctx) => {
@@ -425,6 +489,16 @@ describe("firestore.rules — admin reads", () => {
         description: null,
         questions: [],
       });
+      await setDoc(doc(db, "gameSessions/g1"), {
+        sessionId: "g1",
+        hostUid: "bob",
+        status: "lobby",
+        players: {},
+        sessionCode: "ABCD23",
+        questions: [],
+        currentQuestionIndex: -1,
+        revealedIndex: -1,
+      });
     });
   }
 
@@ -463,6 +537,12 @@ describe("firestore.rules — admin reads", () => {
     await seedAdminAndOthers();
     const db = env.authenticatedContext("admin1").firestore();
     await assertSucceeds(getDoc(doc(db, "questionSets/qs1")));
+  });
+
+  it("admin can read any game session", async () => {
+    await seedAdminAndOthers();
+    const db = env.authenticatedContext("admin1").firestore();
+    await assertSucceeds(getDoc(doc(db, "gameSessions/g1")));
   });
 
   it("admin still cannot write users (server-only)", async () => {
