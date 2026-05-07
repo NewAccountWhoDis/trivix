@@ -275,6 +275,67 @@ describe("firestore.rules — teams/{teamId}/joinRequests/{uid}", () => {
   });
 });
 
+describe("firestore.rules — venues/{venueId}", () => {
+  async function seedVenue(ownerUid: string, venueId = "v1") {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), `venues/${venueId}`), {
+        venueId,
+        ownerUid,
+        name: "Joe's Pub",
+        address: {
+          street: "123 Main",
+          city: "Albany",
+          state: "NY",
+          zip: "12207",
+        },
+      });
+    });
+  }
+
+  it("owner host can read own venue", async () => {
+    await seedVenue("alice");
+    const db = env.authenticatedContext("alice").firestore();
+    await assertSucceeds(getDoc(doc(db, "venues/v1")));
+  });
+
+  it("non-owner cannot read another host's venue", async () => {
+    await seedVenue("alice");
+    const db = env.authenticatedContext("bob").firestore();
+    await assertFails(getDoc(doc(db, "venues/v1")));
+  });
+
+  it("unauthenticated cannot read", async () => {
+    await seedVenue("alice");
+    const db = env.unauthenticatedContext().firestore();
+    await assertFails(getDoc(doc(db, "venues/v1")));
+  });
+
+  it("nobody can write venues directly (server-only)", async () => {
+    await seedVenue("alice");
+    const db = env.authenticatedContext("alice").firestore();
+    await assertFails(
+      setDoc(doc(db, "venues/v1"), { name: "Renamed" }, { merge: true }),
+    );
+  });
+
+  it("client cannot create a venue directly", async () => {
+    const db = env.authenticatedContext("alice").firestore();
+    await assertFails(
+      setDoc(doc(db, "venues/new"), {
+        venueId: "new",
+        ownerUid: "alice",
+        name: "Joe's Pub",
+        address: {
+          street: "123 Main",
+          city: "Albany",
+          state: "NY",
+          zip: "12207",
+        },
+      }),
+    );
+  });
+});
+
 describe("firestore.rules — admin reads", () => {
   async function seedAdminAndOthers() {
     await env.withSecurityRulesDisabled(async (ctx) => {
@@ -298,6 +359,17 @@ describe("firestore.rules — admin reads", () => {
         uid: "eve",
         displayName: "eve",
         requestedAt: new Date(),
+      });
+      await setDoc(doc(db, "venues/v1"), {
+        venueId: "v1",
+        ownerUid: "bob",
+        name: "Joe's Pub",
+        address: {
+          street: "123 Main",
+          city: "Albany",
+          state: "NY",
+          zip: "12207",
+        },
       });
     });
   }
@@ -325,6 +397,12 @@ describe("firestore.rules — admin reads", () => {
     await seedAdminAndOthers();
     const db = env.authenticatedContext("admin1").firestore();
     await assertSucceeds(getDoc(doc(db, "teams/t1/joinRequests/eve")));
+  });
+
+  it("admin can read any venue (even non-owned)", async () => {
+    await seedAdminAndOthers();
+    const db = env.authenticatedContext("admin1").firestore();
+    await assertSucceeds(getDoc(doc(db, "venues/v1")));
   });
 
   it("admin still cannot write users (server-only)", async () => {
