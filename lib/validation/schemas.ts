@@ -100,6 +100,15 @@ export const requestActionSchema = z.object({
   action: z.enum(["approve", "deny"]),
 });
 
+// ── Admin ───────────────────────────────────────────────────────────────────
+export const hostApplicationActionSchema = z.object({
+  action: z.enum(["approve", "deny"]),
+});
+
+export const userActionSchema = z.object({
+  action: z.enum(["revoke-host", "delete"]),
+});
+
 export type SignupStep1EmailInput = z.infer<typeof signupStep1EmailSchema>;
 export type SignupStep2Input = z.infer<typeof signupStep2Schema>;
 export type SignupStep3Input = z.infer<typeof signupStep3Schema>;
@@ -112,3 +121,7 @@ export type CreateTeamInput = z.infer<typeof createTeamSchema>;
 export type JoinTeamInput = z.infer<typeof joinTeamSchema>;
 export type TransferCaptainInput = z.infer<typeof transferCaptainSchema>;
 export type RequestActionInput = z.infer<typeof requestActionSchema>;
+export type HostApplicationActionInput = z.infer<
+  typeof hostApplicationActionSchema
+>;
+export type UserActionInput = z.infer<typeof userActionSchema>;
