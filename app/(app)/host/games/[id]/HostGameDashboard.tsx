@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { Timestamp } from "firebase/firestore";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui";
 import { Card } from "@/components/ui/Card";
 import { Countdown } from "@/components/games/Countdown";
+import { QrCode, buildJoinUrl } from "@/components/games/QrCode";
 import { useGameSession } from "@/hooks/useGameSession";
 import { aggregateTeams } from "@/lib/games/team-aggregate";
 
@@ -51,6 +52,13 @@ export function HostGameDashboard({
   );
   const [busy, setBusy] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [origin, setOrigin] = useState("");
+
+  useEffect(() => {
+    /* eslint-disable react-hooks/set-state-in-effect */
+    setOrigin(window.location.origin);
+    /* eslint-enable react-hooks/set-state-in-effect */
+  }, []);
 
   async function call(
     path: string,
@@ -162,33 +170,54 @@ export function HostGameDashboard({
 
       {status === "lobby" && (
         <Card>
-          <div className="p-5">
-            <p className="text-text-muted mb-4">
-              {players.length === 0
-                ? "Waiting for players to join with the code above."
-                : `${players.length} player${players.length === 1 ? "" : "s"} ready.`}
-            </p>
-            <div className="flex gap-3 flex-wrap">
-              <Button
-                onClick={() => call(`/api/games/${sessionId}/start`)}
-                disabled={busy || players.length === 0}
+          <div className="p-5 flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
+            <div className="flex-1 flex flex-col gap-4">
+              <p className="text-text-muted">
+                {players.length === 0
+                  ? "Waiting for players to join with the code above."
+                  : `${players.length} player${players.length === 1 ? "" : "s"} ready.`}
+              </p>
+              <div className="flex gap-3 flex-wrap">
+                <Button
+                  onClick={() => call(`/api/games/${sessionId}/start`)}
+                  disabled={busy || players.length === 0}
+                >
+                  Start game
+                </Button>
+                <Button
+                  variant="ghost"
+                  onClick={async () => {
+                    if (confirm("Cancel this session?")) {
+                      await call(`/api/games/${sessionId}`, "DELETE");
+                      router.push("/host");
+                      router.refresh();
+                    }
+                  }}
+                  disabled={busy}
+                >
+                  Cancel session
+                </Button>
+              </div>
+              <a
+                href={`/host/games/${sessionId}/present`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm text-text-muted hover:text-text-primary underline self-start"
               >
-                Start game
-              </Button>
-              <Button
-                variant="ghost"
-                onClick={async () => {
-                  if (confirm("Cancel this session?")) {
-                    await call(`/api/games/${sessionId}`, "DELETE");
-                    router.push("/host");
-                    router.refresh();
-                  }
-                }}
-                disabled={busy}
-              >
-                Cancel session
-              </Button>
+                Open presenter view ↗
+              </a>
             </div>
+            {origin && sessionCode && (
+              <div className="flex flex-col items-center gap-2">
+                <QrCode
+                  value={buildJoinUrl(origin, sessionCode)}
+                  size={160}
+                />
+                <p className="text-xs text-text-faint tracking-wider">
+                  scan to join
+                </p>
+              </div>
+            )}
           </div>
         </Card>
       )}
