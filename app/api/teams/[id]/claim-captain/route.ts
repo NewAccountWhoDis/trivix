@@ -1,10 +1,6 @@
 import { NextResponse } from "next/server";
 import { FieldValue } from "firebase-admin/firestore";
-import {
-  isMember,
-  loadTeam,
-  requireVerifiedSession,
-} from "@/lib/teams/auth";
+import { isMember, loadTeam, requireVerifiedSession } from "@/lib/teams/auth";
 
 export const runtime = "nodejs";
 
@@ -14,7 +10,10 @@ export async function POST(
 ): Promise<NextResponse> {
   const session = await requireVerifiedSession();
   if (!session.ok) {
-    return NextResponse.json({ error: session.error }, { status: session.status });
+    return NextResponse.json(
+      { error: session.error },
+      { status: session.status },
+    );
   }
   const { uid } = session.value;
 

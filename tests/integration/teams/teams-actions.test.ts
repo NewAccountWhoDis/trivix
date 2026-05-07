@@ -1,13 +1,6 @@
 // @vitest-environment node
 import "@/tests/setup/emulator-bootstrap";
-import {
-  afterEach,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  vi,
-} from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { POST as leaveTeam } from "@/app/api/teams/[id]/leave/route";
 import { POST as claimCaptain } from "@/app/api/teams/[id]/claim-captain/route";
 import { POST as transferCaptain } from "@/app/api/teams/[id]/transfer-captain/route";
@@ -121,7 +114,10 @@ describe("POST /api/teams/[id]/leave", () => {
       params: Promise.resolve({ id: teamId }),
     });
     expect(res.status).toBe(200);
-    const body = (await res.json()) as { disbanded: boolean; captainCleared: boolean };
+    const body = (await res.json()) as {
+      disbanded: boolean;
+      captainCleared: boolean;
+    };
     expect(body.disbanded).toBe(false);
     expect(body.captainCleared).toBe(true);
 

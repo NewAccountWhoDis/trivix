@@ -1,13 +1,6 @@
 // @vitest-environment node
 import "@/tests/setup/emulator-bootstrap";
-import {
-  afterEach,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  vi,
-} from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { POST as createTeam } from "@/app/api/teams/route";
 import { POST as joinTeam } from "@/app/api/teams/join/route";
 import { GET as getTeam } from "@/app/api/teams/[id]/route";
@@ -258,9 +251,12 @@ describe("GET /api/teams/[id]", () => {
     const teamId = await seedTeamWithMembers(["alice", "bob"], "alice");
     asUser("alice");
 
-    const res = await getTeam(new Request(`http://localhost/api/teams/${teamId}`), {
-      params: Promise.resolve({ id: teamId }),
-    });
+    const res = await getTeam(
+      new Request(`http://localhost/api/teams/${teamId}`),
+      {
+        params: Promise.resolve({ id: teamId }),
+      },
+    );
     expect(res.status).toBe(200);
     const body = (await res.json()) as Record<string, unknown>;
 
@@ -279,17 +275,23 @@ describe("GET /api/teams/[id]", () => {
     await seedUser("eve");
     asUser("eve");
 
-    const res = await getTeam(new Request(`http://localhost/api/teams/${teamId}`), {
-      params: Promise.resolve({ id: teamId }),
-    });
+    const res = await getTeam(
+      new Request(`http://localhost/api/teams/${teamId}`),
+      {
+        params: Promise.resolve({ id: teamId }),
+      },
+    );
     expect(res.status).toBe(403);
   });
 
   it("returns 404 for unknown team", async () => {
     asUser("alice");
-    const res = await getTeam(new Request("http://localhost/api/teams/missing"), {
-      params: Promise.resolve({ id: "missing" }),
-    });
+    const res = await getTeam(
+      new Request("http://localhost/api/teams/missing"),
+      {
+        params: Promise.resolve({ id: "missing" }),
+      },
+    );
     expect(res.status).toBe(404);
   });
 

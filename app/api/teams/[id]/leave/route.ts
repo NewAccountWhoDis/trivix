@@ -16,7 +16,10 @@ export async function POST(
 ): Promise<NextResponse> {
   const session = await requireVerifiedSession();
   if (!session.ok) {
-    return NextResponse.json({ error: session.error }, { status: session.status });
+    return NextResponse.json(
+      { error: session.error },
+      { status: session.status },
+    );
   }
   const { uid } = session.value;
 
@@ -54,5 +57,9 @@ export async function POST(
     tx.update(userRef, { teamId: null, updatedAt: now });
   });
 
-  return NextResponse.json({ ok: true, disbanded: false, captainCleared: wasCaptain });
+  return NextResponse.json({
+    ok: true,
+    disbanded: false,
+    captainCleared: wasCaptain,
+  });
 }

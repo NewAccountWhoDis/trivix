@@ -2,11 +2,7 @@ import { NextResponse } from "next/server";
 import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import { adminDb } from "@/lib/firebase/admin";
 import { verifySession } from "@/lib/firebase/session";
-import {
-  isCaptain,
-  loadTeam,
-  requireVerifiedSession,
-} from "@/lib/teams/auth";
+import { isCaptain, loadTeam, requireVerifiedSession } from "@/lib/teams/auth";
 import type { TeamMemberSummary } from "@/types/firestore";
 
 export const runtime = "nodejs";
@@ -45,9 +41,7 @@ export async function GET(
     memberUids.length === 0
       ? []
       : await Promise.all(
-          memberUids.map((uid) =>
-            adminDb.collection("users").doc(uid).get(),
-          ),
+          memberUids.map((uid) => adminDb.collection("users").doc(uid).get()),
         );
 
   const members: TeamMemberSummary[] = memberSnaps
@@ -82,7 +76,10 @@ export async function DELETE(
 ): Promise<NextResponse> {
   const session = await requireVerifiedSession();
   if (!session.ok) {
-    return NextResponse.json({ error: session.error }, { status: session.status });
+    return NextResponse.json(
+      { error: session.error },
+      { status: session.status },
+    );
   }
   const { uid } = session.value;
 
@@ -95,7 +92,8 @@ export async function DELETE(
     return NextResponse.json({ error: "Captain only" }, { status: 403 });
   }
 
-  const memberUids = (teamSnap.data()?.memberUids as string[] | undefined) ?? [];
+  const memberUids =
+    (teamSnap.data()?.memberUids as string[] | undefined) ?? [];
   const now = FieldValue.serverTimestamp();
 
   const reqs = await teamRef.collection("joinRequests").get();

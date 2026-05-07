@@ -12,7 +12,9 @@ const defaultRandomInt: RandomIntFn = (max) => randomInt(max);
  * Generate a 6-char invite code from the unambiguous alphabet.
  * Optional `rand` lets tests inject a deterministic RNG.
  */
-export function generateInviteCode(rand: RandomIntFn = defaultRandomInt): string {
+export function generateInviteCode(
+  rand: RandomIntFn = defaultRandomInt,
+): string {
   const chars: string[] = [];
   for (let i = 0; i < INVITE_CODE_LENGTH; i++) {
     chars.push(INVITE_CODE_ALPHABET[rand(INVITE_CODE_ALPHABET.length)]!);

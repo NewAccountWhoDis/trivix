@@ -41,7 +41,10 @@ export async function POST(request: Request): Promise<NextResponse> {
     .limit(1)
     .get();
   if (teamSnap.empty) {
-    return NextResponse.json({ error: "Invite code not found" }, { status: 404 });
+    return NextResponse.json(
+      { error: "Invite code not found" },
+      { status: 404 },
+    );
   }
   const teamDoc = teamSnap.docs[0]!;
   const teamId = teamDoc.id;

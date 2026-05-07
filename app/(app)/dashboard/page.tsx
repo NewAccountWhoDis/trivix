@@ -70,17 +70,22 @@ export default function DashboardPage() {
           </Card>
         </Link>
 
-        <Card variant="elevated" className="p-5">
-          <div className="text-xs uppercase tracking-[3px] text-text-faint mb-2">
-            Team
-          </div>
-          <div className="font-display text-2xl tracking-[2px]">
-            {user.teamId ? "—" : "No team yet"}
-          </div>
-          <p className="text-sm text-text-muted mt-2">
-            Teams arrive in the next slice. Sit tight.
-          </p>
-        </Card>
+        <Link href="/team" className="block">
+          <Card
+            variant="elevated"
+            className="p-5 hover:border-brand-red transition cursor-pointer"
+          >
+            <div className="text-xs uppercase tracking-[3px] text-text-faint mb-2">
+              Team
+            </div>
+            <div className="font-display text-2xl tracking-[2px]">
+              {user.teamId ? "Your team" : "No team yet"}
+            </div>
+            <p className="text-sm text-text-muted mt-2">
+              {user.teamId ? "Manage your crew." : "Create a team or join one."}
+            </p>
+          </Card>
+        </Link>
 
         {user.role === "host" && user.hostStatus === "approved" && (
           <Link href="/host" className="block sm:col-span-2">

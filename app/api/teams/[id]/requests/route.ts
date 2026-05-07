@@ -1,10 +1,6 @@
 import { NextResponse } from "next/server";
 import { Timestamp } from "firebase-admin/firestore";
-import {
-  isCaptain,
-  loadTeam,
-  requireVerifiedSession,
-} from "@/lib/teams/auth";
+import { isCaptain, loadTeam, requireVerifiedSession } from "@/lib/teams/auth";
 import type { SerializedJoinRequest } from "@/types/firestore";
 
 export const runtime = "nodejs";
@@ -21,7 +17,10 @@ export async function GET(
 ): Promise<NextResponse> {
   const session = await requireVerifiedSession();
   if (!session.ok) {
-    return NextResponse.json({ error: session.error }, { status: session.status });
+    return NextResponse.json(
+      { error: session.error },
+      { status: session.status },
+    );
   }
   const { uid } = session.value;
 

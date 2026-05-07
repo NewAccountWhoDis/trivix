@@ -16,7 +16,10 @@ export async function POST(
 ): Promise<NextResponse> {
   const session = await requireVerifiedSession();
   if (!session.ok) {
-    return NextResponse.json({ error: session.error }, { status: session.status });
+    return NextResponse.json(
+      { error: session.error },
+      { status: session.status },
+    );
   }
   const { uid } = session.value;
 
