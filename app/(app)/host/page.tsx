@@ -1,8 +1,16 @@
-import { redirect } from "next/navigation";
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import { Timestamp } from "firebase-admin/firestore";
 import { adminDb } from "@/lib/firebase/admin";
 import { verifySession } from "@/lib/firebase/session";
+import { Button } from "@/components/ui";
 import { Card } from "@/components/ui/Card";
+import { VenueRow } from "./VenueRow";
+
+function tsToMs(value: unknown): number {
+  if (value instanceof Timestamp) return value.toMillis();
+  return 0;
+}
 
 export default async function HostPage() {
   const session = await verifySession();
@@ -40,19 +48,61 @@ export default async function HostPage() {
     );
   }
 
+  const snap = await adminDb
+    .collection("venues")
+    .where("ownerUid", "==", session.uid)
+    .orderBy("createdAt", "asc")
+    .get();
+
+  const venues = snap.docs.map((d) => {
+    const data = d.data();
+    return {
+      venueId: d.id,
+      name: String(data.name ?? ""),
+      address: data.address as {
+        street: string;
+        city: string;
+        state: string;
+        zip: string;
+      },
+      createdAt: tsToMs(data.createdAt),
+    };
+  });
+
   return (
     <main className="min-h-screen px-6 py-10 md:px-12 md:py-14 max-w-3xl mx-auto">
-      <h1 className="font-display text-4xl tracking-[3px] mb-2">HOST TOOLS</h1>
-      <p className="text-text-muted mb-8">
-        Game-night tools land in a future slice. You&apos;re approved.
-      </p>
-      <Card variant="neon">
-        <div className="p-6">
-          <p className="text-text-muted">
-            Coming soon: build a question set, start a live game, manage venues.
-          </p>
+      <header className="flex items-start justify-between gap-4 mb-8 flex-wrap">
+        <div>
+          <p className="text-text-muted text-sm">Host tools</p>
+          <h1 className="font-display text-4xl tracking-[3px]">VENUES</h1>
         </div>
-      </Card>
+        <Button asChild>
+          <Link href="/host/venues/new">Add venue</Link>
+        </Button>
+      </header>
+
+      {venues.length === 0 ? (
+        <Card>
+          <div className="p-6">
+            <p className="text-text-muted">
+              No venues yet. Add the first place you&apos;ll run trivia.
+            </p>
+            <div className="mt-4">
+              <Button asChild variant="secondary">
+                <Link href="/host/venues/new">Add your first venue</Link>
+              </Button>
+            </div>
+          </div>
+        </Card>
+      ) : (
+        <Card>
+          <ul className="divide-y divide-brand-line">
+            {venues.map((v) => (
+              <VenueRow key={v.venueId} venue={v} />
+            ))}
+          </ul>
+        </Card>
+      )}
     </main>
   );
 }

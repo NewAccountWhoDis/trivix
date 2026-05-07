@@ -1,21 +1,13 @@
-import { NextResponse } from "next/server";
 import { Timestamp } from "firebase-admin/firestore";
 import { adminDb } from "@/lib/firebase/admin";
-import { requireAdmin } from "@/lib/admin/auth";
-
-export const runtime = "nodejs";
+import { AdminVenuesTable, type AdminVenueRow } from "./VenuesTable";
 
 function tsToMs(value: unknown): number {
   if (value instanceof Timestamp) return value.toMillis();
   return 0;
 }
 
-export async function GET(): Promise<NextResponse> {
-  const auth = await requireAdmin();
-  if (!auth.ok) {
-    return NextResponse.json({ error: auth.error }, { status: auth.status });
-  }
-
+export default async function AdminVenuesPage() {
   const snap = await adminDb
     .collection("venues")
     .orderBy("createdAt", "asc")
@@ -36,7 +28,7 @@ export async function GET(): Promise<NextResponse> {
     }),
   );
 
-  const venues = snap.docs.map((d) => {
+  const venues: AdminVenueRow[] = snap.docs.map((d) => {
     const data = d.data();
     const ownerUid = String(data.ownerUid ?? "");
     return {
@@ -44,11 +36,20 @@ export async function GET(): Promise<NextResponse> {
       ownerUid,
       ownerDisplayName: ownerMap[ownerUid] ?? null,
       name: String(data.name ?? ""),
-      address: data.address,
+      address: data.address as {
+        street: string;
+        city: string;
+        state: string;
+        zip: string;
+      },
       createdAt: tsToMs(data.createdAt),
-      updatedAt: tsToMs(data.updatedAt),
     };
   });
 
-  return NextResponse.json({ venues });
+  return (
+    <div>
+      <h1 className="font-display text-3xl tracking-[3px] mb-6">VENUES</h1>
+      <AdminVenuesTable venues={venues} />
+    </div>
+  );
 }

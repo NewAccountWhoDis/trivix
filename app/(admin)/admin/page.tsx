@@ -3,7 +3,7 @@ import { adminDb } from "@/lib/firebase/admin";
 import { Card } from "@/components/ui/Card";
 
 export default async function AdminOverviewPage() {
-  const [pendingApps, allUsers, allTeams] = await Promise.all([
+  const [pendingApps, allUsers, allTeams, allVenues] = await Promise.all([
     adminDb
       .collection("hostApplications")
       .where("status", "==", "pending")
@@ -11,6 +11,7 @@ export default async function AdminOverviewPage() {
       .get(),
     adminDb.collection("users").count().get(),
     adminDb.collection("teams").count().get(),
+    adminDb.collection("venues").count().get(),
   ]);
 
   const stats = [
@@ -29,12 +30,17 @@ export default async function AdminOverviewPage() {
       value: allTeams.data().count,
       href: "/admin/teams",
     },
+    {
+      label: "Venues",
+      value: allVenues.data().count,
+      href: "/admin/venues",
+    },
   ];
 
   return (
     <div>
       <h1 className="font-display text-3xl tracking-[3px] mb-6">OVERVIEW</h1>
-      <div className="grid sm:grid-cols-3 gap-4">
+      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {stats.map((s) => (
           <Link key={s.href} href={s.href} className="block">
             <Card

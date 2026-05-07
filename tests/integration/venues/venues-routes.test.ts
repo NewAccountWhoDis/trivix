@@ -1,13 +1,6 @@
 // @vitest-environment node
 import "@/tests/setup/emulator-bootstrap";
-import {
-  afterEach,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  vi,
-} from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { POST as createVenue, GET as listMine } from "@/app/api/venues/route";
 import {
   GET as getVenue,
@@ -71,10 +64,7 @@ async function seedVenue(ownerUid: string, name = "Joe's Pub", id?: string) {
   return ref.id;
 }
 
-function asUser(
-  uid: string,
-  opts: { emailVerified?: boolean } = {},
-) {
+function asUser(uid: string, opts: { emailVerified?: boolean } = {}) {
   vi.spyOn(session, "verifySession").mockResolvedValue({
     uid,
     email: `${uid}@x.test`,
@@ -243,9 +233,9 @@ describe("DELETE /api/venues/[id]", () => {
       params: Promise.resolve({ id: venueId }),
     });
     expect(res.status).toBe(200);
-    expect(
-      (await adminDb.collection("venues").doc(venueId).get()).exists,
-    ).toBe(false);
+    expect((await adminDb.collection("venues").doc(venueId).get()).exists).toBe(
+      false,
+    );
   });
 
   it("403 for non-owner host", async () => {

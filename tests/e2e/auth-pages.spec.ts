@@ -120,4 +120,14 @@ test.describe("middleware redirects", () => {
     await page.goto("/admin/teams");
     await expect(page).toHaveURL(/\/login\?next=%2Fadmin%2Fteams/);
   });
+
+  test("/admin/venues without cookie redirects", async ({ page }) => {
+    await page.goto("/admin/venues");
+    await expect(page).toHaveURL(/\/login\?next=%2Fadmin%2Fvenues/);
+  });
+
+  test("/host/venues/new without cookie redirects", async ({ page }) => {
+    await page.goto("/host/venues/new");
+    await expect(page).toHaveURL(/\/login\?next=%2Fhost%2Fvenues%2Fnew/);
+  });
 });
