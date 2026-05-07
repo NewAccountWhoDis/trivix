@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import type { Timestamp } from "firebase/firestore";
+import { AnimatedChoice } from "@/components/games/AnimatedChoice";
 import { Countdown } from "@/components/games/Countdown";
 import { QrCode, buildJoinUrl } from "@/components/games/QrCode";
 import { useGameSession } from "@/hooks/useGameSession";
@@ -154,35 +155,37 @@ export function PresenterView({
           </h1>
         </div>
         <ul className="grid grid-cols-2 gap-6">
-          {current.choices.map((c, i) => {
-            const isCorrect = correct !== null && i === correct;
-            const revealed = correct !== null;
-            return (
-              <li
-                key={i}
-                className={`p-8 rounded-xl border-2 transition-colors duration-300 ${
-                  isCorrect
-                    ? "border-game-green bg-game-green/15"
-                    : revealed
-                      ? "border-brand-line bg-brand-ink opacity-50"
-                      : "border-brand-line bg-brand-ink"
-                }`}
-              >
-                <div className="flex items-baseline gap-6">
-                  <span
-                    className={`font-display text-5xl md:text-7xl tracking-[4px] ${
-                      isCorrect ? "text-game-green" : "text-text-faint"
-                    }`}
-                  >
-                    {String.fromCharCode(65 + i)}
-                  </span>
-                  <span className="text-3xl md:text-5xl leading-tight">
-                    {c}
-                  </span>
-                </div>
-              </li>
-            );
-          })}
+          {current.choices.map((c, i) => (
+            <AnimatedChoice key={i} index={i} correctIndex={correct}>
+              {({ state, style }) => (
+                <li
+                  style={style}
+                  className={`p-8 rounded-xl border-2 ${
+                    state === "correct"
+                      ? "border-game-green bg-game-green/15"
+                      : state === "incorrect"
+                        ? "border-brand-line bg-brand-ink opacity-40"
+                        : "border-brand-line bg-brand-ink"
+                  }`}
+                >
+                  <div className="flex items-baseline gap-6">
+                    <span
+                      className={`font-display text-5xl md:text-7xl tracking-[4px] ${
+                        state === "correct"
+                          ? "text-game-green"
+                          : "text-text-faint"
+                      }`}
+                    >
+                      {String.fromCharCode(65 + i)}
+                    </span>
+                    <span className="text-3xl md:text-5xl leading-tight">
+                      {c}
+                    </span>
+                  </div>
+                </li>
+              )}
+            </AnimatedChoice>
+          ))}
         </ul>
       </div>
     );

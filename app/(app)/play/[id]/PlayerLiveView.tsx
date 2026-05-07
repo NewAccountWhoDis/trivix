@@ -6,6 +6,7 @@ import type { Timestamp } from "firebase/firestore";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui";
 import { Card } from "@/components/ui/Card";
+import { AnimatedChoice } from "@/components/games/AnimatedChoice";
 import { Countdown } from "@/components/games/Countdown";
 import { useGameSession } from "@/hooks/useGameSession";
 import { aggregateTeams } from "@/lib/games/team-aggregate";
@@ -177,32 +178,45 @@ export function PlayerLiveView({
             <div className="grid sm:grid-cols-2 gap-3">
               {currentRendered.choices.map((c, i) => {
                 const reveal = currentRendered.correctIndex !== null;
-                const isCorrect = i === currentRendered.correctIndex;
                 const isMine = myAnswer?.choiceIndex === i;
-                const tone = reveal
-                  ? isCorrect
-                    ? "border-game-green bg-game-green/10"
-                    : isMine
-                      ? "border-game-red bg-game-red/10"
-                      : "border-brand-line bg-brand-ink"
-                  : isMine
-                    ? "border-brand-red bg-brand-red/10"
-                    : "border-brand-line bg-brand-ink hover:border-brand-red";
                 return (
-                  <button
+                  <AnimatedChoice
                     key={i}
-                    type="button"
-                    onClick={() => submit(i)}
-                    disabled={
-                      submitting || Boolean(myAnswer) || reveal || timerExpired
-                    }
-                    className={`text-left p-4 rounded-md border transition ${tone} disabled:cursor-default`}
+                    index={i}
+                    correctIndex={currentRendered.correctIndex}
                   >
-                    <span className="text-text-muted mr-2">
-                      {String.fromCharCode(65 + i)}.
-                    </span>
-                    {c}
-                  </button>
+                    {({ state, style }) => {
+                      const tone =
+                        state === "correct"
+                          ? "border-game-green bg-game-green/10"
+                          : state === "incorrect"
+                            ? isMine
+                              ? "border-game-red bg-game-red/10"
+                              : "border-brand-line bg-brand-ink opacity-60"
+                            : isMine
+                              ? "border-brand-red bg-brand-red/10"
+                              : "border-brand-line bg-brand-ink hover:border-brand-red";
+                      return (
+                        <button
+                          type="button"
+                          onClick={() => submit(i)}
+                          disabled={
+                            submitting ||
+                            Boolean(myAnswer) ||
+                            reveal ||
+                            timerExpired
+                          }
+                          style={style}
+                          className={`w-full text-left p-4 rounded-md border ${tone} disabled:cursor-default`}
+                        >
+                          <span className="text-text-muted mr-2">
+                            {String.fromCharCode(65 + i)}.
+                          </span>
+                          {c}
+                        </button>
+                      );
+                    }}
+                  </AnimatedChoice>
                 );
               })}
             </div>

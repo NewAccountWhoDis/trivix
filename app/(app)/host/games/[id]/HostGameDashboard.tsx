@@ -6,6 +6,7 @@ import type { Timestamp } from "firebase/firestore";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui";
 import { Card } from "@/components/ui/Card";
+import { AnimatedChoice } from "@/components/games/AnimatedChoice";
 import { Countdown } from "@/components/games/Countdown";
 import { QrCode, buildJoinUrl } from "@/components/games/QrCode";
 import { useGameSession } from "@/hooks/useGameSession";
@@ -235,24 +236,34 @@ export function HostGameDashboard({
             </div>
             <ul className="grid sm:grid-cols-2 gap-3">
               {currentRendered.choices.map((c, i) => (
-                <li
+                <AnimatedChoice
                   key={i}
-                  className={`p-3 rounded-md border ${
-                    i === currentRendered.correctIndex
-                      ? "border-game-green bg-game-green/10"
-                      : "border-brand-line bg-brand-ink"
-                  }`}
+                  index={i}
+                  correctIndex={currentRendered.correctIndex}
                 >
-                  <span className="text-text-muted mr-2">
-                    {String.fromCharCode(65 + i)}.
-                  </span>
-                  {c}
-                  {i === currentRendered.correctIndex && (
-                    <span className="ml-2 text-xs uppercase tracking-[2px] text-game-green">
-                      correct
-                    </span>
+                  {({ state, style }) => (
+                    <li
+                      style={style}
+                      className={`p-3 rounded-md border ${
+                        state === "correct"
+                          ? "border-game-green bg-game-green/10"
+                          : state === "incorrect"
+                            ? "border-brand-line bg-brand-ink opacity-60"
+                            : "border-brand-line bg-brand-ink"
+                      }`}
+                    >
+                      <span className="text-text-muted mr-2">
+                        {String.fromCharCode(65 + i)}.
+                      </span>
+                      {c}
+                      {state === "correct" && (
+                        <span className="ml-2 text-xs uppercase tracking-[2px] text-game-green">
+                          correct
+                        </span>
+                      )}
+                    </li>
                   )}
-                </li>
+                </AnimatedChoice>
               ))}
             </ul>
             <div className="flex gap-3 mt-6">
