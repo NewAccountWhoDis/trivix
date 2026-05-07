@@ -92,16 +92,16 @@ Numbering picks up from Plan 6 (which ended at Task 147).
 
 ---
 
-## Decisions to lock in before execution
+## Decisions (resolved 2026-05-07)
 
-- **D1.** Session code: same 6-char unambiguous alphabet as team invite codes? *Recommend: yes — reuse the generator.*
-- **D2.** Player join: code entry only (no QR link)? *Recommend: yes — QR is polish for Plan 8+.*
-- **D3.** Scoring: base `points` per correct answer, no time bonus? *Recommend: yes — keeps math trivial. Time bonus needs server timers.*
-- **D4.** Player view: poll `GET /api/games/[id]` every 3s? *Recommend: yes — `onSnapshot` lands in Plan 8.*
-- **D5.** Player joining: anyone with the code (no team restriction)? *Recommend: yes. Players still need to be signed in + email-verified — leverage the existing `(app)` layout guard.*
-- **D6.** Tie-breaker for game winner: top scorer wins; ties yield no winner (so `gamesWon` only goes up if there's a unique top)? *Recommend: yes — simplest clean rule.*
-- **D7.** Question reveal: when host advances, the just-finished question's correct answer becomes visible to players too. Recommend yes; keeps player UX coherent.
-- **D8.** Re-entry: if a player closes the tab and reopens, they should land back in their game. Server "lookup my active session" route? *Recommend: skip for slice 7 — players use the same session code to rejoin (idempotent join). Re-discovery lands later.*
+- **D1.** Session codes use the same 6-char unambiguous alphabet as team invite codes; generator reused.
+- **D2.** Manual code entry only; no QR.
+- **D3.** Score = sum of `points` for correct answers. No time bonus.
+- **D4.** Players poll `GET /api/games/[id]` every 3s.
+- **D5.** Anyone signed in + email-verified can join with the code (existing `(app)` layout guard handles auth).
+- **D6.** Unique top scorer wins; ties → no winner (no `gamesWon++`).
+- **D7.** When host advances past a question, the correct answer becomes visible to players.
+- **D8.** Tab close: rejoin by re-entering the code (join is idempotent). No auto re-discovery in this slice.
 
 ---
 

@@ -175,6 +175,21 @@ export const createQuestionSetSchema = z.object({
 
 export const updateQuestionSetSchema = createQuestionSetSchema;
 
+// ── Live game sessions ──────────────────────────────────────────────────────
+export const createGameSessionSchema = z.object({
+  venueId: z.string().min(1, "Required"),
+  questionSetId: z.string().min(1, "Required"),
+});
+
+export const joinGameSessionSchema = z.object({
+  sessionCode: inviteCodeSchema,
+});
+
+export const submitAnswerSchema = z.object({
+  questionIndex: z.number().int().min(0),
+  choiceIndex: z.number().int().min(0).max(3),
+});
+
 export type SignupStep1EmailInput = z.infer<typeof signupStep1EmailSchema>;
 export type SignupStep2Input = z.infer<typeof signupStep2Schema>;
 export type SignupStep3Input = z.infer<typeof signupStep3Schema>;
@@ -197,3 +212,6 @@ export type UpdateVenueInput = z.infer<typeof updateVenueSchema>;
 export type QuestionInput = z.infer<typeof questionSchema>;
 export type CreateQuestionSetInput = z.infer<typeof createQuestionSetSchema>;
 export type UpdateQuestionSetInput = z.infer<typeof updateQuestionSetSchema>;
+export type CreateGameSessionInput = z.infer<typeof createGameSessionSchema>;
+export type JoinGameSessionInput = z.infer<typeof joinGameSessionSchema>;
+export type SubmitAnswerInput = z.infer<typeof submitAnswerSchema>;

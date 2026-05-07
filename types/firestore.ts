@@ -199,6 +199,79 @@ export interface SerializedQuestionSet {
   updatedAt: number;
 }
 
+export type GameSessionStatus = "lobby" | "active" | "ended";
+
+export interface PlayerAnswer {
+  choiceIndex: number;
+  correct: boolean;
+  points: number;
+  answeredAt: FirestoreTimestamp;
+}
+
+export interface GameSessionPlayer {
+  uid: string;
+  displayName: string;
+  joinedAt: FirestoreTimestamp;
+  score: number;
+  /** Keyed by question index (as string for Firestore map keys). */
+  answers: Record<string, PlayerAnswer>;
+}
+
+export interface GameSessionDoc {
+  sessionId: string;
+  hostUid: string;
+  venueId: string;
+  venueNameSnapshot: string;
+  questionSetId: string;
+  questionSetNameSnapshot: string;
+  questions: Question[];
+  status: GameSessionStatus;
+  /** -1 in lobby; 0..N-1 while active; equals questions.length once ended. */
+  currentQuestionIndex: number;
+  /** Max question index whose correct answer has been revealed; -1 = none. */
+  revealedIndex: number;
+  sessionCode: string;
+  /** Keyed by player uid — lets us atomically update one player at a time. */
+  players: Record<string, GameSessionPlayer>;
+  createdAt: FirestoreTimestamp;
+  startedAt: FirestoreTimestamp | null;
+  endedAt: FirestoreTimestamp | null;
+}
+
+export interface SerializedPlayerAnswer {
+  choiceIndex: number;
+  correct: boolean;
+  points: number;
+  answeredAt: number;
+}
+
+export interface SerializedGameSessionPlayer {
+  uid: string;
+  displayName: string;
+  joinedAt: number;
+  score: number;
+  answers: Record<string, SerializedPlayerAnswer>;
+}
+
+/** Plain-JSON form of GameSessionDoc safe to pass server→client. */
+export interface SerializedGameSession {
+  sessionId: string;
+  hostUid: string;
+  venueId: string;
+  venueNameSnapshot: string;
+  questionSetId: string;
+  questionSetNameSnapshot: string;
+  questions: Question[];
+  status: GameSessionStatus;
+  currentQuestionIndex: number;
+  revealedIndex: number;
+  sessionCode: string;
+  players: Record<string, SerializedGameSessionPlayer>;
+  createdAt: number;
+  startedAt: number | null;
+  endedAt: number | null;
+}
+
 export interface HostApplicationDoc {
   uid: string;
   email: string;
