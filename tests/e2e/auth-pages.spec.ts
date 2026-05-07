@@ -96,4 +96,11 @@ test.describe("middleware redirects", () => {
     await page.goto("/host");
     await expect(page).toHaveURL(/\/login/);
   });
+
+  test("/admin without cookie redirects to /login?next=/admin", async ({
+    page,
+  }) => {
+    await page.goto("/admin");
+    await expect(page).toHaveURL(/\/login\?next=%2Fadmin/);
+  });
 });
