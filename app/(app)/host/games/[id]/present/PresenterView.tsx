@@ -6,6 +6,7 @@ import { AnimatedChoice } from "@/components/games/AnimatedChoice";
 import { Countdown } from "@/components/games/Countdown";
 import { QrCode, buildJoinUrl } from "@/components/games/QrCode";
 import { useGameSession } from "@/hooks/useGameSession";
+import { useWakeLock } from "@/hooks/useWakeLock";
 import { aggregateTeams } from "@/lib/games/team-aggregate";
 
 interface PlayerRow {
@@ -53,6 +54,8 @@ export function PresenterView({
     setOrigin(window.location.origin);
     /* eslint-enable react-hooks/set-state-in-effect */
   }, []);
+
+  useWakeLock(session?.status === "active");
 
   if (loading) {
     return (
