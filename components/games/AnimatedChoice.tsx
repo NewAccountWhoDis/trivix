@@ -56,7 +56,8 @@ export function AnimatedChoice({
   const style: CSSProperties = reducedMotion
     ? { transition: "none" }
     : {
-        transitionProperty: "background-color, border-color, opacity, transform",
+        transitionProperty:
+          "background-color, border-color, opacity, transform",
         transitionDuration: `${durationMs}ms`,
         transitionTimingFunction: "cubic-bezier(0.4, 0, 0.2, 1)",
         transitionDelay: `${delayMs}ms`,

@@ -210,10 +210,7 @@ export function HostGameDashboard({
             </div>
             {origin && sessionCode && (
               <div className="flex flex-col items-center gap-2">
-                <QrCode
-                  value={buildJoinUrl(origin, sessionCode)}
-                  size={160}
-                />
+                <QrCode value={buildJoinUrl(origin, sessionCode)} size={160} />
                 <p className="text-xs text-text-faint tracking-wider">
                   scan to join
                 </p>

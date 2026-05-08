@@ -67,7 +67,9 @@ export function PresenterView({
   if (error || !session) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p className="text-game-red text-2xl">{error ?? "Session not found."}</p>
+        <p className="text-game-red text-2xl">
+          {error ?? "Session not found."}
+        </p>
       </div>
     );
   }
@@ -109,8 +111,7 @@ export function PresenterView({
     ),
   );
 
-  const current =
-    status === "active" ? questions[currentQuestionIndex] : null;
+  const current = status === "active" ? questions[currentQuestionIndex] : null;
 
   if (status === "lobby") {
     const joinUrl = origin ? buildJoinUrl(origin, sessionCode) : "";
