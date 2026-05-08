@@ -4,6 +4,7 @@ import { adminDb } from "@/lib/firebase/admin";
 import { verifySession } from "@/lib/firebase/session";
 import { serializeUser } from "@/lib/user/serialize";
 import { UserProvider } from "@/components/auth/UserProvider";
+import { AppHeader } from "@/components/layout/AppHeader";
 
 export default async function AppLayout({ children }: { children: ReactNode }) {
   const session = await verifySession();
@@ -23,5 +24,10 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
 
   const user = serializeUser(session.uid, userSnap.data() ?? {});
 
-  return <UserProvider user={user}>{children}</UserProvider>;
+  return (
+    <UserProvider user={user}>
+      <AppHeader />
+      {children}
+    </UserProvider>
+  );
 }
