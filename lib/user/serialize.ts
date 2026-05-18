@@ -24,6 +24,8 @@ export function serializeUser(
     uid,
     email: String(raw.email ?? ""),
     emailVerified: Boolean(raw.emailVerified),
+    phone: (raw.phone as string | null | undefined) ?? null,
+    phoneVerified: Boolean(raw.phoneVerified),
     firstName: String(raw.firstName ?? ""),
     lastName: String(raw.lastName ?? ""),
     displayName: String(raw.displayName ?? ""),

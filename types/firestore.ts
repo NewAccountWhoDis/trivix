@@ -39,6 +39,8 @@ export interface UserDoc {
   uid: string;
   email: string;
   emailVerified: boolean;
+  phone: string | null;
+  phoneVerified: boolean;
   firstName: string;
   lastName: string;
   displayName: string;
@@ -62,6 +64,8 @@ export interface SerializedUser {
   uid: string;
   email: string;
   emailVerified: boolean;
+  phone: string | null;
+  phoneVerified: boolean;
   firstName: string;
   lastName: string;
   displayName: string;

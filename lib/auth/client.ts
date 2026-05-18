@@ -1,11 +1,14 @@
 import {
   GoogleAuthProvider,
+  RecaptchaVerifier,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
+  signInWithPhoneNumber,
   signInWithPopup,
   signOut,
   sendPasswordResetEmail,
   type AuthCredential,
+  type ConfirmationResult,
   type UserCredential,
 } from "firebase/auth";
 import { FirebaseError } from "firebase/app";
@@ -64,6 +67,41 @@ export async function signOutClient(): Promise<void> {
 export async function sendPasswordReset(email: string): Promise<void> {
   await sendPasswordResetEmail(firebaseAuth, email);
 }
+
+let recaptchaVerifier: RecaptchaVerifier | null = null;
+
+function getRecaptcha(containerId: string): RecaptchaVerifier {
+  if (recaptchaVerifier) return recaptchaVerifier;
+  recaptchaVerifier = new RecaptchaVerifier(firebaseAuth, containerId, {
+    size: "invisible",
+  });
+  return recaptchaVerifier;
+}
+
+export function clearRecaptcha(): void {
+  recaptchaVerifier?.clear();
+  recaptchaVerifier = null;
+}
+
+export async function sendPhoneCode(
+  phoneE164: string,
+  containerId: string,
+): Promise<ConfirmationResult> {
+  return signInWithPhoneNumber(
+    firebaseAuth,
+    phoneE164,
+    getRecaptcha(containerId),
+  );
+}
+
+export async function confirmPhoneCode(
+  confirmation: ConfirmationResult,
+  code: string,
+): Promise<UserCredential> {
+  return confirmation.confirm(code);
+}
+
+export type { ConfirmationResult };
 
 export async function getIdToken(forceRefresh = false): Promise<string> {
   const user = firebaseAuth.currentUser;

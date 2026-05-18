@@ -7,9 +7,13 @@ import { FirebaseError } from "firebase/app";
 import { Button } from "@/components/ui";
 import { Input } from "@/components/ui/Input";
 import {
+  clearRecaptcha,
+  confirmPhoneCode,
   getIdToken,
+  sendPhoneCode,
   signInWithGoogle,
   signUpWithEmail,
+  type ConfirmationResult,
 } from "@/lib/auth/client";
 import { useAuth } from "@/hooks/useAuth";
 import {
@@ -114,6 +118,8 @@ function StepIndicator({ current }: { current: Step }) {
 }
 
 // ── Step 1 ──────────────────────────────────────────────────────────────────
+const E164_RE = /^\+[1-9]\d{6,14}$/;
+
 function Step1Account({
   onAuthed,
   alreadyAuthed,
@@ -121,6 +127,7 @@ function Step1Account({
   onAuthed: () => void;
   alreadyAuthed: boolean;
 }) {
+  const [mode, setMode] = useState<"email" | "phone">("email");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -198,53 +205,252 @@ function Step1Account({
         </div>
       )}
 
-      <form onSubmit={handleEmail} className="flex flex-col gap-4">
-        <Input
-          label="Email"
-          type="email"
-          autoComplete="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
+      {mode === "email" ? (
+        <form onSubmit={handleEmail} className="flex flex-col gap-4">
+          <Input
+            label="Email"
+            type="email"
+            autoComplete="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+          <Input
+            label="Password"
+            type="password"
+            autoComplete="new-password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            hint="At least 8 characters"
+            required
+          />
+          {error && (
+            <div
+              role="alert"
+              className="text-sm text-game-red bg-game-red/10 border border-game-red/30 rounded-md px-3 py-2"
+            >
+              {error}
+            </div>
+          )}
+          <Button type="submit" size="lg" disabled={submitting}>
+            {submitting ? "Creating…" : "Create account"}
+          </Button>
+        </form>
+      ) : (
+        <PhoneSignup
+          onAuthed={onAuthed}
+          onCancel={() => {
+            setError(null);
+            setMode("email");
+          }}
         />
-        <Input
-          label="Password"
-          type="password"
-          autoComplete="new-password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          hint="At least 8 characters"
-          required
-        />
-        {error && (
-          <div
-            role="alert"
-            className="text-sm text-game-red bg-game-red/10 border border-game-red/30 rounded-md px-3 py-2"
-          >
-            {error}
+      )}
+
+      {mode === "email" && (
+        <>
+          <div className="my-6 flex items-center gap-3 text-text-faint text-xs uppercase tracking-[3px]">
+            <span className="flex-1 h-px bg-brand-line" />
+            or
+            <span className="flex-1 h-px bg-brand-line" />
           </div>
-        )}
-        <Button type="submit" size="lg" disabled={submitting}>
-          {submitting ? "Creating…" : "Create account"}
-        </Button>
-      </form>
 
-      <div className="my-6 flex items-center gap-3 text-text-faint text-xs uppercase tracking-[3px]">
-        <span className="flex-1 h-px bg-brand-line" />
-        or
-        <span className="flex-1 h-px bg-brand-line" />
-      </div>
+          <div className="flex flex-col gap-3">
+            <Button
+              type="button"
+              variant="secondary"
+              size="lg"
+              className="w-full"
+              onClick={handleGoogle}
+              disabled={submitting}
+            >
+              Continue with Google
+            </Button>
+            <Button
+              type="button"
+              variant="secondary"
+              size="lg"
+              className="w-full"
+              onClick={() => {
+                setError(null);
+                setMode("phone");
+              }}
+              disabled={submitting}
+            >
+              Continue with phone
+            </Button>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
 
-      <Button
-        type="button"
-        variant="secondary"
-        size="lg"
-        className="w-full"
-        onClick={handleGoogle}
-        disabled={submitting}
-      >
-        Continue with Google
-      </Button>
+function PhoneSignup({
+  onAuthed,
+  onCancel,
+}: {
+  onAuthed: () => void;
+  onCancel: () => void;
+}) {
+  const [phase, setPhase] = useState<"number" | "code">("number");
+  const [phone, setPhone] = useState("");
+  const [code, setCode] = useState("");
+  const [confirmation, setConfirmation] = useState<ConfirmationResult | null>(
+    null,
+  );
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    return () => {
+      clearRecaptcha();
+    };
+  }, []);
+
+  async function handleSend(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    if (!E164_RE.test(phone)) {
+      setError("Use E.164 format, e.g. +15555551234.");
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const c = await sendPhoneCode(phone, "recaptcha-container");
+      setConfirmation(c);
+      setPhase("code");
+    } catch (err) {
+      const code = err instanceof FirebaseError ? err.code : "";
+      if (code === "auth/invalid-phone-number") {
+        setError("That phone number looks invalid.");
+      } else if (code === "auth/too-many-requests") {
+        setError("Too many attempts. Wait a moment and try again.");
+      } else {
+        setError("Couldn't send code. Please try again.");
+      }
+      clearRecaptcha();
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function handleConfirm(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    if (!confirmation) {
+      setError("Session expired. Resend the code.");
+      setPhase("number");
+      return;
+    }
+    if (!/^\d{6}$/.test(code)) {
+      setError("Enter the 6-digit code.");
+      return;
+    }
+    setSubmitting(true);
+    try {
+      await confirmPhoneCode(confirmation, code);
+      onAuthed();
+    } catch (err) {
+      const fcode = err instanceof FirebaseError ? err.code : "";
+      if (fcode === "auth/invalid-verification-code") {
+        setError("Wrong code. Try again.");
+      } else if (fcode === "auth/code-expired") {
+        setError("Code expired. Resend a new one.");
+        setPhase("number");
+      } else {
+        setError("Couldn't verify. Try again.");
+      }
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <div className="flex flex-col gap-4">
+      {phase === "number" ? (
+        <form onSubmit={handleSend} className="flex flex-col gap-4">
+          <Input
+            label="Phone number"
+            type="tel"
+            autoComplete="tel"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            hint="Include country code, e.g. +15555551234"
+            required
+          />
+          {error && (
+            <div
+              role="alert"
+              className="text-sm text-game-red bg-game-red/10 border border-game-red/30 rounded-md px-3 py-2"
+            >
+              {error}
+            </div>
+          )}
+          <div className="flex gap-3">
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={onCancel}
+              disabled={submitting}
+            >
+              Back
+            </Button>
+            <Button
+              type="submit"
+              size="lg"
+              className="flex-1"
+              disabled={submitting}
+            >
+              {submitting ? "Sending…" : "Send code"}
+            </Button>
+          </div>
+        </form>
+      ) : (
+        <form onSubmit={handleConfirm} className="flex flex-col gap-4">
+          <p className="text-sm text-text-muted">Code sent to {phone}.</p>
+          <Input
+            label="6-digit code"
+            type="text"
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            value={code}
+            onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
+            required
+          />
+          {error && (
+            <div
+              role="alert"
+              className="text-sm text-game-red bg-game-red/10 border border-game-red/30 rounded-md px-3 py-2"
+            >
+              {error}
+            </div>
+          )}
+          <div className="flex gap-3">
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => {
+                setPhase("number");
+                setCode("");
+                setConfirmation(null);
+                clearRecaptcha();
+              }}
+              disabled={submitting}
+            >
+              Change number
+            </Button>
+            <Button
+              type="submit"
+              size="lg"
+              className="flex-1"
+              disabled={submitting}
+            >
+              {submitting ? "Verifying…" : "Verify"}
+            </Button>
+          </div>
+        </form>
+      )}
+      <div id="recaptcha-container" />
     </div>
   );
 }

@@ -52,6 +52,9 @@ export async function POST(request: Request): Promise<NextResponse> {
   const uid = decoded.uid;
   const email = decoded.email ?? "";
   const emailVerified = Boolean(decoded.email_verified);
+  const phone = (decoded.phone_number as string | undefined) ?? null;
+  const phoneVerified =
+    decoded.firebase?.sign_in_provider === "phone" || Boolean(phone);
 
   const userRef = adminDb.collection("users").doc(uid);
   const dnRef = adminDb.collection("displayNames").doc(displayNameKey);
@@ -78,6 +81,8 @@ export async function POST(request: Request): Promise<NextResponse> {
         uid,
         email,
         emailVerified,
+        phone,
+        phoneVerified,
         firstName,
         lastName,
         displayName,
