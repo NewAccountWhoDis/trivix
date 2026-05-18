@@ -4,10 +4,8 @@ import {
   signInWithEmailAndPassword,
   signInWithPopup,
   signOut,
-  sendEmailVerification,
   sendPasswordResetEmail,
   type AuthCredential,
-  type User,
   type UserCredential,
 } from "firebase/auth";
 import { FirebaseError } from "firebase/app";
@@ -61,14 +59,6 @@ export async function signInWithGoogle(): Promise<GoogleSignInResult> {
 
 export async function signOutClient(): Promise<void> {
   await signOut(firebaseAuth);
-}
-
-export async function sendVerificationEmail(user?: User): Promise<void> {
-  const target = user ?? firebaseAuth.currentUser;
-  if (!target) {
-    throw new Error("No authenticated user to send verification email to.");
-  }
-  await sendEmailVerification(target);
 }
 
 export async function sendPasswordReset(email: string): Promise<void> {

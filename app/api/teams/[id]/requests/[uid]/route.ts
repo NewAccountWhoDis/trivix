@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { FieldValue } from "firebase-admin/firestore";
 import { adminDb } from "@/lib/firebase/admin";
-import { isCaptain, loadTeam, requireVerifiedSession } from "@/lib/teams/auth";
+import { verifySession } from "@/lib/firebase/session";
+import { isCaptain, loadTeam } from "@/lib/teams/auth";
 import { requestActionSchema } from "@/lib/validation/schemas";
 
 export const runtime = "nodejs";
@@ -13,14 +14,11 @@ export async function POST(
   request: Request,
   ctx: { params: Promise<{ id: string; uid: string }> },
 ): Promise<NextResponse> {
-  const session = await requireVerifiedSession();
-  if (!session.ok) {
-    return NextResponse.json(
-      { error: session.error },
-      { status: session.status },
-    );
+  const session = await verifySession();
+  if (!session) {
+    return NextResponse.json({ error: "Not signed in" }, { status: 401 });
   }
-  const { uid: callerUid } = session.value;
+  const { uid: callerUid } = session;
 
   let body: unknown;
   try {

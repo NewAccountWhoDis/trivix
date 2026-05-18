@@ -18,10 +18,6 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
     redirect("/signup?step=2");
   }
 
-  if (!session.emailVerified) {
-    redirect("/verify-email");
-  }
-
   const user = serializeUser(session.uid, userSnap.data() ?? {});
 
   return (

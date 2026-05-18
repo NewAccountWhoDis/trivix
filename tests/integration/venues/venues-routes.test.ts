@@ -119,13 +119,6 @@ describe("POST /api/venues (host create)", () => {
     expect(res.status).toBe(403);
   });
 
-  it("403 for unverified email", async () => {
-    await seedUser("alice", { role: "host", hostStatus: "approved" });
-    asUser("alice", { emailVerified: false });
-    const res = await createVenue(jsonReq("POST", VALID_BODY));
-    expect(res.status).toBe(403);
-  });
-
   it("400 on bad address", async () => {
     await seedUser("alice", { role: "host", hostStatus: "approved" });
     asUser("alice");

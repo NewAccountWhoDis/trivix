@@ -11,12 +11,6 @@ export async function POST(request: Request): Promise<NextResponse> {
   if (!session) {
     return NextResponse.json({ error: "Not signed in" }, { status: 401 });
   }
-  if (!session.emailVerified) {
-    return NextResponse.json(
-      { error: "Verify your email first" },
-      { status: 403 },
-    );
-  }
 
   let body: unknown;
   try {

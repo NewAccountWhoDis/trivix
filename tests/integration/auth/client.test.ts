@@ -3,7 +3,6 @@ import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { firebaseAuth } from "@/lib/firebase/client";
 import {
   getIdToken,
-  sendVerificationEmail,
   signInWithEmail,
   signOutClient,
   signUpWithEmail,
@@ -71,12 +70,5 @@ describe("lib/auth/client (emulator)", () => {
   it("getIdToken throws when no user", async () => {
     await signOutClient();
     await expect(getIdToken()).rejects.toThrow(/No authenticated user/);
-  });
-
-  it("sendVerificationEmail throws when no user", async () => {
-    await signOutClient();
-    await expect(sendVerificationEmail()).rejects.toThrow(
-      /No authenticated user/,
-    );
   });
 });

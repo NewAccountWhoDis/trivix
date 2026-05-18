@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { FieldValue } from "firebase-admin/firestore";
 import { adminDb } from "@/lib/firebase/admin";
-import { isCaptain, loadTeam, requireVerifiedSession } from "@/lib/teams/auth";
+import { verifySession } from "@/lib/firebase/session";
+import { isCaptain, loadTeam } from "@/lib/teams/auth";
 import { generateUniqueInviteCode } from "@/lib/teams/invite-code";
 
 export const runtime = "nodejs";
@@ -19,14 +20,11 @@ export async function POST(
   _request: Request,
   ctx: { params: Promise<{ id: string }> },
 ): Promise<NextResponse> {
-  const session = await requireVerifiedSession();
-  if (!session.ok) {
-    return NextResponse.json(
-      { error: session.error },
-      { status: session.status },
-    );
+  const session = await verifySession();
+  if (!session) {
+    return NextResponse.json({ error: "Not signed in" }, { status: 401 });
   }
-  const { uid } = session.value;
+  const { uid } = session;
 
   const { id } = await ctx.params;
   const { ref: teamRef, snap: teamSnap } = await loadTeam(id);

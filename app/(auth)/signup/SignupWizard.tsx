@@ -8,9 +8,7 @@ import { Button } from "@/components/ui";
 import { Input } from "@/components/ui/Input";
 import {
   getIdToken,
-  sendVerificationEmail,
   signInWithGoogle,
-  signOutClient,
   signUpWithEmail,
 } from "@/lib/auth/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -20,7 +18,7 @@ import {
   signupStep3Schema,
 } from "@/lib/validation/schemas";
 
-type Step = 1 | 2 | 3 | 4;
+type Step = 1 | 2 | 3;
 
 interface Step2Data {
   firstName: string;
@@ -37,7 +35,7 @@ export function SignupWizard() {
   const router = useRouter();
   const params = useSearchParams();
   const rawStep = Number(params.get("step") ?? "1");
-  const step = ([1, 2, 3, 4].includes(rawStep) ? rawStep : 1) as Step;
+  const step = ([1, 2, 3].includes(rawStep) ? rawStep : 1) as Step;
   const intent = params.get("intent");
   const { user: firebaseUser } = useAuth();
 
@@ -82,18 +80,17 @@ export function SignupWizard() {
           value={step3}
           onChange={setStep3}
           step2={step2}
-          onComplete={() => goTo(4)}
+          onComplete={() => router.push("/dashboard")}
           onBack={() => goTo(2)}
         />
       )}
-      {step === 4 && <Step4Verify />}
     </div>
   );
 }
 
 function StepIndicator({ current }: { current: Step }) {
   const labels = useMemo(
-    () => ["Account", "Identity", "Role", "Verify"] as const,
+    () => ["Account", "Identity", "Role"] as const,
     [],
   );
   return (
@@ -431,8 +428,6 @@ function Step3Role({
         const body = (await res.json().catch(() => ({}))) as { error?: string };
         throw new Error(body.error ?? "Signup failed");
       }
-      // Send verification email; ignore throttling errors
-      await sendVerificationEmail().catch(() => {});
       onComplete();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Signup failed");
@@ -535,71 +530,3 @@ function RoleOption({
   );
 }
 
-// ── Step 4 ──────────────────────────────────────────────────────────────────
-function Step4Verify() {
-  const [resending, setResending] = useState(false);
-  const [resent, setResent] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  async function handleResend() {
-    setError(null);
-    setResending(true);
-    try {
-      await sendVerificationEmail();
-      setResent(true);
-    } catch {
-      setError("Couldn't send the email. Wait a moment and try again.");
-    } finally {
-      setResending(false);
-    }
-  }
-
-  async function handleSignOut() {
-    await signOutClient();
-    window.location.href = "/login";
-  }
-
-  return (
-    <div>
-      <h1 className="font-display text-4xl tracking-[3px] mb-2">
-        CHECK YOUR EMAIL
-      </h1>
-      <p className="text-text-muted mb-6">
-        We sent a verification link. Click it to unlock your dashboard.
-      </p>
-      <div className="bg-brand-ink border border-brand-line rounded-md p-4 mb-6 text-sm text-text-muted">
-        Already verified? Refresh the page or{" "}
-        <Link href="/dashboard" className="text-brand-red hover:underline">
-          go to your dashboard
-        </Link>
-        .
-      </div>
-      {resent && (
-        <div className="text-sm text-game-green bg-game-green/10 border border-game-green/30 rounded-md px-3 py-2 mb-4">
-          Verification email sent.
-        </div>
-      )}
-      {error && (
-        <div
-          role="alert"
-          className="text-sm text-game-red bg-game-red/10 border border-game-red/30 rounded-md px-3 py-2 mb-4"
-        >
-          {error}
-        </div>
-      )}
-      <div className="flex gap-3">
-        <Button
-          type="button"
-          variant="secondary"
-          onClick={handleResend}
-          disabled={resending}
-        >
-          {resending ? "Sending…" : "Resend email"}
-        </Button>
-        <Button type="button" variant="ghost" onClick={handleSignOut}>
-          Sign out
-        </Button>
-      </div>
-    </div>
-  );
-}

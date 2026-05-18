@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import { adminDb } from "@/lib/firebase/admin";
 import { verifySession } from "@/lib/firebase/session";
-import { isCaptain, loadTeam, requireVerifiedSession } from "@/lib/teams/auth";
+import { isCaptain, loadTeam } from "@/lib/teams/auth";
 import type { TeamMemberSummary } from "@/types/firestore";
 
 export const runtime = "nodejs";
@@ -74,14 +74,11 @@ export async function DELETE(
   _request: Request,
   ctx: { params: Promise<{ id: string }> },
 ): Promise<NextResponse> {
-  const session = await requireVerifiedSession();
-  if (!session.ok) {
-    return NextResponse.json(
-      { error: session.error },
-      { status: session.status },
-    );
+  const session = await verifySession();
+  if (!session) {
+    return NextResponse.json({ error: "Not signed in" }, { status: 401 });
   }
-  const { uid } = session.value;
+  const { uid } = session;
 
   const { id } = await ctx.params;
   const { ref: teamRef, snap: teamSnap } = await loadTeam(id);
