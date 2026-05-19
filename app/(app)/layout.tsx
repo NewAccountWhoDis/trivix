@@ -22,6 +22,10 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
     redirect("/signup?step=2");
   }
 
+  if (userSnap.data()?.archived === true) {
+    redirect("/account-removed");
+  }
+
   const user = serializeUser(session.uid, userSnap.data() ?? {});
 
   return (

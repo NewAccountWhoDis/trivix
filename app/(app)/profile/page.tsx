@@ -7,12 +7,23 @@ import { Button } from "@/components/ui";
 import { Card } from "@/components/ui/Card";
 import { useUser } from "@/hooks/useUser";
 import { formatStoredUsPhone } from "@/lib/utils/phone";
+import { DeletionRequestButton } from "./DeletionRequestButton";
+import { HostAccessButton } from "./HostAccessButton";
 
 export default function ProfilePage() {
   const user = useUser();
 
   return (
     <main className="min-h-screen px-6 py-10 md:px-12 md:py-14 max-w-3xl mx-auto">
+      {user.deletionRequestedAt !== null && (
+        <div
+          role="alert"
+          className="mb-6 px-4 py-3 rounded-md border border-game-red bg-game-red/10 text-game-red text-sm font-medium"
+        >
+          Account deletion request pending — an admin will review and finalize.
+        </div>
+      )}
+
       <div className="flex items-start gap-6 mb-10">
         <Avatar
           firstName={user.firstName}
@@ -56,7 +67,7 @@ export default function ProfilePage() {
       </Card>
 
       <h2 className="font-display text-2xl tracking-[3px] mb-3">STATS</h2>
-      <Card>
+      <Card className="mb-10">
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 p-5">
           <Stat label="Games" value={user.stats.gamesPlayed} />
           <Stat label="Wins" value={user.stats.gamesWon} />
@@ -64,6 +75,11 @@ export default function ProfilePage() {
           <Stat label="Longest streak" value={user.stats.longestWinStreak} />
         </div>
       </Card>
+
+      <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
+        <HostAccessButton hostStatus={user.hostStatus} />
+        {user.deletionRequestedAt === null && <DeletionRequestButton />}
+      </div>
     </main>
   );
 }

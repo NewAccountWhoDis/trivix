@@ -157,3 +157,68 @@ export async function POST(
 
   return NextResponse.json({ ok: true, status: newStatus });
 }
+
+export async function DELETE(
+  _request: Request,
+  ctx: { params: Promise<{ uid: string }> },
+): Promise<NextResponse> {
+  const auth = await requireAdmin();
+  if (!auth.ok) {
+    return NextResponse.json({ error: auth.error }, { status: auth.status });
+  }
+
+  const { uid } = await ctx.params;
+  const appRef = adminDb.collection("hostApplications").doc(uid);
+  const userRef = adminDb.collection("users").doc(uid);
+
+  try {
+    await adminDb.runTransaction(async (tx) => {
+      const userSnap = await tx.get(userRef);
+      if (!userSnap.exists) throw new Error("USER_NOT_FOUND");
+      const u = userSnap.data() ?? {};
+
+      // If this user is currently a sub-host, detach from their main.
+      const mainUid = (u.mainHostUid ?? null) as string | null;
+      if (mainUid) {
+        const mainRef = adminDb.collection("users").doc(mainUid);
+        await tx.get(mainRef);
+        tx.update(mainRef, {
+          subHostUids: FieldValue.arrayRemove(uid),
+          updatedAt: FieldValue.serverTimestamp(),
+        });
+      }
+
+      // If this user is a main host with sub-hosts, demote the subs too.
+      const subUids = (u.subHostUids as string[] | undefined) ?? [];
+      for (const s of subUids) {
+        const ref = adminDb.collection("users").doc(s);
+        await tx.get(ref);
+        tx.update(ref, {
+          role: "player",
+          hostStatus: "none",
+          mainHostUid: null,
+          updatedAt: FieldValue.serverTimestamp(),
+        });
+      }
+
+      tx.delete(appRef);
+      tx.update(userRef, {
+        role: "player",
+        hostStatus: "none",
+        mainHostUid: null,
+        hostExpiresAt: null,
+        subHostCap: 0,
+        subHostUids: [],
+        updatedAt: FieldValue.serverTimestamp(),
+      });
+    });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : "";
+    if (msg === "USER_NOT_FOUND") {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+    return NextResponse.json({ error: "Delete failed" }, { status: 500 });
+  }
+
+  return NextResponse.json({ ok: true });
+}

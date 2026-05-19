@@ -60,6 +60,12 @@ export interface UserDoc {
   teamId: string | null;
   teamHistory: string[];
   stats: UserStats;
+  /** Set when the user has clicked "Request account deletion". */
+  deletionRequestedAt: FirestoreTimestamp | null;
+  /** Admin has confirmed the account is to be removed. The Firebase Auth
+   *  user may still exist briefly until the admin deletes it manually. */
+  archived: boolean;
+  archivedAt: FirestoreTimestamp | null;
   createdAt: FirestoreTimestamp;
   updatedAt: FirestoreTimestamp;
 }
@@ -88,6 +94,9 @@ export interface SerializedUser {
   isAdmin: boolean;
   teamId: string | null;
   teamHistory: string[];
+  deletionRequestedAt: number | null;
+  archived: boolean;
+  archivedAt: number | null;
   stats: Omit<UserStats, "lastPlayedAt" | "venues"> & {
     lastPlayedAt: number | null;
     venues: Array<

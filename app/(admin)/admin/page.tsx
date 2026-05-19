@@ -3,11 +3,17 @@ import { adminDb } from "@/lib/firebase/admin";
 import { Card } from "@/components/ui/Card";
 
 export default async function AdminOverviewPage() {
-  const [pendingApps, allUsers, allTeams, allVenues, allSets] =
+  const [pendingApps, accountReviews, allUsers, allTeams, allVenues, allSets] =
     await Promise.all([
       adminDb
         .collection("hostApplications")
         .where("status", "==", "pending")
+        .count()
+        .get(),
+      adminDb
+        .collection("users")
+        .where("deletionRequestedAt", "!=", null)
+        .where("archived", "==", false)
         .count()
         .get(),
       adminDb.collection("users").count().get(),
@@ -16,11 +22,18 @@ export default async function AdminOverviewPage() {
       adminDb.collection("questionSets").count().get(),
     ]);
 
+  const reviewsCount = accountReviews.data().count;
   const stats = [
     {
       label: "Pending host applications",
       value: pendingApps.data().count,
       href: "/admin/host-applications",
+    },
+    {
+      label: "Accounts for review",
+      value: reviewsCount,
+      href: "/admin/account-reviews",
+      flag: reviewsCount > 0,
     },
     {
       label: "Users",
@@ -52,12 +65,18 @@ export default async function AdminOverviewPage() {
           <Link key={s.href} href={s.href} className="block">
             <Card
               variant="elevated"
-              className="p-6 hover:border-brand-red transition cursor-pointer"
+              className={`p-6 hover:border-brand-red transition cursor-pointer ${
+                s.flag ? "border-game-yellow" : ""
+              }`}
             >
               <div className="text-xs uppercase tracking-[3px] text-text-faint mb-2">
                 {s.label}
               </div>
-              <div className="font-display text-4xl tracking-[2px]">
+              <div
+                className={`font-display text-4xl tracking-[2px] ${
+                  s.flag ? "text-game-yellow" : ""
+                }`}
+              >
                 {s.value}
               </div>
             </Card>

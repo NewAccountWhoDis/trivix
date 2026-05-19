@@ -20,6 +20,9 @@ export default async function AdminUsersPage() {
     return {
       uid: d.id,
       email: String(data.email ?? ""),
+      phone: (data.phone as string | null | undefined) ?? null,
+      firstName: String(data.firstName ?? ""),
+      lastName: String(data.lastName ?? ""),
       displayName: String(data.displayName ?? ""),
       role: (data.role as "player" | "host") ?? "player",
       hostStatus:
@@ -27,6 +30,8 @@ export default async function AdminUsersPage() {
         "none",
       isAdmin: Boolean(data.isAdmin),
       teamId: (data.teamId as string | null | undefined) ?? null,
+      archived: Boolean(data.archived),
+      archivedAt: data.archivedAt ? tsToMs(data.archivedAt) : null,
       createdAt: tsToMs(data.createdAt),
     };
   });

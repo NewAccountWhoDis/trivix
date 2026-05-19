@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui";
 import { Input } from "@/components/ui/Input";
 import { Card } from "@/components/ui/Card";
+import { ConfirmDestructive } from "@/components/admin/ConfirmDestructive";
 import {
   UserAutocomplete,
   type UserAutocompleteHit,
@@ -53,6 +54,17 @@ export function HostApplicationCard({ app }: { app: HostApplicationRow }) {
       setError(err instanceof Error ? err.message : "Action failed");
       setBusy(false);
     }
+  }
+
+  async function handleDelete() {
+    const res = await fetch(`/api/admin/host-applications/${app.uid}`, {
+      method: "DELETE",
+    });
+    if (!res.ok) {
+      const b = (await res.json().catch(() => ({}))) as { error?: string };
+      throw new Error(b.error ?? "Delete failed");
+    }
+    router.refresh();
   }
 
   async function approve() {
@@ -119,6 +131,18 @@ export function HostApplicationCard({ app }: { app: HostApplicationRow }) {
               >
                 Deny
               </Button>
+              <ConfirmDestructive
+                trigger={
+                  <Button size="sm" variant="danger" disabled={busy}>
+                    Delete
+                  </Button>
+                }
+                title="Delete host application"
+                description={`Permanently remove @${app.displayName}'s application. The user will be reset to a player and can re-apply.`}
+                confirmPhrase={`@${app.displayName}`}
+                actionLabel="Delete application"
+                onConfirm={handleDelete}
+              />
             </div>
           )}
         </div>

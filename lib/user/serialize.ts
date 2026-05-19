@@ -40,6 +40,9 @@ export function serializeUser(
     isAdmin: Boolean(raw.isAdmin),
     teamId: (raw.teamId as string | null | undefined) ?? null,
     teamHistory: (raw.teamHistory as string[] | undefined) ?? [],
+    deletionRequestedAt: tsToMsOrNull(raw.deletionRequestedAt),
+    archived: Boolean(raw.archived),
+    archivedAt: tsToMsOrNull(raw.archivedAt),
     stats: {
       gamesPlayed: Number(stats.gamesPlayed ?? 0),
       gamesWon: Number(stats.gamesWon ?? 0),
