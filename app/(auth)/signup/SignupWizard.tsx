@@ -118,7 +118,13 @@ function StepIndicator({ current }: { current: Step }) {
 }
 
 // ── Step 1 ──────────────────────────────────────────────────────────────────
-const E164_RE = /^\+[1-9]\d{6,14}$/;
+function formatUsPhone(digits: string): string {
+  const d = digits.slice(0, 10);
+  if (d.length === 0) return "";
+  if (d.length <= 3) return `+1 (${d}`;
+  if (d.length <= 6) return `+1 (${d.slice(0, 3)}) ${d.slice(3)}`;
+  return `+1 (${d.slice(0, 3)}) ${d.slice(3, 6)}-${d.slice(6)}`;
+}
 
 function Step1Account({
   onAuthed,
@@ -293,7 +299,7 @@ function PhoneSignup({
   onCancel: () => void;
 }) {
   const [phase, setPhase] = useState<"number" | "code">("number");
-  const [phone, setPhone] = useState("");
+  const [phoneDigits, setPhoneDigits] = useState("");
   const [code, setCode] = useState("");
   const [confirmation, setConfirmation] = useState<ConfirmationResult | null>(
     null,
@@ -310,13 +316,13 @@ function PhoneSignup({
   async function handleSend(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
-    if (!E164_RE.test(phone)) {
-      setError("Use E.164 format, e.g. +15555551234.");
+    if (phoneDigits.length !== 10) {
+      setError("Enter a 10-digit US phone number.");
       return;
     }
     setSubmitting(true);
     try {
-      const c = await sendPhoneCode(phone, "recaptcha-container");
+      const c = await sendPhoneCode(`+1${phoneDigits}`, "recaptcha-container");
       setConfirmation(c);
       setPhase("code");
     } catch (err) {
@@ -372,10 +378,14 @@ function PhoneSignup({
           <Input
             label="Phone number"
             type="tel"
-            autoComplete="tel"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-            hint="Include country code, e.g. +15555551234"
+            autoComplete="tel-national"
+            inputMode="numeric"
+            value={formatUsPhone(phoneDigits)}
+            onChange={(e) =>
+              setPhoneDigits(e.target.value.replace(/\D/g, "").slice(0, 10))
+            }
+            placeholder="+1 (555) 555-1234"
+            hint="US numbers only"
             required
           />
           {error && (
@@ -407,7 +417,9 @@ function PhoneSignup({
         </form>
       ) : (
         <form onSubmit={handleConfirm} className="flex flex-col gap-4">
-          <p className="text-sm text-text-muted">Code sent to {phone}.</p>
+          <p className="text-sm text-text-muted">
+            Code sent to {formatUsPhone(phoneDigits)}.
+          </p>
           <Input
             label="6-digit code"
             type="text"
