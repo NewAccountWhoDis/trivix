@@ -48,6 +48,14 @@ export interface UserDoc {
   avatarSeed: string;
   role: Role;
   hostStatus: HostStatus;
+  /** uid of the main host this account works under. null = main host or non-host. */
+  mainHostUid: string | null;
+  /** Main host only. Date when host status auto-expires. */
+  hostExpiresAt: FirestoreTimestamp | null;
+  /** Main host only. Max sub-hosts admin allows. */
+  subHostCap: number;
+  /** Main host only. Denormalized list of approved sub-host uids. */
+  subHostUids: string[];
   isAdmin: boolean;
   teamId: string | null;
   teamHistory: string[];
@@ -73,6 +81,10 @@ export interface SerializedUser {
   avatarSeed: string;
   role: Role;
   hostStatus: HostStatus;
+  mainHostUid: string | null;
+  hostExpiresAt: number | null;
+  subHostCap: number;
+  subHostUids: string[];
   isAdmin: boolean;
   teamId: string | null;
   teamHistory: string[];

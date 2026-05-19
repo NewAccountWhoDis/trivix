@@ -124,12 +124,57 @@ export const requestActionSchema = z.object({
 });
 
 // ── Admin ───────────────────────────────────────────────────────────────────
-export const hostApplicationActionSchema = z.object({
-  action: z.enum(["approve", "deny"]),
-});
+export const hostApplicationActionSchema = z
+  .object({
+    action: z.enum(["approve", "deny"]),
+    mainHostUid: z
+      .string()
+      .trim()
+      .min(1)
+      .max(128)
+      .optional()
+      .nullable(),
+    // ISO date string (YYYY-MM-DD) when this approval makes a new main host.
+    hostExpiresAt: z
+      .string()
+      .trim()
+      .regex(/^\d{4}-\d{2}-\d{2}$/, "Use YYYY-MM-DD")
+      .optional()
+      .nullable(),
+    subHostCap: z.number().int().min(0).max(100).optional(),
+  })
+  .refine(
+    (v) =>
+      v.action !== "approve" ||
+      v.mainHostUid ||
+      (v.hostExpiresAt && typeof v.subHostCap === "number"),
+    {
+      message:
+        "Main host approvals require hostExpiresAt and subHostCap; sub-host approvals require mainHostUid.",
+    },
+  );
 
 export const userActionSchema = z.object({
   action: z.enum(["revoke-host", "delete"]),
+});
+
+export const editHostSchema = z.object({
+  mainHostUid: z.string().trim().min(1).max(128).optional().nullable(),
+  hostExpiresAt: z
+    .string()
+    .trim()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, "Use YYYY-MM-DD")
+    .optional()
+    .nullable(),
+  subHostCap: z.number().int().min(0).max(100).optional(),
+});
+
+export const userSearchSchema = z.object({
+  q: z.string().trim().min(2, "At least 2 characters").max(64),
+});
+
+export const addSubHostSchema = z.object({
+  uid: z.string().trim().min(1).max(128),
 });
 
 // ── Venues ──────────────────────────────────────────────────────────────────

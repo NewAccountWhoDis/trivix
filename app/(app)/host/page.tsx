@@ -20,6 +20,11 @@ export default async function HostPage() {
   const u = userSnap.data() ?? {};
   const role = u.role as string | undefined;
   const hostStatus = u.hostStatus as string | undefined;
+  const isMainHost =
+    role === "host" &&
+    hostStatus === "approved" &&
+    (u.mainHostUid ?? null) === null &&
+    Number(u.subHostCap ?? 0) > 0;
 
   if (role !== "host" || hostStatus !== "approved") {
     return (
@@ -84,6 +89,14 @@ export default async function HostPage() {
         >
           Question sets
         </Link>
+        {isMainHost && (
+          <Link
+            href="/host/sub-hosts"
+            className="px-3 py-1 rounded-md text-text-muted hover:text-text-primary transition"
+          >
+            Sub-hosts
+          </Link>
+        )}
         <Link
           href="/host/games/new"
           className="px-3 py-1 rounded-md text-brand-red hover:underline transition"

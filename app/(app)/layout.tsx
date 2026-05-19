@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
 import { adminDb } from "@/lib/firebase/admin";
 import { verifySession } from "@/lib/firebase/session";
+import { checkAndExpireHost } from "@/lib/host/expiration";
 import { serializeUser } from "@/lib/user/serialize";
 import { UserProvider } from "@/components/auth/UserProvider";
 import { AppHeader } from "@/components/layout/AppHeader";
@@ -11,6 +12,9 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
   if (!session) {
     redirect("/login");
   }
+
+  // Lazy host-expiration check — keeps UI fresh without a scheduled job.
+  await checkAndExpireHost(session.uid);
 
   const userSnap = await adminDb.collection("users").doc(session.uid).get();
   if (!userSnap.exists) {

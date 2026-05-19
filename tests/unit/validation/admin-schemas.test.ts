@@ -5,13 +5,45 @@ import {
 } from "@/lib/validation/schemas";
 
 describe("hostApplicationActionSchema", () => {
-  it("accepts approve and deny", () => {
-    expect(hostApplicationActionSchema.parse({ action: "approve" })).toEqual({
+  it("accepts deny without extra fields", () => {
+    expect(hostApplicationActionSchema.parse({ action: "deny" })).toMatchObject(
+      { action: "deny" },
+    );
+  });
+  it("accepts approve as a main host with expiration and cap", () => {
+    expect(
+      hostApplicationActionSchema.parse({
+        action: "approve",
+        hostExpiresAt: "2027-01-01",
+        subHostCap: 5,
+      }),
+    ).toMatchObject({
       action: "approve",
+      hostExpiresAt: "2027-01-01",
+      subHostCap: 5,
     });
-    expect(hostApplicationActionSchema.parse({ action: "deny" })).toEqual({
-      action: "deny",
-    });
+  });
+  it("accepts approve as a sub-host with mainHostUid", () => {
+    expect(
+      hostApplicationActionSchema.parse({
+        action: "approve",
+        mainHostUid: "abc123",
+      }),
+    ).toMatchObject({ action: "approve", mainHostUid: "abc123" });
+  });
+  it("rejects approve with no main and no expiration", () => {
+    expect(() =>
+      hostApplicationActionSchema.parse({ action: "approve" }),
+    ).toThrow();
+  });
+  it("rejects malformed expiration date", () => {
+    expect(() =>
+      hostApplicationActionSchema.parse({
+        action: "approve",
+        hostExpiresAt: "01/01/2027",
+        subHostCap: 0,
+      }),
+    ).toThrow();
   });
   it("rejects other actions", () => {
     expect(() =>

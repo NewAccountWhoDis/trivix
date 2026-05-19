@@ -1,6 +1,7 @@
 import "server-only";
 import { adminDb } from "@/lib/firebase/admin";
 import { verifySession } from "@/lib/firebase/session";
+import { checkAndExpireHost } from "@/lib/host/expiration";
 
 export type HostOutcome =
   | { ok: true; uid: string }
@@ -9,6 +10,7 @@ export type HostOutcome =
 export async function requireApprovedHost(): Promise<HostOutcome> {
   const session = await verifySession();
   if (!session) return { ok: false, status: 401, error: "Not signed in" };
+  await checkAndExpireHost(session.uid);
   const userSnap = await adminDb.collection("users").doc(session.uid).get();
   if (!userSnap.exists) {
     return { ok: false, status: 403, error: "Forbidden" };
