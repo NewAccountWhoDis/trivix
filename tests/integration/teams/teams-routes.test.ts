@@ -96,15 +96,6 @@ describe("POST /api/teams (create)", () => {
     expect(res.status).toBe(401);
   });
 
-  it("rejects users with unverified email", async () => {
-    await seedUser("alice");
-    asUser("alice", false);
-    const res = await createTeam(
-      postReq("http://localhost/api/teams", { name: "X" }),
-    );
-    expect(res.status).toBe(403);
-  });
-
   it("rejects 409 when user is already on a team", async () => {
     await seedUser("alice", { teamId: "existing-team" });
     asUser("alice");

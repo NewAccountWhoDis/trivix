@@ -126,19 +126,26 @@ describe("GET /api/admin/host-applications", () => {
 });
 
 describe("POST /api/admin/host-applications/[uid]", () => {
-  it("approve: flips application + user.hostStatus", async () => {
+  it("approve as new main host: flips application + sets host fields", async () => {
     await seedUser("admin", { isAdmin: true });
     await seedUser("alice", { role: "host", hostStatus: "pending" });
     await seedHostApp("alice", "pending");
     asAdmin();
 
-    const res = await actOnApp(postReq({ action: "approve" }), {
-      params: Promise.resolve({ uid: "alice" }),
-    });
+    const res = await actOnApp(
+      postReq({
+        action: "approve",
+        hostExpiresAt: "2099-01-01",
+        subHostCap: 3,
+      }),
+      { params: Promise.resolve({ uid: "alice" }) },
+    );
     expect(res.status).toBe(200);
 
     const userSnap = await adminDb.collection("users").doc("alice").get();
     expect(userSnap.data()!.hostStatus).toBe("approved");
+    expect(userSnap.data()!.mainHostUid).toBeNull();
+    expect(userSnap.data()!.subHostCap).toBe(3);
 
     const appSnap = await adminDb
       .collection("hostApplications")
@@ -146,6 +153,58 @@ describe("POST /api/admin/host-applications/[uid]", () => {
       .get();
     expect(appSnap.data()!.status).toBe("approved");
     expect(appSnap.data()!.decidedBy).toBe("admin");
+  });
+
+  it("approve as sub-host under an existing main", async () => {
+    await seedUser("admin", { isAdmin: true });
+    await seedUser("mainboss", {
+      role: "host",
+      hostStatus: "approved",
+      mainHostUid: null,
+      subHostCap: 2,
+      subHostUids: [],
+    });
+    await seedUser("alice", { role: "host", hostStatus: "pending" });
+    await seedHostApp("alice", "pending");
+    asAdmin();
+
+    const res = await actOnApp(
+      postReq({ action: "approve", mainHostUid: "mainboss" }),
+      { params: Promise.resolve({ uid: "alice" }) },
+    );
+    expect(res.status).toBe(200);
+
+    const userSnap = await adminDb.collection("users").doc("alice").get();
+    expect(userSnap.data()!.hostStatus).toBe("approved");
+    expect(userSnap.data()!.mainHostUid).toBe("mainboss");
+
+    const mainSnap = await adminDb.collection("users").doc("mainboss").get();
+    expect(mainSnap.data()!.subHostUids).toEqual(["alice"]);
+  });
+
+  it("rejects approve as sub-host when main is at capacity", async () => {
+    await seedUser("admin", { isAdmin: true });
+    await seedUser("mainboss", {
+      role: "host",
+      hostStatus: "approved",
+      mainHostUid: null,
+      subHostCap: 1,
+      subHostUids: ["existing"],
+    });
+    await seedUser("existing", {
+      role: "host",
+      hostStatus: "approved",
+      mainHostUid: "mainboss",
+    });
+    await seedUser("alice", { role: "host", hostStatus: "pending" });
+    await seedHostApp("alice", "pending");
+    asAdmin();
+
+    const res = await actOnApp(
+      postReq({ action: "approve", mainHostUid: "mainboss" }),
+      { params: Promise.resolve({ uid: "alice" }) },
+    );
+    expect(res.status).toBe(409);
   });
 
   it("deny: flips application + user.hostStatus to denied", async () => {
@@ -166,9 +225,14 @@ describe("POST /api/admin/host-applications/[uid]", () => {
     await seedUser("admin", { isAdmin: true });
     await seedUser("alice");
     asAdmin();
-    const res = await actOnApp(postReq({ action: "approve" }), {
-      params: Promise.resolve({ uid: "alice" }),
-    });
+    const res = await actOnApp(
+      postReq({
+        action: "approve",
+        hostExpiresAt: "2099-01-01",
+        subHostCap: 0,
+      }),
+      { params: Promise.resolve({ uid: "alice" }) },
+    );
     expect(res.status).toBe(404);
   });
 
@@ -176,7 +240,7 @@ describe("POST /api/admin/host-applications/[uid]", () => {
     await seedUser("alice");
     await seedHostApp("alice");
     asUser("alice");
-    const res = await actOnApp(postReq({ action: "approve" }), {
+    const res = await actOnApp(postReq({ action: "deny" }), {
       params: Promise.resolve({ uid: "alice" }),
     });
     expect(res.status).toBe(403);

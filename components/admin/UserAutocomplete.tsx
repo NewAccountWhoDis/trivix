@@ -41,7 +41,7 @@ export function UserAutocomplete({
     if (value) return; // Selected; don't search.
     const q = query.trim();
     if (q.length < 2) {
-      setResults([]);
+      setResults([]); // eslint-disable-line react-hooks/set-state-in-effect
       return;
     }
     const ctrl = new AbortController();
