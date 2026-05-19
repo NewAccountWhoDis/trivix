@@ -11,22 +11,25 @@ function tsToMs(value: unknown): number {
 export const dynamic = "force-dynamic";
 
 export default async function AccountReviewsPage() {
+  // orderBy on deletionRequestedAt implicitly excludes nulls; we filter
+  // archived client-side to avoid needing a composite index.
   const snap = await adminDb
     .collection("users")
-    .where("deletionRequestedAt", "!=", null)
-    .where("archived", "==", false)
     .orderBy("deletionRequestedAt", "asc")
+    .limit(500)
     .get();
 
-  const rows = snap.docs.map((d) => {
-    const data = d.data();
-    return {
-      uid: String(data.uid ?? d.id),
-      displayName: String(data.displayName ?? ""),
-      email: String(data.email ?? ""),
-      requestedAt: tsToMs(data.deletionRequestedAt),
-    };
-  });
+  const rows = snap.docs
+    .filter((d) => !d.data().archived)
+    .map((d) => {
+      const data = d.data();
+      return {
+        uid: String(data.uid ?? d.id),
+        displayName: String(data.displayName ?? ""),
+        email: String(data.email ?? ""),
+        requestedAt: tsToMs(data.deletionRequestedAt),
+      };
+    });
 
   return (
     <div>

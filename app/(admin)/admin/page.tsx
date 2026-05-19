@@ -10,11 +10,13 @@ export default async function AdminOverviewPage() {
         .where("status", "==", "pending")
         .count()
         .get(),
+      // orderBy implicitly excludes docs missing the field, so we don't need
+      // a composite index for deletionRequestedAt != null + archived == false.
+      // Filter archived client-side.
       adminDb
         .collection("users")
-        .where("deletionRequestedAt", "!=", null)
-        .where("archived", "==", false)
-        .count()
+        .orderBy("deletionRequestedAt", "asc")
+        .limit(500)
         .get(),
       adminDb.collection("users").count().get(),
       adminDb.collection("teams").count().get(),
@@ -22,7 +24,9 @@ export default async function AdminOverviewPage() {
       adminDb.collection("questionSets").count().get(),
     ]);
 
-  const reviewsCount = accountReviews.data().count;
+  const reviewsCount = accountReviews.docs.filter(
+    (d) => !d.data().archived,
+  ).length;
   const stats = [
     {
       label: "Pending host applications",
