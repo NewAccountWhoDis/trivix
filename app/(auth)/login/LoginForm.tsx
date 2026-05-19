@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { FirebaseError } from "firebase/app";
 import { Button } from "@/components/ui";
 import { Input } from "@/components/ui/Input";
+import { PhoneAuthForm } from "@/components/auth/PhoneAuthForm";
 import {
   getIdToken,
   signInWithEmail,
@@ -30,6 +31,7 @@ export function LoginForm() {
   const params = useSearchParams();
   const next = params.get("next") || "/dashboard";
 
+  const [mode, setMode] = useState<"email" | "phone">("email");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -124,65 +126,100 @@ export function LoginForm() {
         </Link>
       </p>
 
-      <form onSubmit={handleEmailSubmit} className="flex flex-col gap-4">
-        <Input
-          label="Email"
-          type="email"
-          autoComplete="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
+      {mode === "phone" ? (
+        <PhoneAuthForm
+          recaptchaContainerId="login-recaptcha-container"
+          onAuthed={async () => {
+            await exchangeForSession();
+            router.push(next);
+          }}
+          onCancel={() => {
+            setError(null);
+            setMode("email");
+          }}
         />
-        <Input
-          label={pendingLink ? "Confirm your password" : "Password"}
-          type="password"
-          autoComplete="current-password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
-
-        {error && (
-          <div
-            role="alert"
-            className="text-sm text-game-red bg-game-red/10 border border-game-red/30 rounded-md px-3 py-2"
-          >
-            {error}
+      ) : (
+        <>
+          <div className="flex flex-col gap-3">
+            <Button
+              type="button"
+              size="lg"
+              className="w-full"
+              onClick={() => {
+                setError(null);
+                setMode("phone");
+              }}
+              disabled={submitting}
+            >
+              Continue with phone
+            </Button>
+            <Button
+              type="button"
+              variant="secondary"
+              size="lg"
+              className="w-full"
+              onClick={handleGoogle}
+              disabled={submitting}
+            >
+              Continue with Google
+            </Button>
           </div>
-        )}
 
-        <Button type="submit" size="lg" disabled={submitting}>
-          {submitting
-            ? "Signing in…"
-            : pendingLink
-              ? "Sign in & link Google"
-              : "Sign in"}
-        </Button>
+          <div className="my-6 flex items-center gap-3 text-text-faint text-xs uppercase tracking-[3px]">
+            <span className="flex-1 h-px bg-brand-line" />
+            or email and password
+            <span className="flex-1 h-px bg-brand-line" />
+          </div>
 
-        <Link
-          href="/forgot-password"
-          className="text-sm text-text-muted hover:text-text-primary self-end"
-        >
-          Forgot password?
-        </Link>
-      </form>
+          <form onSubmit={handleEmailSubmit} className="flex flex-col gap-4">
+            <Input
+              label="Email"
+              type="email"
+              autoComplete="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+            <Input
+              label={pendingLink ? "Confirm your password" : "Password"}
+              type="password"
+              autoComplete="current-password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
 
-      <div className="my-6 flex items-center gap-3 text-text-faint text-xs uppercase tracking-[3px]">
-        <span className="flex-1 h-px bg-brand-line" />
-        or
-        <span className="flex-1 h-px bg-brand-line" />
-      </div>
+            {error && (
+              <div
+                role="alert"
+                className="text-sm text-game-red bg-game-red/10 border border-game-red/30 rounded-md px-3 py-2"
+              >
+                {error}
+              </div>
+            )}
 
-      <Button
-        type="button"
-        variant="secondary"
-        size="lg"
-        className="w-full"
-        onClick={handleGoogle}
-        disabled={submitting}
-      >
-        Continue with Google
-      </Button>
+            <Button
+              type="submit"
+              variant="secondary"
+              size="lg"
+              disabled={submitting}
+            >
+              {submitting
+                ? "Signing in…"
+                : pendingLink
+                  ? "Sign in & link Google"
+                  : "Sign in"}
+            </Button>
+
+            <Link
+              href="/forgot-password"
+              className="text-sm text-text-muted hover:text-text-primary self-end"
+            >
+              Forgot password?
+            </Link>
+          </form>
+        </>
+      )}
     </div>
   );
 }
