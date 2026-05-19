@@ -82,6 +82,18 @@ export function AppHeader() {
               Admin
             </Link>
           )}
+          {showHost && (
+            <span className="hidden sm:inline-flex px-2 py-0.5 rounded-md text-[10px] uppercase tracking-[2px] border border-brand-red/40 bg-brand-red/10 text-brand-red font-medium">
+              Host
+            </span>
+          )}
+          <Link
+            href="/profile"
+            aria-label="Open profile"
+            className="hidden sm:inline-flex items-center text-sm text-text-muted hover:text-text-primary transition"
+          >
+            @{user.displayName}
+          </Link>
           <Link
             href="/profile"
             aria-label="Open profile"
@@ -98,7 +110,7 @@ export function AppHeader() {
             type="button"
             onClick={handleSignOut}
             disabled={signingOut}
-            className="text-xs text-text-muted hover:text-text-primary transition px-2 py-1 disabled:opacity-50"
+            className="text-xs uppercase tracking-[2px] px-2.5 py-1 rounded-md border border-brand-line text-text-muted hover:text-text-primary hover:border-brand-red transition disabled:opacity-50"
           >
             {signingOut ? "…" : "Sign out"}
           </button>
