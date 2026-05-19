@@ -1,35 +1,27 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { FirebaseError } from "firebase/app";
 import { Button } from "@/components/ui";
 import { Input } from "@/components/ui/Input";
 import {
   clearRecaptcha,
-  confirmPhoneCode,
-  sendPhoneCode,
-  type ConfirmationResult,
+  confirmPhoneUpdate,
+  getIdToken,
+  startPhoneUpdate,
 } from "@/lib/auth/client";
-import {
-  extractPhoneDigits,
-  formatUsPhoneDigits,
-} from "@/lib/utils/phone";
+import { extractPhoneDigits, formatUsPhoneDigits } from "@/lib/utils/phone";
 
-export function PhoneAuthForm({
-  recaptchaContainerId,
-  onAuthed,
-  onCancel,
-}: {
-  recaptchaContainerId: string;
-  onAuthed: () => void | Promise<void>;
-  onCancel: () => void;
-}) {
+const RECAPTCHA_ID = "edit-phone-recaptcha";
+
+export default function EditPhonePage() {
+  const router = useRouter();
   const [phase, setPhase] = useState<"number" | "code">("number");
   const [phoneDigits, setPhoneDigits] = useState("");
+  const [verificationId, setVerificationId] = useState<string | null>(null);
   const [code, setCode] = useState("");
-  const [confirmation, setConfirmation] = useState<ConfirmationResult | null>(
-    null,
-  );
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -38,6 +30,29 @@ export function PhoneAuthForm({
       clearRecaptcha();
     };
   }, []);
+
+  function mapErr(err: unknown): string {
+    if (err instanceof FirebaseError) {
+      switch (err.code) {
+        case "auth/invalid-phone-number":
+          return "That phone number looks invalid.";
+        case "auth/too-many-requests":
+          return "Too many attempts. Wait a moment and try again.";
+        case "auth/invalid-verification-code":
+          return "Wrong code. Try again.";
+        case "auth/code-expired":
+          return "Code expired. Send a new one.";
+        case "auth/credential-already-in-use":
+        case "auth/account-exists-with-different-credential":
+          return "That phone number is already used by another account.";
+        case "auth/requires-recent-login":
+          return "Sign in again, then retry.";
+        default:
+          return "Something went wrong. Please try again.";
+      }
+    }
+    return "Something went wrong. Please try again.";
+  }
 
   async function handleSend(e: React.FormEvent) {
     e.preventDefault();
@@ -48,29 +63,22 @@ export function PhoneAuthForm({
     }
     setSubmitting(true);
     try {
-      const c = await sendPhoneCode(`+1${phoneDigits}`, recaptchaContainerId);
-      setConfirmation(c);
+      const id = await startPhoneUpdate(`+1${phoneDigits}`, RECAPTCHA_ID);
+      setVerificationId(id);
       setPhase("code");
     } catch (err) {
-      const fcode = err instanceof FirebaseError ? err.code : "";
-      if (fcode === "auth/invalid-phone-number") {
-        setError("That phone number looks invalid.");
-      } else if (fcode === "auth/too-many-requests") {
-        setError("Too many attempts. Wait a moment and try again.");
-      } else {
-        setError("Couldn't send code. Please try again.");
-      }
+      setError(mapErr(err));
       clearRecaptcha();
     } finally {
       setSubmitting(false);
     }
   }
 
-  async function handleConfirm(e: React.FormEvent) {
+  async function handleVerify(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
-    if (!confirmation) {
-      setError("Session expired. Resend the code.");
+    if (!verificationId) {
+      setError("Session expired. Start over.");
       setPhase("number");
       return;
     }
@@ -80,17 +88,24 @@ export function PhoneAuthForm({
     }
     setSubmitting(true);
     try {
-      await confirmPhoneCode(confirmation, code);
-      await onAuthed();
+      await confirmPhoneUpdate(verificationId, code);
+      const idToken = await getIdToken(true);
+      const res = await fetch("/api/profile/phone", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ idToken }),
+      });
+      if (!res.ok) {
+        const body = (await res.json().catch(() => ({}))) as { error?: string };
+        throw new Error(body.error ?? "Update failed");
+      }
+      router.push("/profile");
+      router.refresh();
     } catch (err) {
-      const fcode = err instanceof FirebaseError ? err.code : "";
-      if (fcode === "auth/invalid-verification-code") {
-        setError("Wrong code. Try again.");
-      } else if (fcode === "auth/code-expired") {
-        setError("Code expired. Resend a new one.");
-        setPhase("number");
+      if (err instanceof FirebaseError) {
+        setError(mapErr(err));
       } else {
-        setError("Couldn't verify. Try again.");
+        setError(err instanceof Error ? err.message : "Update failed");
       }
     } finally {
       setSubmitting(false);
@@ -98,11 +113,18 @@ export function PhoneAuthForm({
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    <main className="min-h-screen px-6 py-10 md:px-12 md:py-14 max-w-md mx-auto">
+      <h1 className="font-display text-4xl tracking-[3px] mb-2">
+        UPDATE PHONE
+      </h1>
+      <p className="text-text-muted mb-8">
+        We&apos;ll send a code to your new number to confirm it&apos;s yours.
+      </p>
+
       {phase === "number" ? (
         <form onSubmit={handleSend} className="flex flex-col gap-4">
           <Input
-            label="Phone number"
+            label="New phone number"
             type="tel"
             autoComplete="tel-national"
             inputMode="numeric"
@@ -120,13 +142,8 @@ export function PhoneAuthForm({
             </div>
           )}
           <div className="flex gap-3">
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={onCancel}
-              disabled={submitting}
-            >
-              Back
+            <Button type="button" variant="ghost" asChild>
+              <Link href="/profile">Cancel</Link>
             </Button>
             <Button
               type="submit"
@@ -139,7 +156,7 @@ export function PhoneAuthForm({
           </div>
         </form>
       ) : (
-        <form onSubmit={handleConfirm} className="flex flex-col gap-4">
+        <form onSubmit={handleVerify} className="flex flex-col gap-4">
           <p className="text-sm text-text-muted">
             Code sent to {formatUsPhoneDigits(phoneDigits)}.
           </p>
@@ -167,7 +184,7 @@ export function PhoneAuthForm({
               onClick={() => {
                 setPhase("number");
                 setCode("");
-                setConfirmation(null);
+                setVerificationId(null);
                 clearRecaptcha();
               }}
               disabled={submitting}
@@ -180,12 +197,13 @@ export function PhoneAuthForm({
               className="flex-1"
               disabled={submitting}
             >
-              {submitting ? "Verifying…" : "Verify"}
+              {submitting ? "Saving…" : "Verify & save"}
             </Button>
           </div>
         </form>
       )}
-      <div id={recaptchaContainerId} />
-    </div>
+
+      <div id={RECAPTCHA_ID} />
+    </main>
   );
 }

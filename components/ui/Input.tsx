@@ -6,10 +6,11 @@ export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> 
   label?: string;
   error?: string;
   hint?: string;
+  success?: boolean;
 }
 
 export const Input = React.forwardRef<HTMLInputElement, InputProps>(
-  ({ className, label, error, hint, id, ...props }, ref) => {
+  ({ className, label, error, hint, success, id, ...props }, ref) => {
     const generatedId = React.useId();
     const inputId = id ?? generatedId;
     const errorId = error ? `${inputId}-err` : undefined;
@@ -36,6 +37,9 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
             "placeholder:text-text-faint",
             "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-red focus-visible:border-brand-red",
             "aria-[invalid=true]:border-game-red aria-[invalid=true]:ring-game-red",
+            success &&
+              !error &&
+              "border-game-green focus-visible:border-game-green focus-visible:ring-game-green",
             "transition",
             className,
           )}

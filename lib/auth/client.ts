@@ -1,6 +1,7 @@
 import {
   EmailAuthProvider,
   GoogleAuthProvider,
+  PhoneAuthProvider,
   RecaptchaVerifier,
   createUserWithEmailAndPassword,
   linkWithCredential,
@@ -10,6 +11,7 @@ import {
   signOut,
   sendPasswordResetEmail,
   updatePassword,
+  updatePhoneNumber,
   type AuthCredential,
   type ConfirmationResult,
   type UserCredential,
@@ -87,6 +89,24 @@ export async function updateCurrentUserPassword(
   const user = firebaseAuth.currentUser;
   if (!user) throw new Error("No authenticated user.");
   await updatePassword(user, newPassword);
+}
+
+export async function startPhoneUpdate(
+  phoneE164: string,
+  containerId: string,
+): Promise<string> {
+  const provider = new PhoneAuthProvider(firebaseAuth);
+  return provider.verifyPhoneNumber(phoneE164, getRecaptcha(containerId));
+}
+
+export async function confirmPhoneUpdate(
+  verificationId: string,
+  code: string,
+): Promise<void> {
+  const user = firebaseAuth.currentUser;
+  if (!user) throw new Error("No authenticated user.");
+  const credential = PhoneAuthProvider.credential(verificationId, code);
+  await updatePhoneNumber(user, credential);
 }
 
 let recaptchaVerifier: RecaptchaVerifier | null = null;

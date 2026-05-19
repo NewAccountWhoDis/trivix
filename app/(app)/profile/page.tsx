@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui";
 import { Card } from "@/components/ui/Card";
 import { useUser } from "@/hooks/useUser";
+import { formatStoredUsPhone } from "@/lib/utils/phone";
 
 export default function ProfilePage() {
   const user = useUser();
@@ -45,6 +46,7 @@ export default function ProfilePage() {
             label="Email verified"
             value={user.emailVerified ? "Yes" : "No"}
           />
+          <PhoneField phone={user.phone} />
           <Field label="Username" value={`@${user.displayName}`} />
           <Field
             label="Joined"
@@ -73,6 +75,27 @@ function Field({ label, value }: { label: string; value: string }) {
         {label}
       </div>
       <div className="text-text-primary">{value}</div>
+    </div>
+  );
+}
+
+function PhoneField({ phone }: { phone: string | null }) {
+  return (
+    <div>
+      <div className="text-xs uppercase tracking-[3px] text-text-faint mb-1">
+        Phone
+      </div>
+      <div className="flex items-center gap-3">
+        <div className="text-text-primary">
+          {phone ? formatStoredUsPhone(phone) : "Not set"}
+        </div>
+        <Link
+          href="/profile/edit-phone"
+          className="text-xs text-brand-red hover:underline"
+        >
+          {phone ? "Edit" : "Add"}
+        </Link>
+      </div>
     </div>
   );
 }

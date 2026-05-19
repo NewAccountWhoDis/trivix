@@ -25,6 +25,7 @@ interface Step2Data {
   displayName: string;
   email: string;
   password: string;
+  confirmPassword: string;
 }
 
 interface Step3Data {
@@ -46,6 +47,7 @@ export function SignupWizard() {
     displayName: "",
     email: "",
     password: "",
+    confirmPassword: "",
   });
   const [step3, setStep3] = useState<Step3Data>({
     role: intent === "host" ? "host" : "player",
@@ -220,6 +222,10 @@ function Step2Identity({
       setFormError("Fill in all fields with valid values.");
       return;
     }
+    if (value.password !== value.confirmPassword) {
+      setFormError("Passwords don't match.");
+      return;
+    }
     if (available === false) {
       setFormError("That username isn't available.");
       return;
@@ -239,17 +245,24 @@ function Step2Identity({
     }
   }
 
+  const USERNAME_RULES =
+    "Letters, numbers, and underscores OK — no spaces or special characters.";
   const dnHint = !value.displayName
-    ? "3–20 chars; letters, numbers, underscores"
+    ? USERNAME_RULES
     : checking
       ? "Checking availability…"
       : available === true
         ? "Available"
         : available === false
           ? "Username isn't available"
-          : "3–20 chars; letters, numbers, underscores";
+          : USERNAME_RULES;
 
   const dnError = available === false ? "username isn't available" : undefined;
+
+  const passwordsMatch =
+    value.password.length > 0 && value.password === value.confirmPassword;
+  const passwordsMismatch =
+    value.confirmPassword.length > 0 && value.password !== value.confirmPassword;
 
   return (
     <div>
@@ -296,6 +309,24 @@ function Step2Identity({
           value={value.password}
           onChange={(e) => onChange({ ...value, password: e.target.value })}
           hint="At least 8 characters"
+          success={passwordsMatch}
+          className={
+            passwordsMismatch
+              ? "border-game-red focus-visible:border-game-red focus-visible:ring-game-red"
+              : undefined
+          }
+          required
+        />
+        <Input
+          label="Verify password"
+          type="password"
+          autoComplete="new-password"
+          value={value.confirmPassword}
+          onChange={(e) =>
+            onChange({ ...value, confirmPassword: e.target.value })
+          }
+          success={passwordsMatch}
+          error={passwordsMismatch ? "Passwords don't match." : undefined}
           required
         />
         {formError && (
