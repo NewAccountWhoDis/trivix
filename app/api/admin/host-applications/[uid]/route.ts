@@ -173,8 +173,20 @@ export async function DELETE(
 
   try {
     await adminDb.runTransaction(async (tx) => {
+      const appSnap = await tx.get(appRef);
       const userSnap = await tx.get(userRef);
-      if (!userSnap.exists) throw new Error("USER_NOT_FOUND");
+      if (!appSnap.exists && !userSnap.exists) {
+        throw new Error("NOT_FOUND");
+      }
+
+      const now = FieldValue.serverTimestamp();
+
+      // Orphan application (user doc was already deleted) — just nuke the app.
+      if (!userSnap.exists) {
+        if (appSnap.exists) tx.delete(appRef);
+        return;
+      }
+
       const u = userSnap.data() ?? {};
 
       // If this user is currently a sub-host, detach from their main.
@@ -184,7 +196,7 @@ export async function DELETE(
         await tx.get(mainRef);
         tx.update(mainRef, {
           subHostUids: FieldValue.arrayRemove(uid),
-          updatedAt: FieldValue.serverTimestamp(),
+          updatedAt: now,
         });
       }
 
@@ -197,11 +209,11 @@ export async function DELETE(
           role: "player",
           hostStatus: "none",
           mainHostUid: null,
-          updatedAt: FieldValue.serverTimestamp(),
+          updatedAt: now,
         });
       }
 
-      tx.delete(appRef);
+      if (appSnap.exists) tx.delete(appRef);
       tx.update(userRef, {
         role: "player",
         hostStatus: "none",
@@ -209,13 +221,16 @@ export async function DELETE(
         hostExpiresAt: null,
         subHostCap: 0,
         subHostUids: [],
-        updatedAt: FieldValue.serverTimestamp(),
+        updatedAt: now,
       });
     });
   } catch (err) {
     const msg = err instanceof Error ? err.message : "";
-    if (msg === "USER_NOT_FOUND") {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    if (msg === "NOT_FOUND") {
+      return NextResponse.json(
+        { error: "Application not found" },
+        { status: 404 },
+      );
     }
     return NextResponse.json({ error: "Delete failed" }, { status: 500 });
   }
