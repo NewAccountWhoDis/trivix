@@ -1,5 +1,9 @@
 // lib/firebase/client.ts
 import { initializeApp, getApps, getApp, type FirebaseApp } from "firebase/app";
+import {
+  initializeAppCheck,
+  ReCaptchaEnterpriseProvider,
+} from "firebase/app-check";
 import { getAuth, connectAuthEmulator } from "firebase/auth";
 import { getFirestore, connectFirestoreEmulator } from "firebase/firestore";
 
@@ -26,9 +30,11 @@ export const firebaseApp = ensureApp();
 export const firebaseAuth = getAuth(firebaseApp);
 export const firebaseDb = getFirestore(firebaseApp);
 
+const useEmulators = process.env.NEXT_PUBLIC_USE_EMULATORS === "true";
+
 if (
   typeof window !== "undefined" &&
-  process.env.NEXT_PUBLIC_USE_EMULATORS === "true" &&
+  useEmulators &&
   !(globalThis as { __TRIVIX_EMU__?: boolean }).__TRIVIX_EMU__
 ) {
   connectAuthEmulator(firebaseAuth, "http://127.0.0.1:9099", {
@@ -36,4 +42,19 @@ if (
   });
   connectFirestoreEmulator(firebaseDb, "127.0.0.1", 8080);
   (globalThis as { __TRIVIX_EMU__?: boolean }).__TRIVIX_EMU__ = true;
+}
+
+if (
+  typeof window !== "undefined" &&
+  !useEmulators &&
+  process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY &&
+  !(globalThis as { __TRIVIX_APPCHECK__?: boolean }).__TRIVIX_APPCHECK__
+) {
+  initializeAppCheck(firebaseApp, {
+    provider: new ReCaptchaEnterpriseProvider(
+      process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY,
+    ),
+    isTokenAutoRefreshEnabled: true,
+  });
+  (globalThis as { __TRIVIX_APPCHECK__?: boolean }).__TRIVIX_APPCHECK__ = true;
 }
