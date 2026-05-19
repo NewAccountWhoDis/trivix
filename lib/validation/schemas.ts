@@ -32,6 +32,8 @@ export const signupStep2Schema = z.object({
   firstName: nameSchema,
   lastName: nameSchema,
   displayName: displayNameSchema,
+  email: emailSchema,
+  password: passwordSchema,
 });
 
 export const signupStep3Schema = z.object({
@@ -39,7 +41,16 @@ export const signupStep3Schema = z.object({
   reason: z.string().trim().max(500).optional().nullable(),
 });
 
-export const completeSignupSchema = signupStep2Schema.merge(signupStep3Schema);
+// Server-side completeSignup only needs identity + role; the email/password
+// credential is already linked client-side to the phone-authed user before
+// the wizard reaches the role step.
+export const completeSignupSchema = z
+  .object({
+    firstName: nameSchema,
+    lastName: nameSchema,
+    displayName: displayNameSchema,
+  })
+  .merge(signupStep3Schema);
 
 export const checkDisplayNameSchema = z.object({
   displayName: displayNameSchema,
@@ -51,13 +62,25 @@ export const profileEditSchema = z.object({
   displayName: displayNameSchema,
 });
 
+// Identifier may be a username (displayName), email, or US phone number.
+// Validation is forgiving here — the resolver decides which kind it is.
+export const identifierSchema = z
+  .string()
+  .trim()
+  .min(1, "Required")
+  .max(64, "Too long");
+
 export const loginSchema = z.object({
-  email: emailSchema,
+  identifier: identifierSchema,
   password: z.string().min(1, "Required"),
 });
 
 export const forgotPasswordSchema = z.object({
-  email: emailSchema,
+  identifier: identifierSchema,
+});
+
+export const resolveIdentifierSchema = z.object({
+  identifier: identifierSchema,
 });
 
 // ── Teams ───────────────────────────────────────────────────────────────────

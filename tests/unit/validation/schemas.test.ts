@@ -85,18 +85,33 @@ describe("signupStep1EmailSchema", () => {
 });
 
 describe("signupStep2Schema", () => {
-  it("validates all three fields", () => {
+  it("validates identity, email, and password fields", () => {
     expect(
       signupStep2Schema.parse({
         firstName: "Joe",
         lastName: "Black",
         displayName: "joe_black",
+        email: "JOE@x.com",
+        password: "password123",
       }),
     ).toEqual({
       firstName: "Joe",
       lastName: "Black",
       displayName: "joe_black",
+      email: "joe@x.com",
+      password: "password123",
     });
+  });
+  it("rejects a weak password", () => {
+    expect(() =>
+      signupStep2Schema.parse({
+        firstName: "Joe",
+        lastName: "Black",
+        displayName: "joe_black",
+        email: "joe@x.com",
+        password: "short",
+      }),
+    ).toThrow();
   });
 });
 
@@ -158,23 +173,37 @@ describe("profileEditSchema", () => {
 });
 
 describe("loginSchema", () => {
-  it("accepts any non-empty password (server-side login is lax)", () => {
-    expect(loginSchema.parse({ email: "joe@x.com", password: "x" })).toEqual({
-      email: "joe@x.com",
-      password: "x",
-    });
+  it("accepts a username identifier", () => {
+    expect(
+      loginSchema.parse({ identifier: "joe_black", password: "x" }),
+    ).toEqual({ identifier: "joe_black", password: "x" });
+  });
+  it("accepts an email identifier", () => {
+    expect(
+      loginSchema.parse({ identifier: "joe@x.com", password: "x" }),
+    ).toEqual({ identifier: "joe@x.com", password: "x" });
+  });
+  it("accepts a phone identifier", () => {
+    expect(
+      loginSchema.parse({ identifier: "+15555551234", password: "x" }),
+    ).toEqual({ identifier: "+15555551234", password: "x" });
   });
   it("rejects empty password", () => {
     expect(() =>
-      loginSchema.parse({ email: "joe@x.com", password: "" }),
+      loginSchema.parse({ identifier: "joe@x.com", password: "" }),
+    ).toThrow();
+  });
+  it("rejects empty identifier", () => {
+    expect(() =>
+      loginSchema.parse({ identifier: "", password: "x" }),
     ).toThrow();
   });
 });
 
 describe("forgotPasswordSchema", () => {
-  it("validates email", () => {
-    expect(forgotPasswordSchema.parse({ email: "JOE@x.com" })).toEqual({
-      email: "joe@x.com",
+  it("accepts an identifier string", () => {
+    expect(forgotPasswordSchema.parse({ identifier: "joe@x.com" })).toEqual({
+      identifier: "joe@x.com",
     });
   });
 });

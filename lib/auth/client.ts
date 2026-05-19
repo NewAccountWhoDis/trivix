@@ -1,12 +1,15 @@
 import {
+  EmailAuthProvider,
   GoogleAuthProvider,
   RecaptchaVerifier,
   createUserWithEmailAndPassword,
+  linkWithCredential,
   signInWithEmailAndPassword,
   signInWithPhoneNumber,
   signInWithPopup,
   signOut,
   sendPasswordResetEmail,
+  updatePassword,
   type AuthCredential,
   type ConfirmationResult,
   type UserCredential,
@@ -66,6 +69,24 @@ export async function signOutClient(): Promise<void> {
 
 export async function sendPasswordReset(email: string): Promise<void> {
   await sendPasswordResetEmail(firebaseAuth, email);
+}
+
+export async function linkEmailPasswordToCurrentUser(
+  email: string,
+  password: string,
+): Promise<void> {
+  const user = firebaseAuth.currentUser;
+  if (!user) throw new Error("No authenticated user to link credential to.");
+  const credential = EmailAuthProvider.credential(email, password);
+  await linkWithCredential(user, credential);
+}
+
+export async function updateCurrentUserPassword(
+  newPassword: string,
+): Promise<void> {
+  const user = firebaseAuth.currentUser;
+  if (!user) throw new Error("No authenticated user.");
+  await updatePassword(user, newPassword);
 }
 
 let recaptchaVerifier: RecaptchaVerifier | null = null;
