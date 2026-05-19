@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { Timestamp } from "firebase-admin/firestore";
 import { adminDb } from "@/lib/firebase/admin";
 import { verifySession } from "@/lib/firebase/session";
+import { getHostGroup } from "@/lib/host/scope";
 import { Button } from "@/components/ui";
 import { Card } from "@/components/ui/Card";
 import { VenueRow } from "./VenueRow";
@@ -53,16 +54,42 @@ export default async function HostPage() {
     );
   }
 
+  const group = await getHostGroup(session.uid);
   const snap = await adminDb
     .collection("venues")
-    .where("ownerUid", "==", session.uid)
+    .where("ownerUid", "in", group)
     .orderBy("createdAt", "asc")
     .get();
 
+  // Resolve owner display names for non-self entries (sub-host viewing
+  // main's venues, or main viewing sub's venues).
+  const otherOwnerUids = Array.from(
+    new Set(
+      snap.docs
+        .map((d) => String(d.data().ownerUid ?? ""))
+        .filter((u) => u && u !== session.uid),
+    ),
+  );
+  const ownerNames = new Map<string, string>();
+  if (otherOwnerUids.length > 0) {
+    const ownerSnaps = await Promise.all(
+      otherOwnerUids.map((u) => adminDb.collection("users").doc(u).get()),
+    );
+    for (const s of ownerSnaps) {
+      if (s.exists) {
+        ownerNames.set(s.id, String(s.data()?.displayName ?? ""));
+      }
+    }
+  }
+
   const venues = snap.docs.map((d) => {
     const data = d.data();
+    const ownerUid = String(data.ownerUid ?? "");
     return {
       venueId: d.id,
+      ownerUid,
+      ownerDisplayName: ownerNames.get(ownerUid) ?? null,
+      ownedByMe: ownerUid === session.uid,
       name: String(data.name ?? ""),
       address: data.address as {
         street: string;

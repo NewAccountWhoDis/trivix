@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { FieldValue } from "firebase-admin/firestore";
 import { adminDb } from "@/lib/firebase/admin";
 import { requireApprovedHost } from "@/lib/venues/auth";
+import { getHostGroup } from "@/lib/host/scope";
 import { generateUniqueSessionCode } from "@/lib/games/session-code";
 import { createGameSessionSchema } from "@/lib/validation/schemas";
 
@@ -27,11 +28,14 @@ export async function POST(request: Request): Promise<NextResponse> {
     );
   }
 
+  const group = await getHostGroup(auth.uid);
+
   const venueSnap = await adminDb
     .collection("venues")
     .doc(parsed.data.venueId)
     .get();
-  if (!venueSnap.exists || venueSnap.data()?.ownerUid !== auth.uid) {
+  const venueOwner = String(venueSnap.data()?.ownerUid ?? "");
+  if (!venueSnap.exists || !group.includes(venueOwner)) {
     return NextResponse.json(
       { error: "Venue not found or not yours" },
       { status: 404 },
@@ -42,7 +46,8 @@ export async function POST(request: Request): Promise<NextResponse> {
     .collection("questionSets")
     .doc(parsed.data.questionSetId)
     .get();
-  if (!setSnap.exists || setSnap.data()?.ownerUid !== auth.uid) {
+  const setOwner = String(setSnap.data()?.ownerUid ?? "");
+  if (!setSnap.exists || !group.includes(setOwner)) {
     return NextResponse.json(
       { error: "Question set not found or not yours" },
       { status: 404 },

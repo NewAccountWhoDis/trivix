@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { Timestamp } from "firebase-admin/firestore";
 import { adminDb } from "@/lib/firebase/admin";
 import { verifySession } from "@/lib/firebase/session";
+import { getHostGroup } from "@/lib/host/scope";
 import { Button } from "@/components/ui";
 import { Card } from "@/components/ui/Card";
 import { QuestionSetRow } from "./QuestionSetRow";
@@ -22,17 +23,40 @@ export default async function QuestionSetsPage() {
     redirect("/host");
   }
 
+  const group = await getHostGroup(session.uid);
   const snap = await adminDb
     .collection("questionSets")
-    .where("ownerUid", "==", session.uid)
+    .where("ownerUid", "in", group)
     .orderBy("createdAt", "asc")
     .get();
+
+  const otherOwnerUids = Array.from(
+    new Set(
+      snap.docs
+        .map((d) => String(d.data().ownerUid ?? ""))
+        .filter((id) => id && id !== session.uid),
+    ),
+  );
+  const ownerNames = new Map<string, string>();
+  if (otherOwnerUids.length > 0) {
+    const ownerSnaps = await Promise.all(
+      otherOwnerUids.map((u) => adminDb.collection("users").doc(u).get()),
+    );
+    for (const s of ownerSnaps) {
+      if (s.exists) {
+        ownerNames.set(s.id, String(s.data()?.displayName ?? ""));
+      }
+    }
+  }
 
   const sets = snap.docs.map((d) => {
     const data = d.data();
     const questions = (data.questions as unknown[] | undefined) ?? [];
+    const ownerUid = String(data.ownerUid ?? "");
     return {
       setId: d.id,
+      ownedByMe: ownerUid === session.uid,
+      ownerDisplayName: ownerNames.get(ownerUid) ?? null,
       name: String(data.name ?? ""),
       description: (data.description as string | null) ?? null,
       questionCount: questions.length,

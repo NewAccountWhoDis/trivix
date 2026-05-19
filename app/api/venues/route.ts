@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import { adminDb } from "@/lib/firebase/admin";
 import { requireApprovedHost } from "@/lib/venues/auth";
+import { getHostGroup } from "@/lib/host/scope";
 import { createVenueSchema } from "@/lib/validation/schemas";
 
 export const runtime = "nodejs";
@@ -52,9 +53,10 @@ export async function GET(): Promise<NextResponse> {
     return NextResponse.json({ error: auth.error }, { status: auth.status });
   }
 
+  const group = await getHostGroup(auth.uid);
   const snap = await adminDb
     .collection("venues")
-    .where("ownerUid", "==", auth.uid)
+    .where("ownerUid", "in", group)
     .orderBy("createdAt", "asc")
     .get();
 

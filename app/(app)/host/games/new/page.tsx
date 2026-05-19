@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { adminDb } from "@/lib/firebase/admin";
 import { verifySession } from "@/lib/firebase/session";
+import { getHostGroup } from "@/lib/host/scope";
 import { NewGameForm } from "./NewGameForm";
 
 export default async function NewGamePage() {
@@ -14,15 +15,16 @@ export default async function NewGamePage() {
     redirect("/host");
   }
 
+  const group = await getHostGroup(session.uid);
   const [venuesSnap, setsSnap] = await Promise.all([
     adminDb
       .collection("venues")
-      .where("ownerUid", "==", session.uid)
+      .where("ownerUid", "in", group)
       .orderBy("createdAt", "asc")
       .get(),
     adminDb
       .collection("questionSets")
-      .where("ownerUid", "==", session.uid)
+      .where("ownerUid", "in", group)
       .orderBy("createdAt", "asc")
       .get(),
   ]);

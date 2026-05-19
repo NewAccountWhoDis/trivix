@@ -3,6 +3,7 @@ import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import { adminDb } from "@/lib/firebase/admin";
 import { verifySession } from "@/lib/firebase/session";
 import { requireApprovedHost } from "@/lib/venues/auth";
+import { getHostGroup } from "@/lib/host/scope";
 import { updateQuestionSetSchema } from "@/lib/validation/schemas";
 
 export const runtime = "nodejs";
@@ -34,7 +35,8 @@ export async function GET(
   }
   const s = snap.data() ?? {};
   const ownerUid = String(s.ownerUid ?? "");
-  if (ownerUid !== session.uid && !(await isAdminUid(session.uid))) {
+  const group = await getHostGroup(session.uid);
+  if (!group.includes(ownerUid) && !(await isAdminUid(session.uid))) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
