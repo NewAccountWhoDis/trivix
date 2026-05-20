@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { TrivixLogo } from "@/components/brand/TrivixLogo";
 import { Avatar } from "@/components/ui/Avatar";
 import { useUser } from "@/hooks/useUser";
 import { cn } from "@/lib/utils/cn";
@@ -69,10 +70,10 @@ export function AppHeader() {
       <div className="max-w-5xl mx-auto px-4 md:px-6 py-3 flex items-center gap-3">
         <Link
           href="/dashboard"
-          className="font-display text-lg md:text-xl tracking-[3px] hover:opacity-80 transition shrink-0"
+          className="hover:opacity-85 transition shrink-0"
           aria-label="Trivix home"
         >
-          TRIVIX
+          <TrivixLogo size="sm" ariaHidden />
         </Link>
 
         <nav

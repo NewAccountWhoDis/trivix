@@ -2,6 +2,7 @@
 
 import { motion, useReducedMotion } from "framer-motion";
 import Link from "next/link";
+import { TrivixLogo } from "@/components/brand/TrivixLogo";
 import { Button } from "@/components/ui";
 import { ContactSupportModal } from "@/components/support/ContactSupportModal";
 
@@ -62,15 +63,21 @@ export function HomeHero() {
         Welcome to
       </motion.p>
 
-      <motion.h1
+      <h1 className="sr-only">Trivix</h1>
+
+      <motion.div
         initial={{ opacity: 0, scale: 0.96 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.7, ease: "easeOut" }}
-        className="font-display text-7xl md:text-9xl tracking-[8px] text-text-primary text-center"
         style={{ textShadow: "0 0 32px rgba(255,31,58,0.65)" }}
       >
-        TRIVIX
-      </motion.h1>
+        <TrivixLogo
+          size="hero"
+          ariaHidden
+          className="justify-center text-center"
+          markClassName="drop-shadow-[0_0_28px_rgba(255,31,58,0.45)]"
+        />
+      </motion.div>
 
       <motion.p
         initial={{ opacity: 0 }}
@@ -113,7 +120,7 @@ export function HomeHero() {
               type="button"
               className="underline hover:text-text-primary transition"
             >
-              Contact Support for help
+              Contact Support
             </button>
           }
         />

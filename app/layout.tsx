@@ -16,6 +16,11 @@ export const metadata: Metadata = {
     description: "High-energy trivia for hosts, players, and team captains.",
     images: ["/og.png"],
   },
+  icons: {
+    icon: "/trivix-mark.svg",
+    shortcut: "/trivix-mark.svg",
+    apple: "/trivix-mark.svg",
+  },
 };
 
 export default function RootLayout({

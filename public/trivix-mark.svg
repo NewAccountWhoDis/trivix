@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" fill="none">
+  <defs>
+    <filter id="red-glow" x="-40%" y="-40%" width="180%" height="180%" color-interpolation-filters="sRGB">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  <rect width="96" height="96" rx="18" fill="#050608"/>
+  <path d="M48 7 84.5 27.5v41L48 89 11.5 68.5v-41L48 7Z" fill="#0d0e12" stroke="#2a2d36" stroke-width="3"/>
+  <path d="M48 15 77.5 31.5v33L48 81 18.5 64.5v-33L48 15Z" stroke="#ff1f3a" stroke-opacity=".42" stroke-width="2"/>
+  <path d="M30 30h14v14H30V30Z" fill="#ff2e3e" filter="url(#red-glow)"/>
+  <path d="M52 30h14v14H52V30Z" fill="#1ea7ff"/>
+  <path d="M30 52h14v14H30V52Z" fill="#ffd400"/>
+  <path d="M52 52h14v14H52V52Z" fill="#1fd66a"/>
+  <path d="m31 68 37-40M29 28l39 40" stroke="#fff" stroke-width="7" stroke-linecap="round"/>
+  <path d="m33.5 65.5 32-35M32 30.5l32.5 35" stroke="#050608" stroke-width="2.5" stroke-linecap="round"/>
+  <circle cx="48" cy="48" r="7" fill="#ff1f3a" stroke="#fff" stroke-width="2" filter="url(#red-glow)"/>
+</svg>

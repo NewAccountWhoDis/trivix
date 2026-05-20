@@ -89,7 +89,7 @@ export default function ProfilePage() {
               type="button"
               className="underline hover:text-text-primary transition"
             >
-              Contact Support for help
+              Contact Support
             </button>
           }
         />
