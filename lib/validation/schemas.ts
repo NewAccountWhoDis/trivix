@@ -178,7 +178,7 @@ export const addSubHostSchema = z.object({
 });
 
 export const requestHostAccessSchema = z.object({
-  reason: z.string().trim().max(500).optional().nullable(),
+  reason: z.string().trim().max(2000).optional().nullable(),
 });
 
 // ── Venues ──────────────────────────────────────────────────────────────────

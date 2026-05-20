@@ -32,7 +32,8 @@ export default async function HostApplicationPage() {
         REQUEST HOST ACCESS
       </h1>
       <p className="text-text-muted mb-8">
-        Tell us about your venue. An admin will review and decide.
+        Tell us about your venue. An admin will review and follow up for
+        payment.
       </p>
       <HostApplicationForm />
     </main>

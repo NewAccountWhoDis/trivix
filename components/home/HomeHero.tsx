@@ -3,6 +3,7 @@
 import { motion, useReducedMotion } from "framer-motion";
 import Link from "next/link";
 import { Button } from "@/components/ui";
+import { ContactSupportModal } from "@/components/support/ContactSupportModal";
 
 const QUAD_LETTERS = [
   { ch: "A", className: "text-game-red", delay: 0 },
@@ -99,6 +100,23 @@ export function HomeHero() {
         <Link href="/login" className="text-brand-red underline">
           Sign in
         </Link>
+      </p>
+
+      <p className="mt-3 mb-16 text-text-faint text-sm flex items-center gap-3">
+        <Link href="/faq" className="underline hover:text-text-primary transition">
+          FAQ
+        </Link>
+        <span aria-hidden>·</span>
+        <ContactSupportModal
+          trigger={
+            <button
+              type="button"
+              className="underline hover:text-text-primary transition"
+            >
+              Contact Support for help
+            </button>
+          }
+        />
       </p>
 
       <Marquee words={MARQUEE} reduced={Boolean(reduce)} />

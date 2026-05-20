@@ -7,6 +7,7 @@ import { Button } from "@/components/ui";
 import { Card } from "@/components/ui/Card";
 import { useUser } from "@/hooks/useUser";
 import { formatStoredUsPhone } from "@/lib/utils/phone";
+import { ContactSupportModal } from "@/components/support/ContactSupportModal";
 import { DeletionRequestButton } from "./DeletionRequestButton";
 import { HostAccessButton } from "./HostAccessButton";
 
@@ -80,6 +81,19 @@ export default function ProfilePage() {
         <HostAccessButton hostStatus={user.hostStatus} />
         {user.deletionRequestedAt === null && <DeletionRequestButton />}
       </div>
+
+      <p className="mt-10 text-center text-sm text-text-faint">
+        <ContactSupportModal
+          trigger={
+            <button
+              type="button"
+              className="underline hover:text-text-primary transition"
+            >
+              Contact Support for help
+            </button>
+          }
+        />
+      </p>
     </main>
   );
 }

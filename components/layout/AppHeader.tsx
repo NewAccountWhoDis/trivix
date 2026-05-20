@@ -14,6 +14,7 @@ const TABS: readonly Tab[] = [
   { href: "/play", label: "Play" },
   { href: "/team", label: "Team" },
   { href: "/host", label: "Host", requiresHost: true },
+  { href: "/faq", label: "FAQ" },
 ];
 
 export function AppHeader() {
@@ -22,7 +23,13 @@ export function AppHeader() {
   const router = useRouter();
   const [signingOut, setSigningOut] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [prevPath, setPrevPath] = useState(pathname);
   const menuRef = useRef<HTMLDivElement>(null);
+
+  if (pathname !== prevPath) {
+    setPrevPath(pathname);
+    setMenuOpen(false);
+  }
 
   async function handleSignOut() {
     if (signingOut) return;
@@ -38,10 +45,6 @@ export function AppHeader() {
 
   const showHost = user.role === "host";
   const visibleTabs = TABS.filter((t) => !t.requiresHost || showHost);
-
-  useEffect(() => {
-    setMenuOpen(false);
-  }, [pathname]);
 
   useEffect(() => {
     if (!menuOpen) return;
