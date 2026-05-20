@@ -5,15 +5,35 @@ import { ToastProvider } from "@/components/ui/ToastProvider";
 import { BrandScene } from "@/components/three/BrandScene";
 import "./globals.css";
 
+const siteUrl = new URL("https://trivix.app");
+const description = "High-energy trivia for hosts, players, and team captains.";
+
 export const metadata: Metadata = {
   title: "Trivix",
-  description: "High-energy trivia for hosts, players, and team captains.",
-  metadataBase: new URL(
-    process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000",
-  ),
+  description,
+  metadataBase: siteUrl,
+  alternates: {
+    canonical: "/",
+  },
   openGraph: {
     title: "Trivix",
-    description: "High-energy trivia for hosts, players, and team captains.",
+    description,
+    url: "/",
+    siteName: "Trivix",
+    type: "website",
+    images: [
+      {
+        url: "/og.png",
+        width: 1200,
+        height: 630,
+        alt: "Trivix live trivia app",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Trivix",
+    description,
     images: ["/og.png"],
   },
   icons: {
