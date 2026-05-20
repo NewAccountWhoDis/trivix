@@ -61,7 +61,11 @@ export function ContactSupportModal({ trigger, defaultReason }: Props) {
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
         body: body.toString(),
       });
-      if (!res.ok) throw new Error("Couldn't send your message. Try again.");
+      if (!res.ok) {
+        throw new Error(
+          `Couldn't send your message (error ${res.status}). Please try again.`,
+        );
+      }
       setSubmitted(true);
     } catch (err) {
       setError(
