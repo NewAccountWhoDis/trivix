@@ -245,23 +245,56 @@ export interface Question {
   points: number;
 }
 
-export interface QuestionSetDoc {
-  setId: string;
+/**
+ * Authored game content. Replaces the old flat question sets with a
+ * sectioned structure and per-game host assignment.
+ *
+ * - `ownerUid` is the creator (a main host). Only the owner or an admin may
+ *   edit/delete the game or change its assigned hosts.
+ * - `hostUids` always includes the owner plus any assigned sub-hosts. Assigned
+ *   sub-hosts get view + Start access only. Owners may assign only sub-hosts on
+ *   their own account (their `subHostUids`).
+ */
+export type GameQuestionFormat = "choice" | "typed";
+
+export interface GameQuestion {
+  /** Stable local id for editing/reordering within a section. */
+  id: string;
+  format: GameQuestionFormat;
+  prompt: string;
+  /** Points awarded per correct answer. */
+  points: number;
+  /** `choice` format: exactly 4 options, one correct. */
+  choices?: [string, string, string, string];
+  correctIndex?: 0 | 1 | 2 | 3;
+  /** `typed` format: 1+ accepted answers; each correct match scores points. */
+  acceptedAnswers?: string[];
+}
+
+export interface GameSection {
+  id: string;
+  theme: string;
+  questions: GameQuestion[];
+}
+
+export interface GameDoc {
+  gameId: string;
   ownerUid: string;
+  /** Owner + assigned sub-hosts. Determines who can view/Start the game. */
+  hostUids: string[];
   name: string;
-  description: string | null;
-  questions: Question[];
+  sections: GameSection[];
   createdAt: FirestoreTimestamp;
   updatedAt: FirestoreTimestamp;
 }
 
-/** Plain-JSON form of QuestionSetDoc safe to pass server→client. */
-export interface SerializedQuestionSet {
-  setId: string;
+/** Plain-JSON form of GameDoc safe to pass server→client. */
+export interface SerializedGame {
+  gameId: string;
   ownerUid: string;
+  hostUids: string[];
   name: string;
-  description: string | null;
-  questions: Question[];
+  sections: GameSection[];
   createdAt: number;
   updatedAt: number;
 }
@@ -269,16 +302,37 @@ export interface SerializedQuestionSet {
 export type GameSessionStatus = "lobby" | "active" | "ended";
 
 /**
- * Player-safe question shape stored on `gameSessions/{id}`. `correctIndex`
- * is null until the host advances past that question; the server then
- * copies the real value over from `gameSessionKeys/{id}`. Lets players
- * subscribe via `onSnapshot` without ever seeing future answers.
+ * Player-safe question shape stored on `gameSessions/{id}`, built by flattening
+ * an authored game's sections. Answers are hidden (`correctIndex`/`acceptedAnswers`
+ * null) until the host reveals the question; the server then copies the real
+ * values from `gameSessionKeys/{id}`. Lets players subscribe via `onSnapshot`
+ * without seeing answers early.
  */
 export interface SanitizedQuestion {
+  format: GameQuestionFormat;
+  /** Section theme snapshot. */
+  theme: string;
+  /** 0-based section order; used to render round breaks. */
+  sectionIndex: number;
   prompt: string;
-  choices: [string, string, string, string];
-  correctIndex: 0 | 1 | 2 | 3 | null;
   points: number;
+  /** choice only. */
+  choices?: [string, string, string, string];
+  /** choice only — null until revealed. */
+  correctIndex?: 0 | 1 | 2 | 3 | null;
+  /** typed only — number of answer slots shown to the player. */
+  answerCount?: number;
+  /** typed only — null until revealed. */
+  acceptedAnswers?: string[] | null;
+}
+
+/** Host/admin-only answer-key entry. */
+export interface SessionKeyQuestion {
+  format: GameQuestionFormat;
+  points: number;
+  choices?: [string, string, string, string];
+  correctIndex?: 0 | 1 | 2 | 3;
+  acceptedAnswers?: string[];
 }
 
 /**
@@ -288,19 +342,25 @@ export interface SanitizedQuestion {
 export interface GameSessionKeyDoc {
   sessionId: string;
   hostUid: string;
-  questions: Question[];
+  questions: SessionKeyQuestion[];
   createdAt: FirestoreTimestamp;
 }
 
 export interface SerializedGameSessionKey {
   sessionId: string;
   hostUid: string;
-  questions: Question[];
+  questions: SessionKeyQuestion[];
   createdAt: number;
 }
 
+/** A player's answer to one question. Typed answers are scored at grade time. */
 export interface PlayerAnswer {
-  choiceIndex: number;
+  format: GameQuestionFormat;
+  /** choice only. */
+  choiceIndex?: number;
+  /** typed only — what the player typed into their slots. */
+  typedAnswers?: string[];
+  /** Filled at submit for choice; at host grade-lock for typed. */
   correct: boolean;
   points: number;
   answeredAt: FirestoreTimestamp;
@@ -322,29 +382,35 @@ export interface GameSessionPlayer {
 export interface GameSessionDoc {
   sessionId: string;
   hostUid: string;
+  /** True for the host-driven demo: kept out of real stats, watch-only for players. */
+  isDemo?: boolean;
   venueId: string;
   venueNameSnapshot: string;
-  questionSetId: string;
-  questionSetNameSnapshot: string;
-  /** Sanitized questions — `correctIndex` filled in only after reveal. */
+  gameId: string;
+  gameNameSnapshot: string;
+  /** Sanitized questions — answers filled in only after reveal. */
   questions: SanitizedQuestion[];
   status: GameSessionStatus;
   /** -1 in lobby; 0..N-1 while active; equals questions.length once ended. */
   currentQuestionIndex: number;
-  /** Max question index whose correct answer has been revealed; -1 = none. */
+  /** Max question index whose answer has been revealed; -1 = none. */
   revealedIndex: number;
+  /** Max question index whose scoring is locked; -1 = none. */
+  gradedIndex: number;
+  /** True while paused on the between-sections leaderboard break. */
+  atBreak: boolean;
   sessionCode: string;
   /** Keyed by player uid — lets us atomically update one player at a time. */
   players: Record<string, GameSessionPlayer>;
-  /** Server-set absolute deadline for the current question. Null in lobby/ended. */
-  currentQuestionDeadline: FirestoreTimestamp | null;
   createdAt: FirestoreTimestamp;
   startedAt: FirestoreTimestamp | null;
   endedAt: FirestoreTimestamp | null;
 }
 
 export interface SerializedPlayerAnswer {
-  choiceIndex: number;
+  format: GameQuestionFormat;
+  choiceIndex?: number;
+  typedAnswers?: string[];
   correct: boolean;
   points: number;
   answeredAt: number;
@@ -364,17 +430,19 @@ export interface SerializedGameSessionPlayer {
 export interface SerializedGameSession {
   sessionId: string;
   hostUid: string;
+  isDemo?: boolean;
   venueId: string;
   venueNameSnapshot: string;
-  questionSetId: string;
-  questionSetNameSnapshot: string;
+  gameId: string;
+  gameNameSnapshot: string;
   questions: SanitizedQuestion[];
   status: GameSessionStatus;
   currentQuestionIndex: number;
   revealedIndex: number;
+  gradedIndex: number;
+  atBreak: boolean;
   sessionCode: string;
   players: Record<string, SerializedGameSessionPlayer>;
-  currentQuestionDeadline: number | null;
   createdAt: number;
   startedAt: number | null;
   endedAt: number | null;

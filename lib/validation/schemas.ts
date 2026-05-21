@@ -209,57 +209,116 @@ export const createVenueSchema = z.object({
 
 export const updateVenueSchema = createVenueSchema;
 
-// ── Question sets ───────────────────────────────────────────────────────────
-export const questionSchema = z.object({
-  prompt: z
-    .string()
-    .trim()
-    .min(5, "At least 5 characters")
-    .max(500, "500 characters max"),
-  choices: z
-    .array(z.string().trim().min(1, "Required").max(200, "200 characters max"))
-    .length(4, "Exactly 4 choices"),
-  correctIndex: z.number().int().min(0).max(3),
-  points: z.number().int().min(1).max(10),
-});
-
-export const questionSetNameSchema = z
+// ── Games (authored content) ────────────────────────────────────────────────
+export const gameNameSchema = z
   .string()
   .trim()
   .min(2, "At least 2 characters")
   .max(60, "60 characters max");
 
-export const questionSetDescriptionSchema = z
+const gamePromptSchema = z
   .string()
   .trim()
-  .max(300, "300 characters max")
-  .optional()
-  .nullable();
+  .min(5, "At least 5 characters")
+  .max(500, "500 characters max");
 
-export const createQuestionSetSchema = z.object({
-  name: questionSetNameSchema,
-  description: questionSetDescriptionSchema,
+const gamePointsSchema = z.number().int().min(1).max(10);
+
+const choiceQuestionSchema = z.object({
+  id: z.string().min(1),
+  format: z.literal("choice"),
+  prompt: gamePromptSchema,
+  points: gamePointsSchema,
+  choices: z
+    .array(z.string().trim().min(1, "Required").max(200, "200 characters max"))
+    .length(4, "Exactly 4 choices"),
+  correctIndex: z.number().int().min(0).max(3),
+});
+
+const typedQuestionSchema = z.object({
+  id: z.string().min(1),
+  format: z.literal("typed"),
+  prompt: gamePromptSchema,
+  points: gamePointsSchema,
+  acceptedAnswers: z
+    .array(z.string().trim().min(1, "Required").max(100, "100 characters max"))
+    .min(1, "At least 1 answer")
+    .max(20, "20 answers max"),
+});
+
+export const gameQuestionSchema = z.discriminatedUnion("format", [
+  choiceQuestionSchema,
+  typedQuestionSchema,
+]);
+
+export const gameSectionSchema = z.object({
+  id: z.string().min(1),
+  theme: z
+    .string()
+    .trim()
+    .min(1, "Required")
+    .max(60, "60 characters max"),
   questions: z
-    .array(questionSchema)
+    .array(gameQuestionSchema)
     .min(1, "At least 1 question")
     .max(50, "50 questions max"),
 });
 
-export const updateQuestionSetSchema = createQuestionSetSchema;
+/** Create only needs a name — sections are added on the manage screen. */
+export const createGameSchema = z.object({
+  name: gameNameSchema,
+});
 
-// ── Live game sessions ──────────────────────────────────────────────────────
+export const updateGameSchema = z.object({
+  name: gameNameSchema,
+  sections: z.array(gameSectionSchema).max(50, "50 sections max"),
+});
+
+export const assignHostsSchema = z.object({
+  hostUids: z.array(z.string().min(1)).max(100),
+});
+
+// ── Live game sessions (consume authored games) ──────────────────────────────
 export const createGameSessionSchema = z.object({
   venueId: z.string().min(1, "Required"),
-  questionSetId: z.string().min(1, "Required"),
+  gameId: z.string().min(1, "Required"),
 });
+
+/** Demo join code: TXDEMO, optionally suffixed (TXDEMO2, …). */
+export const demoCodeSchema = z
+  .string()
+  .trim()
+  .toUpperCase()
+  .regex(/^TXDEMO\d*$/, "Invalid demo code");
 
 export const joinGameSessionSchema = z.object({
-  sessionCode: inviteCodeSchema,
+  sessionCode: z.union([inviteCodeSchema, demoCodeSchema]),
 });
 
-export const submitAnswerSchema = z.object({
+const choiceAnswerSchema = z.object({
   questionIndex: z.number().int().min(0),
+  format: z.literal("choice"),
   choiceIndex: z.number().int().min(0).max(3),
+});
+
+const typedAnswerSchema = z.object({
+  questionIndex: z.number().int().min(0),
+  format: z.literal("typed"),
+  typedAnswers: z
+    .array(z.string().trim().max(100, "100 characters max"))
+    .min(1)
+    .max(20),
+});
+
+export const submitAnswerSchema = z.discriminatedUnion("format", [
+  choiceAnswerSchema,
+  typedAnswerSchema,
+]);
+
+/** Host confirms which submitted typed answers count as correct. */
+export const gradeAnswersSchema = z.object({
+  questionIndex: z.number().int().min(0),
+  approved: z.array(z.string().max(100)).max(500),
 });
 
 export type SignupStep1EmailInput = z.infer<typeof signupStep1EmailSchema>;
@@ -281,9 +340,8 @@ export type UserActionInput = z.infer<typeof userActionSchema>;
 export type VenueAddressInput = z.infer<typeof venueAddressSchema>;
 export type CreateVenueInput = z.infer<typeof createVenueSchema>;
 export type UpdateVenueInput = z.infer<typeof updateVenueSchema>;
-export type QuestionInput = z.infer<typeof questionSchema>;
-export type CreateQuestionSetInput = z.infer<typeof createQuestionSetSchema>;
-export type UpdateQuestionSetInput = z.infer<typeof updateQuestionSetSchema>;
+export type CreateGameSchema = z.infer<typeof createGameSchema>;
+export type UpdateGameInput = z.infer<typeof updateGameSchema>;
 export type CreateGameSessionInput = z.infer<typeof createGameSessionSchema>;
 export type JoinGameSessionInput = z.infer<typeof joinGameSessionSchema>;
 export type SubmitAnswerInput = z.infer<typeof submitAnswerSchema>;

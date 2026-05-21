@@ -3,7 +3,7 @@ import { adminDb } from "@/lib/firebase/admin";
 import { Card } from "@/components/ui/Card";
 
 export default async function AdminOverviewPage() {
-  const [pendingApps, accountReviews, allUsers, allTeams, allVenues, allSets] =
+  const [pendingApps, accountReviews, allUsers, allTeams, allVenues, allGames] =
     await Promise.all([
       adminDb
         .collection("hostApplications")
@@ -21,7 +21,7 @@ export default async function AdminOverviewPage() {
       adminDb.collection("users").count().get(),
       adminDb.collection("teams").count().get(),
       adminDb.collection("venues").count().get(),
-      adminDb.collection("questionSets").count().get(),
+      adminDb.collection("games").count().get(),
     ]);
 
   const reviewsCount = accountReviews.docs.filter(
@@ -55,9 +55,9 @@ export default async function AdminOverviewPage() {
       href: "/admin/venues",
     },
     {
-      label: "Question sets",
-      value: allSets.data().count,
-      href: "/admin/question-sets",
+      label: "Games",
+      value: allGames.data().count,
+      href: "/admin/games",
     },
   ];
 

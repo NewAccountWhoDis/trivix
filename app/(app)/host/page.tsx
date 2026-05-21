@@ -7,6 +7,7 @@ import { getHostGroup } from "@/lib/host/scope";
 import { Button } from "@/components/ui";
 import { Card } from "@/components/ui/Card";
 import { VenueRow } from "./VenueRow";
+import { DemoButton } from "./DemoButton";
 
 function tsToMs(value: unknown): number {
   if (value instanceof Timestamp) return value.toMillis();
@@ -111,10 +112,10 @@ export default async function HostPage() {
           Venues
         </Link>
         <Link
-          href="/host/question-sets"
+          href="/host/games"
           className="px-3 py-1 rounded-md text-text-muted hover:text-text-primary transition"
         >
-          Question sets
+          Games
         </Link>
         {isMainHost && (
           <Link
@@ -124,8 +125,9 @@ export default async function HostPage() {
             Sub-hosts
           </Link>
         )}
+        <DemoButton />
         <Link
-          href="/host/games/new"
+          href="/host/sessions/new"
           className="px-3 py-1 rounded-md text-brand-red hover:underline transition"
         >
           Start a game →

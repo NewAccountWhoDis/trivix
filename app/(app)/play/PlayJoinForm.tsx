@@ -25,7 +25,7 @@ export function PlayJoinForm() {
     }
     setSubmitting(true);
     try {
-      const res = await fetch("/api/games/join", {
+      const res = await fetch("/api/sessions/join", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(parsed.data),
@@ -49,7 +49,8 @@ export function PlayJoinForm() {
   useEffect(() => {
     if (autoJoinedRef.current) return;
     if (!initialCode) return;
-    if (initialCode.length !== 6) return;
+    if (!joinGameSessionSchema.safeParse({ sessionCode: initialCode }).success)
+      return;
     autoJoinedRef.current = true;
     void joinWith(initialCode);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -82,7 +83,7 @@ export function PlayJoinForm() {
           label="Session code"
           value={code}
           onChange={(e) => setCode(e.target.value.toUpperCase())}
-          maxLength={6}
+          maxLength={12}
           placeholder="ABCD23"
           autoComplete="off"
           autoCapitalize="characters"

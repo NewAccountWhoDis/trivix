@@ -9,10 +9,10 @@
       ]
     },
     {
-      "collectionGroup": "questionSets",
+      "collectionGroup": "games",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "ownerUid", "order": "ASCENDING" },
+        { "fieldPath": "hostUids", "arrayConfig": "CONTAINS" },
         { "fieldPath": "createdAt", "order": "ASCENDING" }
       ]
     },

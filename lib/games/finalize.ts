@@ -30,6 +30,17 @@ export async function finalizeGameSession(sessionId: string): Promise<void> {
   const session = sessionSnap.data() ?? {};
   if (session.status === "ended") return;
 
+  // Demo sessions never touch real player/team stats — just close them out.
+  if (session.isDemo === true) {
+    await sessionRef.update({ status: "ended", endedAt: FieldValue.serverTimestamp() });
+    await adminDb
+      .collection("gameSessionKeys")
+      .doc(sessionId)
+      .delete()
+      .catch(() => {});
+    return;
+  }
+
   const players = (session.players as Record<string, unknown>) ?? {};
   const venueId = String(session.venueId ?? "");
   const venueName = String(session.venueNameSnapshot ?? "");
@@ -169,7 +180,6 @@ export async function finalizeGameSession(sessionId: string): Promise<void> {
   await sessionRef.update({
     status: "ended",
     endedAt: now,
-    currentQuestionDeadline: null,
   });
 
   // Drop the answer-key doc — no longer needed once the game is over.

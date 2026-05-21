@@ -43,7 +43,7 @@ export default async function AdminGamesPage() {
       sessionId: d.id,
       hostDisplayName: hostMap[hostUid] ?? hostUid,
       venue: String(data.venueNameSnapshot ?? ""),
-      questionSet: String(data.questionSetNameSnapshot ?? ""),
+      gameName: String(data.gameNameSnapshot ?? data.questionSetNameSnapshot ?? ""),
       status: (data.status as "lobby" | "active" | "ended") ?? "lobby",
       sessionCode: String(data.sessionCode ?? ""),
       playerCount: Object.keys(players).length,
@@ -70,7 +70,7 @@ export default async function AdminGamesPage() {
                 <div className="flex-1 min-w-[14rem]">
                   <div className="text-text-primary">
                     {g.venue}{" "}
-                    <span className="text-text-faint">· {g.questionSet}</span>
+                    <span className="text-text-faint">· {g.gameName}</span>
                   </div>
                   <div className="text-xs text-text-faint">
                     host @{g.hostDisplayName} · {g.playerCount} player

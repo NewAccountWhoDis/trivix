@@ -3,16 +3,14 @@ import {
   createGameSessionSchema,
   joinGameSessionSchema,
   submitAnswerSchema,
+  gradeAnswersSchema,
 } from "@/lib/validation/schemas";
 
 describe("createGameSessionSchema", () => {
-  it("requires venueId + questionSetId", () => {
+  it("requires venueId + gameId", () => {
     expect(
-      createGameSessionSchema.parse({
-        venueId: "v1",
-        questionSetId: "qs1",
-      }),
-    ).toEqual({ venueId: "v1", questionSetId: "qs1" });
+      createGameSessionSchema.parse({ venueId: "v1", gameId: "g1" }),
+    ).toEqual({ venueId: "v1", gameId: "g1" });
   });
   it("rejects missing fields", () => {
     expect(() => createGameSessionSchema.parse({ venueId: "v1" })).toThrow();
@@ -20,7 +18,7 @@ describe("createGameSessionSchema", () => {
   });
   it("rejects empty strings", () => {
     expect(() =>
-      createGameSessionSchema.parse({ venueId: "", questionSetId: "qs1" }),
+      createGameSessionSchema.parse({ venueId: "", gameId: "g1" }),
     ).toThrow();
   });
 });
@@ -39,27 +37,62 @@ describe("joinGameSessionSchema", () => {
 });
 
 describe("submitAnswerSchema", () => {
-  it("accepts valid indices", () => {
+  it("accepts a choice answer", () => {
     expect(
-      submitAnswerSchema.parse({ questionIndex: 0, choiceIndex: 2 }),
-    ).toEqual({ questionIndex: 0, choiceIndex: 2 });
+      submitAnswerSchema.parse({
+        questionIndex: 0,
+        format: "choice",
+        choiceIndex: 2,
+      }),
+    ).toEqual({ questionIndex: 0, format: "choice", choiceIndex: 2 });
   });
-  it("rejects negative questionIndex", () => {
-    expect(() =>
-      submitAnswerSchema.parse({ questionIndex: -1, choiceIndex: 0 }),
-    ).toThrow();
+  it("accepts a typed answer", () => {
+    expect(
+      submitAnswerSchema.parse({
+        questionIndex: 1,
+        format: "typed",
+        typedAnswers: ["ape", "ant"],
+      }),
+    ).toEqual({
+      questionIndex: 1,
+      format: "typed",
+      typedAnswers: ["ape", "ant"],
+    });
   });
   it("rejects choiceIndex out of 0-3", () => {
     expect(() =>
-      submitAnswerSchema.parse({ questionIndex: 0, choiceIndex: 4 }),
-    ).toThrow();
-    expect(() =>
-      submitAnswerSchema.parse({ questionIndex: 0, choiceIndex: -1 }),
+      submitAnswerSchema.parse({
+        questionIndex: 0,
+        format: "choice",
+        choiceIndex: 4,
+      }),
     ).toThrow();
   });
-  it("rejects non-integer indices", () => {
+  it("rejects an unknown format", () => {
     expect(() =>
-      submitAnswerSchema.parse({ questionIndex: 0.5, choiceIndex: 0 }),
+      submitAnswerSchema.parse({ questionIndex: 0, format: "essay" }),
+    ).toThrow();
+  });
+  it("rejects an empty typed answer list", () => {
+    expect(() =>
+      submitAnswerSchema.parse({
+        questionIndex: 0,
+        format: "typed",
+        typedAnswers: [],
+      }),
+    ).toThrow();
+  });
+});
+
+describe("gradeAnswersSchema", () => {
+  it("accepts a question index and approved list", () => {
+    expect(
+      gradeAnswersSchema.parse({ questionIndex: 2, approved: ["ape"] }),
+    ).toEqual({ questionIndex: 2, approved: ["ape"] });
+  });
+  it("rejects a negative question index", () => {
+    expect(() =>
+      gradeAnswersSchema.parse({ questionIndex: -1, approved: [] }),
     ).toThrow();
   });
 });
