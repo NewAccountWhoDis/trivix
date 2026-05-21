@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui";
@@ -139,10 +140,15 @@ export function UsersTable({
                   key={u.uid}
                   className="flex items-center gap-3 p-4 flex-wrap"
                 >
-                  <div className="flex-1 min-w-[10rem]">
-                    <div className="text-text-primary">@{u.displayName}</div>
+                  <Link
+                    href={`/admin/users/${u.uid}`}
+                    className="flex-1 min-w-[10rem] group"
+                  >
+                    <div className="text-text-primary group-hover:text-brand-red transition">
+                      @{u.displayName}
+                    </div>
                     <div className="text-xs text-text-faint">{u.email}</div>
-                  </div>
+                  </Link>
                   <div className="flex flex-wrap gap-2">
                     {u.isAdmin && <Badge tone="pro">admin</Badge>}
                     {u.role === "host" && u.hostStatus === "approved" && (
@@ -229,7 +235,12 @@ function ArchivedTable({ rows }: { rows: AdminUserRow[] }) {
                   {u.firstName} {u.lastName}
                 </td>
                 <td className="px-5 py-3 text-text-muted">
-                  @{u.displayName}
+                  <Link
+                    href={`/admin/users/${u.uid}`}
+                    className="hover:text-brand-red transition"
+                  >
+                    @{u.displayName}
+                  </Link>
                 </td>
                 <td className="px-5 py-3 text-text-muted">{u.email}</td>
                 <td className="px-5 py-3 text-text-muted">

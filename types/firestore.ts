@@ -477,6 +477,22 @@ export interface AdminSettingsDoc {
   updatedAt: FirestoreTimestamp;
 }
 
+/**
+ * userSessions/{sessionId} — one record per login, capturing IP + user-agent
+ * for admin review. Server-only writes; not readable by clients (admins read
+ * via the Admin SDK). `endedAt` is set on sign-out-everywhere; `expiresAt`
+ * mirrors the 5-day session cookie.
+ */
+export interface UserSessionDoc {
+  sessionId: string;
+  uid: string;
+  ip: string;
+  userAgent: string;
+  createdAt: FirestoreTimestamp;
+  expiresAt: FirestoreTimestamp;
+  endedAt: FirestoreTimestamp | null;
+}
+
 export interface HostApplicationDoc {
   uid: string;
   email: string;

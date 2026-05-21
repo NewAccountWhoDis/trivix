@@ -38,7 +38,7 @@ export const signupStep2Schema = z.object({
 
 export const signupStep3Schema = z.object({
   role: z.enum(["player", "host"]),
-  reason: z.string().trim().max(500).optional().nullable(),
+  reason: z.string().trim().max(2000).optional().nullable(),
 });
 
 // Server-side completeSignup only needs identity + role; the email/password
@@ -155,7 +155,7 @@ export const hostApplicationActionSchema = z
   );
 
 export const userActionSchema = z.object({
-  action: z.enum(["revoke-host", "delete"]),
+  action: z.enum(["revoke-host", "delete", "signout-everywhere"]),
 });
 
 export const editHostSchema = z.object({

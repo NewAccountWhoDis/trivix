@@ -3,6 +3,7 @@ import { FieldValue } from "firebase-admin/firestore";
 import { adminAuth, adminDb } from "@/lib/firebase/admin";
 import { requireAdmin } from "@/lib/admin/auth";
 import { userActionSchema } from "@/lib/validation/schemas";
+import { endUserSessions } from "@/lib/sessions/record";
 
 export const runtime = "nodejs";
 
@@ -41,6 +42,14 @@ export async function POST(
   }
   const user = userSnap.data() ?? {};
   const now = FieldValue.serverTimestamp();
+
+  if (parsed.data.action === "signout-everywhere") {
+    // Invalidate refresh tokens (forces re-login on all devices once their
+    // current session cookie can't refresh) and end our session records.
+    await adminAuth.revokeRefreshTokens(uid);
+    await endUserSessions(uid);
+    return NextResponse.json({ ok: true });
+  }
 
   if (parsed.data.action === "revoke-host") {
     const appRef = adminDb.collection("hostApplications").doc(uid);

@@ -7,6 +7,7 @@ import { FirebaseError } from "firebase/app";
 import { Button } from "@/components/ui";
 import { Input } from "@/components/ui/Input";
 import { PhoneAuthForm } from "@/components/auth/PhoneAuthForm";
+import { ContactSupportModal } from "@/components/support/ContactSupportModal";
 import {
   getIdToken,
   linkEmailPasswordToCurrentUser,
@@ -30,7 +31,10 @@ interface Step2Data {
 
 interface Step3Data {
   role: "player" | "host";
-  reason: string;
+  venueCount: string;
+  frequency: string;
+  otherHosts: string;
+  notes: string;
 }
 
 export function SignupWizard() {
@@ -51,7 +55,10 @@ export function SignupWizard() {
   });
   const [step3, setStep3] = useState<Step3Data>({
     role: intent === "host" ? "host" : "player",
-    reason: "",
+    venueCount: "",
+    frequency: "",
+    otherHosts: "",
+    notes: "",
   });
 
   const goTo = useCallback(
@@ -377,12 +384,25 @@ function Step3Role({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  function buildReason() {
+    const parts = [
+      ["How many venues do you plan to host trivia?", value.venueCount],
+      ["How often?", value.frequency],
+      ["Do you need other hosts added to your account?", value.otherHosts],
+      ["Notes or questions for the admin team", value.notes],
+    ] as const;
+    return parts
+      .filter(([, a]) => a.trim())
+      .map(([q, a]) => `${q}\n${a.trim()}`)
+      .join("\n\n");
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     const parsed = signupStep3Schema.safeParse({
       role: value.role,
-      reason: value.role === "host" ? value.reason || null : null,
+      reason: value.role === "host" ? buildReason() || null : null,
     });
     if (!parsed.success) {
       setError("Choose a role.");
@@ -446,19 +466,60 @@ function Step3Role({
         />
 
         {value.role === "host" && (
-          <label className="flex flex-col gap-1.5 mt-2">
-            <span className="text-sm font-medium text-text-muted">
-              Tell us about your venue (optional)
-            </span>
-            <textarea
-              value={value.reason}
-              onChange={(e) => onChange({ ...value, reason: e.target.value })}
-              maxLength={500}
-              rows={4}
-              className="px-4 py-3 rounded-md bg-brand-ink border border-brand-line text-text-primary placeholder:text-text-faint focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-red focus-visible:border-brand-red transition resize-none"
-              placeholder="Where do you host? How often? Any prior experience?"
+          <div className="flex flex-col gap-5 mt-2">
+            <Input
+              label="How many venues do you plan to host trivia?"
+              value={value.venueCount}
+              onChange={(e) =>
+                onChange({ ...value, venueCount: e.target.value })
+              }
+              maxLength={200}
             />
-          </label>
+            <Input
+              label="How often?"
+              value={value.frequency}
+              onChange={(e) =>
+                onChange({ ...value, frequency: e.target.value })
+              }
+              maxLength={200}
+            />
+            <Input
+              label="Do you need other hosts added to your account?"
+              value={value.otherHosts}
+              onChange={(e) =>
+                onChange({ ...value, otherHosts: e.target.value })
+              }
+              maxLength={300}
+            />
+            <label className="flex flex-col gap-1.5">
+              <span className="text-sm font-medium text-text-muted">
+                Notes or questions for the admin team
+              </span>
+              <textarea
+                value={value.notes}
+                onChange={(e) => onChange({ ...value, notes: e.target.value })}
+                maxLength={800}
+                rows={4}
+                className="px-4 py-3 rounded-md bg-brand-ink border border-brand-line text-text-primary placeholder:text-text-faint focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-red focus-visible:border-brand-red transition resize-none"
+                placeholder="Anything else we should know?"
+              />
+            </label>
+            <p className="text-sm text-text-muted text-center">
+              Questions about your application,{" "}
+              <ContactSupportModal
+                defaultReason="Host application"
+                trigger={
+                  <button
+                    type="button"
+                    className="text-brand-red underline hover:text-brand-red-glow transition"
+                  >
+                    contact support
+                  </button>
+                }
+              />
+              .
+            </p>
+          </div>
         )}
 
         {error && (

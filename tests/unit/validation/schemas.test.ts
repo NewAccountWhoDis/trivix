@@ -132,9 +132,9 @@ describe("signupStep3Schema", () => {
   it("rejects unknown role", () => {
     expect(() => signupStep3Schema.parse({ role: "admin" })).toThrow();
   });
-  it("rejects reason over 500", () => {
+  it("rejects reason over 2000", () => {
     expect(() =>
-      signupStep3Schema.parse({ role: "host", reason: "x".repeat(501) }),
+      signupStep3Schema.parse({ role: "host", reason: "x".repeat(2001) }),
     ).toThrow();
   });
 });
