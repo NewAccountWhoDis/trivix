@@ -448,6 +448,35 @@ export interface SerializedGameSession {
   endedAt: number | null;
 }
 
+/** The six events an admin can subscribe to notifications for. */
+export type AdminNotificationEventKey =
+  | "accountDeletionRequest"
+  | "accountsNeedReview"
+  | "gameStarted"
+  | "newHostRequest"
+  | "newUserSignup"
+  | "newVenueAdded";
+
+export interface AdminChannelPrefs {
+  email: boolean;
+  sms: boolean;
+}
+
+/**
+ * adminSettings/{adminUid} — one notification-preferences doc per admin.
+ * Server-only writes. SMS is stored but not yet delivered (v1 = email only).
+ */
+export interface AdminSettingsDoc {
+  uid: string;
+  /** Destination email for notifications; null = none set. */
+  email: string | null;
+  /** Destination phone in E.164 (e.g. +15185551234); null = none set. */
+  phone: string | null;
+  events: Record<AdminNotificationEventKey, AdminChannelPrefs>;
+  createdAt: FirestoreTimestamp;
+  updatedAt: FirestoreTimestamp;
+}
+
 export interface HostApplicationDoc {
   uid: string;
   email: string;

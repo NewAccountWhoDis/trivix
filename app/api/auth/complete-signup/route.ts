@@ -6,6 +6,7 @@ import {
   toDisplayNameKey,
 } from "@/lib/validation/schemas";
 import { DEFAULT_USER_STATS } from "@/types/firestore";
+import { notifyAdmins } from "@/lib/notifications/dispatch";
 
 export const runtime = "nodejs";
 
@@ -128,6 +129,18 @@ export async function POST(request: Request): Promise<NextResponse> {
       );
     }
     return NextResponse.json({ error: "Signup failed" }, { status: 500 });
+  }
+
+  const site = process.env.NEXT_PUBLIC_SITE_URL ?? "";
+  await notifyAdmins("newUserSignup", {
+    subject: "Trivix: new user signup",
+    body: `${displayName} (${email || "no email"}) just signed up.\n\nUsers: ${site}/admin/users`,
+  });
+  if (role === "host") {
+    await notifyAdmins("newHostRequest", {
+      subject: "Trivix: new host application",
+      body: `${displayName} (${email || "no email"}) signed up and applied to host.\n\nReview: ${site}/admin/host-applications`,
+    });
   }
 
   return NextResponse.json({ ok: true, uid, displayName });

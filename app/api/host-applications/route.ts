@@ -3,6 +3,7 @@ import { FieldValue } from "firebase-admin/firestore";
 import { adminDb } from "@/lib/firebase/admin";
 import { verifySession } from "@/lib/firebase/session";
 import { requestHostAccessSchema } from "@/lib/validation/schemas";
+import { notifyAdmins } from "@/lib/notifications/dispatch";
 
 export const runtime = "nodejs";
 
@@ -80,6 +81,13 @@ export async function POST(request: Request): Promise<NextResponse> {
       { status: 500 },
     );
   }
+
+  const u = (await userRef.get()).data() ?? {};
+  const site = process.env.NEXT_PUBLIC_SITE_URL ?? "";
+  await notifyAdmins("newHostRequest", {
+    subject: "Trivix: new host application",
+    body: `${String(u.displayName ?? session.uid)} (${String(u.email ?? "no email")}) applied to host.\n\nReview: ${site}/admin/host-applications`,
+  });
 
   return NextResponse.json({ ok: true });
 }

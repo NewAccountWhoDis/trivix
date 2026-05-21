@@ -295,6 +295,43 @@ export const joinGameSessionSchema = z.object({
   sessionCode: z.union([inviteCodeSchema, demoCodeSchema]),
 });
 
+// ── Admin notification settings ──────────────────────────────────────────────
+const channelPrefsSchema = z.object({
+  email: z.boolean(),
+  sms: z.boolean(),
+});
+
+/** Empty string is treated as "not set" (normalized to null in the route). */
+const optionalEmail = z
+  .string()
+  .trim()
+  .toLowerCase()
+  .max(254)
+  .refine((v) => v === "" || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v), "Enter a valid email");
+
+/** E.164 US (+1 then 10 digits) or empty. */
+const optionalUsPhone = z
+  .string()
+  .trim()
+  .refine((v) => v === "" || /^\+1\d{10}$/.test(v), "Enter a valid US phone number");
+
+export const adminNotificationSettingsSchema = z.object({
+  email: optionalEmail,
+  phone: optionalUsPhone,
+  events: z.object({
+    accountDeletionRequest: channelPrefsSchema,
+    accountsNeedReview: channelPrefsSchema,
+    gameStarted: channelPrefsSchema,
+    newHostRequest: channelPrefsSchema,
+    newUserSignup: channelPrefsSchema,
+    newVenueAdded: channelPrefsSchema,
+  }),
+});
+
+export type AdminNotificationSettingsInput = z.infer<
+  typeof adminNotificationSettingsSchema
+>;
+
 const choiceAnswerSchema = z.object({
   questionIndex: z.number().int().min(0),
   format: z.literal("choice"),

@@ -79,6 +79,13 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // adminSettings/{adminUid} — admin notification preferences. Any admin may
+    // read (all admins are trusted); writes are server-only.
+    match /adminSettings/{adminUid} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
     // teams/{teamId} — members, captain, or admin can read; writes server-only.
     match /teams/{teamId} {
       allow read: if isMemberOfTeam(teamId) || isCaptainOfTeam(teamId) || isAdmin();

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { FieldValue } from "firebase-admin/firestore";
 import { adminDb } from "@/lib/firebase/admin";
 import { verifySession } from "@/lib/firebase/session";
+import { notifyAdmins } from "@/lib/notifications/dispatch";
 
 export const runtime = "nodejs";
 
@@ -35,6 +36,16 @@ export async function POST(
     atBreak: false,
     startedAt: FieldValue.serverTimestamp(),
   });
+
+  // Real games only — demos shouldn't notify admins.
+  if (snap.data()?.isDemo !== true) {
+    const venue = String(snap.data()?.venueNameSnapshot ?? "a venue");
+    const game = String(snap.data()?.gameNameSnapshot ?? "a game");
+    await notifyAdmins("gameStarted", {
+      subject: "Trivix: a game just started",
+      body: `"${game}" started at ${venue}.`,
+    });
+  }
 
   return NextResponse.json({ ok: true });
 }

@@ -4,6 +4,7 @@ import { adminDb } from "@/lib/firebase/admin";
 import { requireApprovedHost } from "@/lib/venues/auth";
 import { getHostGroup } from "@/lib/host/scope";
 import { createVenueSchema } from "@/lib/validation/schemas";
+import { notifyAdmins } from "@/lib/notifications/dispatch";
 
 export const runtime = "nodejs";
 
@@ -42,6 +43,12 @@ export async function POST(request: Request): Promise<NextResponse> {
     address: parsed.data.address,
     createdAt: now,
     updatedAt: now,
+  });
+
+  const city = parsed.data.address?.city ?? "";
+  await notifyAdmins("newVenueAdded", {
+    subject: "Trivix: new venue added",
+    body: `A new venue was added: ${parsed.data.name}${city ? ` (${city})` : ""}.`,
   });
 
   return NextResponse.json({ ok: true, venueId });

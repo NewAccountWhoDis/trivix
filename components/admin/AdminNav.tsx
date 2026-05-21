@@ -13,6 +13,7 @@ const TABS = [
   { href: "/admin/teams", label: "Teams" },
   { href: "/admin/venues", label: "Venues" },
   { href: "/admin/games", label: "Games" },
+  { href: "/admin/settings", label: "Settings" },
 ] as const;
 
 export function AdminNav() {
