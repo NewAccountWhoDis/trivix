@@ -2,7 +2,6 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { adminDb } from "@/lib/firebase/admin";
 import { verifySession } from "@/lib/firebase/session";
-import { getHostGroup } from "@/lib/host/scope";
 import type { GameSection } from "@/types/firestore";
 import { NewGameForm } from "./NewGameForm";
 
@@ -18,13 +17,9 @@ export default async function NewGamePage() {
     redirect("/host");
   }
 
-  const group = await getHostGroup(session.uid);
+  // Hosts may run a game at any venue in the system, not just ones they own.
   const [venuesSnap, gamesSnap] = await Promise.all([
-    adminDb
-      .collection("venues")
-      .where("ownerUid", "in", group)
-      .orderBy("createdAt", "asc")
-      .get(),
+    adminDb.collection("venues").orderBy("name", "asc").get(),
     adminDb
       .collection("games")
       .where("hostUids", "array-contains", session.uid)
@@ -32,10 +27,16 @@ export default async function NewGamePage() {
       .get(),
   ]);
 
-  const venues = venuesSnap.docs.map((d) => ({
-    venueId: d.id,
-    name: String(d.data().name ?? ""),
-  }));
+  const venues = venuesSnap.docs.map((d) => {
+    const data = d.data();
+    const addr = (data.address as { city?: string; state?: string }) ?? {};
+    return {
+      venueId: d.id,
+      name: String(data.name ?? ""),
+      city: String(addr.city ?? ""),
+      state: String(addr.state ?? ""),
+    };
+  });
   const games = gamesSnap.docs.map((d) => {
     const sections = (d.data().sections as GameSection[] | undefined) ?? [];
     return {

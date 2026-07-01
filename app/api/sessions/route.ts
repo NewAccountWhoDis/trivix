@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { FieldValue } from "firebase-admin/firestore";
 import { adminDb } from "@/lib/firebase/admin";
 import { requireApprovedHost } from "@/lib/venues/auth";
-import { getHostGroup } from "@/lib/host/scope";
 import { canUseGame } from "@/lib/games/authz";
 import { generateUniqueSessionCode } from "@/lib/games/session-code";
 import { buildSessionFromGame, countQuestions } from "@/lib/games/build-session";
@@ -31,18 +30,14 @@ export async function POST(request: Request): Promise<NextResponse> {
     );
   }
 
-  const group = await getHostGroup(auth.uid);
-
+  // Any approved host may run a game at any existing venue, regardless of
+  // who created it.
   const venueSnap = await adminDb
     .collection("venues")
     .doc(parsed.data.venueId)
     .get();
-  const venueOwner = String(venueSnap.data()?.ownerUid ?? "");
-  if (!venueSnap.exists || !group.includes(venueOwner)) {
-    return NextResponse.json(
-      { error: "Venue not found or not yours" },
-      { status: 404 },
-    );
+  if (!venueSnap.exists) {
+    return NextResponse.json({ error: "Venue not found" }, { status: 404 });
   }
 
   const gameSnap = await adminDb.collection("games").doc(parsed.data.gameId).get();

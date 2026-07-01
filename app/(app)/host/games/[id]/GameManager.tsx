@@ -360,11 +360,20 @@ export function GameManager({
         )}
       </div>
 
-      {canEdit && (
-        <div className="mt-10">
-          <Button asChild variant="secondary">
-            <Link href={`/host/sessions/new`}>Start this game →</Link>
-          </Button>
+      {(canEdit || sections.length > 0) && (
+        <div className="mt-10 flex flex-wrap gap-3">
+          {canEdit && (
+            <Button asChild variant="secondary">
+              <Link href={`/host/sessions/new`}>Start this game →</Link>
+            </Button>
+          )}
+          {sections.some((s) => s.questions.length > 0) && (
+            <Button asChild variant="secondary">
+              <Link href={`/host/games/${gameId}/preview`}>
+                Preview this game
+              </Link>
+            </Button>
+          )}
         </div>
       )}
     </main>

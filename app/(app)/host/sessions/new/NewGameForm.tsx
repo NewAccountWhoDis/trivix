@@ -9,6 +9,13 @@ import { Card } from "@/components/ui/Card";
 interface Venue {
   venueId: string;
   name: string;
+  city?: string;
+  state?: string;
+}
+
+function venueLabel(v: Venue): string {
+  const loc = [v.city, v.state].filter(Boolean).join(", ");
+  return loc ? `${v.name} — ${loc}` : v.name;
 }
 interface GameSummary {
   gameId: string;
@@ -89,7 +96,15 @@ export function NewGameForm({
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       <label className="flex flex-col gap-1.5">
-        <span className="text-sm font-medium text-text-muted">Venue</span>
+        <div className="flex items-center justify-between">
+          <span className="text-sm font-medium text-text-muted">Venue</span>
+          <Link
+            href="/host/venues/new"
+            className="text-xs text-brand-red hover:underline"
+          >
+            + Add a new venue
+          </Link>
+        </div>
         <select
           value={venueId}
           onChange={(e) => setVenueId(e.target.value)}
@@ -97,7 +112,7 @@ export function NewGameForm({
         >
           {venues.map((v) => (
             <option key={v.venueId} value={v.venueId}>
-              {v.name}
+              {venueLabel(v)}
             </option>
           ))}
         </select>
