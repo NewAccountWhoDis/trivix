@@ -36,6 +36,7 @@ export default async function GamesPage() {
     return {
       gameId: d.id,
       name: String(data.name ?? ""),
+      isScorecard: data.kind === "scorecard",
       ownedByMe: String(data.ownerUid ?? "") === session.uid,
       sectionCount: sections.length,
       questionCount: sections.reduce(
@@ -96,11 +97,18 @@ export default async function GamesPage() {
                   className="flex items-center justify-between gap-4 p-5 hover:bg-brand-ink/40 transition"
                 >
                   <div>
-                    <div className="font-medium text-text-primary">
-                      {g.name}
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium text-text-primary">
+                        {g.name}
+                      </span>
+                      {g.isScorecard && (
+                        <span className="text-[10px] uppercase tracking-[2px] text-text-faint border border-brand-line rounded px-1.5 py-0.5">
+                          Scorecard
+                        </span>
+                      )}
                     </div>
                     <div className="text-xs text-text-faint mt-0.5">
-                      {g.sectionCount} section
+                      {g.sectionCount} {g.isScorecard ? "round" : "section"}
                       {g.sectionCount === 1 ? "" : "s"} · {g.questionCount}{" "}
                       question{g.questionCount === 1 ? "" : "s"}
                       {g.ownedByMe ? "" : " · Shared with you"}

@@ -52,7 +52,11 @@ export async function POST(
 
       const players = (data.players as Record<string, unknown>) ?? {};
       const me = players[uid] as
-        | { answers?: Record<string, unknown>; score?: number }
+        | {
+            answers?: Record<string, unknown>;
+            score?: number;
+            teamId?: string | null;
+          }
         | undefined;
       if (!me) throw new Error("NOT_A_PLAYER");
 
@@ -67,17 +71,46 @@ export async function POST(
         throw new Error("ALREADY_ANSWERED");
       }
 
+      // Team play: only the current captain submits, and each question is
+      // answered once for the whole team (captaincy may change mid-game).
+      const teamId = me.teamId ?? null;
+      if (teamId) {
+        const teams =
+          (data.teams as Record<string, { captainUid?: string | null }>) ?? {};
+        if ((teams[teamId]?.captainUid ?? null) !== uid) {
+          throw new Error("NOT_CAPTAIN");
+        }
+        for (const other of Object.values(players)) {
+          const p = other as {
+            teamId?: string | null;
+            answers?: Record<string, unknown>;
+          };
+          if ((p.teamId ?? null) !== teamId) continue;
+          if (p.answers?.[String(qIndex)]) {
+            throw new Error("TEAM_ALREADY_ANSWERED");
+          }
+        }
+      }
+
       const keysSnap = await tx.get(keysRef);
       if (!keysSnap.exists) throw new Error("KEYS_MISSING");
       const key = (keysSnap.data()?.questions as KeyQuestionLike[] | undefined) ?? [];
       const q = key[qIndex];
       if (!q) throw new Error("NO_SUCH_QUESTION");
 
+      // End-of-round sections defer scoring until the round break, so the
+      // player's running score can't telegraph correctness mid-round.
+      const sessionQs =
+        (data.questions as Array<Record<string, unknown>> | undefined) ?? [];
+      const heldMode =
+        String(sessionQs[qIndex]?.revealMode ?? "per-question") ===
+        "end-of-round";
+
       if (parsed.data.format === "choice") {
         if (q.format !== "choice") throw new Error("WRONG_FORMAT");
         const correct = parsed.data.choiceIndex === Number(q.correctIndex ?? -1);
         const points = correct ? Number(q.points ?? 0) : 0;
-        tx.update(ref, {
+        const updates: Record<string, unknown> = {
           [`players.${uid}.answers.${qIndex}`]: {
             format: "choice",
             choiceIndex: parsed.data.choiceIndex,
@@ -85,8 +118,11 @@ export async function POST(
             points,
             answeredAt: FieldValue.serverTimestamp(),
           },
-          [`players.${uid}.score`]: Number(me.score ?? 0) + points,
-        });
+        };
+        if (!heldMode) {
+          updates[`players.${uid}.score`] = Number(me.score ?? 0) + points;
+        }
+        tx.update(ref, updates);
       } else {
         if (q.format !== "typed") throw new Error("WRONG_FORMAT");
         // Store the typed answers now; scoring is locked when the host grades.
@@ -115,6 +151,8 @@ export async function POST(
       WRONG_QUESTION: [409, "That isn't the current question"],
       ANSWERS_CLOSED: [409, "Answers are closed for this question"],
       ALREADY_ANSWERED: [409, "Already answered this question"],
+      NOT_CAPTAIN: [403, "Only the team captain can submit answers"],
+      TEAM_ALREADY_ANSWERED: [409, "Your team already answered this question"],
       NO_SUCH_QUESTION: [404, "Question not found"],
       WRONG_FORMAT: [400, "Wrong answer format for this question"],
       KEYS_MISSING: [500, "Answer key missing"],

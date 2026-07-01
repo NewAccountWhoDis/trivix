@@ -11,6 +11,7 @@ import type {
   GameQuestion,
   GameQuestionFormat,
   GameSection,
+  SectionRevealMode,
 } from "@/types/firestore";
 
 function newId(): string {
@@ -55,6 +56,9 @@ export function SectionEditor({
 }: Props) {
   const router = useRouter();
   const [theme, setTheme] = useState(initialSection?.theme ?? "");
+  const [revealMode, setRevealMode] = useState<SectionRevealMode>(
+    initialSection?.revealMode ?? "per-question",
+  );
   const [questions, setQuestions] = useState<GameQuestion[]>(
     initialSection?.questions?.length
       ? initialSection.questions
@@ -158,6 +162,7 @@ export function SectionEditor({
       id: sectionId ?? newId(),
       theme,
       questions,
+      revealMode,
     };
     const parsed = gameSectionSchema.safeParse(section);
     if (!parsed.success) {
@@ -210,7 +215,7 @@ export function SectionEditor({
 
       <form onSubmit={handleSave} className="flex flex-col gap-6">
         <Card>
-          <div className="p-5">
+          <div className="p-5 flex flex-col gap-5">
             <Input
               label="Theme"
               value={theme}
@@ -220,6 +225,50 @@ export function SectionEditor({
               required
               autoFocus
             />
+
+            <div className="flex flex-col gap-2">
+              <span className="text-sm font-medium text-text-muted">
+                Reveal answers
+              </span>
+              <div
+                role="radiogroup"
+                aria-label="Reveal answers"
+                className="flex flex-col sm:flex-row gap-2"
+              >
+                {(
+                  [
+                    {
+                      value: "per-question" as const,
+                      label: "After each question",
+                      hint: "Show the correct answer right after every question.",
+                    },
+                    {
+                      value: "end-of-round" as const,
+                      label: "At end of round",
+                      hint: "Hold all answers until the round break.",
+                    },
+                  ]
+                ).map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    role="radio"
+                    aria-checked={revealMode === opt.value}
+                    onClick={() => setRevealMode(opt.value)}
+                    className={`flex-1 text-left px-3 py-2.5 rounded-md border text-sm transition ${
+                      revealMode === opt.value
+                        ? "border-brand-red text-text-primary bg-brand-red/10"
+                        : "border-brand-line text-text-muted hover:text-text-primary"
+                    }`}
+                  >
+                    <div className="font-medium">{opt.label}</div>
+                    <div className="text-xs text-text-faint mt-0.5">
+                      {opt.hint}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
         </Card>
 

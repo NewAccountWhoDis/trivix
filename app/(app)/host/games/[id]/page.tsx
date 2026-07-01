@@ -2,7 +2,7 @@ import { redirect, notFound } from "next/navigation";
 import { adminDb } from "@/lib/firebase/admin";
 import { verifySession } from "@/lib/firebase/session";
 import { canUseGame, isAdminUid } from "@/lib/games/authz";
-import type { GameSection } from "@/types/firestore";
+import type { GameKind, GameSection } from "@/types/firestore";
 import { GameManager, type HostOption } from "./GameManager";
 
 export const dynamic = "force-dynamic";
@@ -62,6 +62,7 @@ export default async function ManageGamePage({
       gameId={id}
       ownerName={nameByUid.get(ownerUid) ?? "Unknown"}
       canEdit={canEdit}
+      kind={(g.kind as GameKind | undefined) === "scorecard" ? "scorecard" : "quiz"}
       initialName={String(g.name ?? "")}
       initialSections={(g.sections as GameSection[] | undefined) ?? []}
       assigned={assigned}

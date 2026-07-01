@@ -28,7 +28,7 @@ export default async function CreateGamePage() {
       </div>
       <h1 className="font-display text-4xl tracking-[3px] mb-2">CREATE GAME</h1>
       <p className="text-text-muted mb-8">
-        Name your game. You&apos;ll add sections and questions next.
+        Name your game and pick a type. You&apos;ll add the rounds next.
       </p>
       <NewGameForm />
     </main>

@@ -1,4 +1,4 @@
-import type { GameSection } from "@/types/firestore";
+import type { GameSection, SectionRevealMode } from "@/types/firestore";
 
 /** Player-safe question on the session doc. Answers hidden until reveal. */
 export interface SessionQuestion {
@@ -6,6 +6,8 @@ export interface SessionQuestion {
   theme: string;
   /** 0-based section order; used to show round breaks. */
   sectionIndex: number;
+  /** Denormalized from the section so the live UI can gate when to display answers. */
+  revealMode: SectionRevealMode;
   prompt: string;
   points: number;
   /** choice: the four options (always visible). */
@@ -41,12 +43,14 @@ export function buildSessionFromGame(sections: GameSection[]): BuiltSession {
   const key: KeyQuestion[] = [];
 
   sections.forEach((section, sectionIndex) => {
+    const revealMode: SectionRevealMode = section.revealMode ?? "per-question";
     for (const q of section.questions) {
       if (q.format === "choice") {
         sanitized.push({
           format: "choice",
           theme: section.theme,
           sectionIndex,
+          revealMode,
           prompt: q.prompt,
           points: q.points,
           choices: q.choices,
@@ -60,13 +64,17 @@ export function buildSessionFromGame(sections: GameSection[]): BuiltSession {
         });
       } else {
         const accepted = q.acceptedAnswers ?? [];
+        // Scorecard questions carry an explicit slot count and no answer key;
+        // quiz typed questions derive their slot count from the accepted list.
+        const slots = q.answerCount ?? accepted.length;
         sanitized.push({
           format: "typed",
           theme: section.theme,
           sectionIndex,
+          revealMode,
           prompt: q.prompt,
           points: q.points,
-          answerCount: accepted.length,
+          answerCount: slots,
           acceptedAnswers: null,
         });
         key.push({

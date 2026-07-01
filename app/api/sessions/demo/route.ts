@@ -69,6 +69,7 @@ export async function POST(): Promise<NextResponse> {
       score: 0,
       teamId: p.teamId,
       teamNameSnapshot: p.teamNameSnapshot,
+      lastSeenAt: seededAt,
       answers: Object.fromEntries(
         Object.entries(p.answers).map(([idx, a]) => [
           idx,

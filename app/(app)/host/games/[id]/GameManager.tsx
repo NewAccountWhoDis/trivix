@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
-import type { GameSection } from "@/types/firestore";
+import type { GameKind, GameSection } from "@/types/firestore";
 
 export interface HostOption {
   uid: string;
@@ -19,6 +19,7 @@ interface Props {
   gameId: string;
   ownerName: string;
   canEdit: boolean;
+  kind: GameKind;
   initialName: string;
   initialSections: GameSection[];
   assigned: HostOption[];
@@ -29,11 +30,15 @@ export function GameManager({
   gameId,
   ownerName,
   canEdit,
+  kind,
   initialName,
   initialSections,
   assigned,
   candidates,
 }: Props) {
+  const isScorecard = kind === "scorecard";
+  const unit = isScorecard ? "round" : "section";
+  const unitPlural = isScorecard ? "rounds" : "sections";
   const router = useRouter();
   const [name, setName] = useState(initialName);
   const [sections, setSections] = useState<GameSection[]>(initialSections);
@@ -74,7 +79,7 @@ export function GameManager({
   }
 
   async function deleteSection(id: string) {
-    if (!confirm("Delete this section and its questions?")) return;
+    if (!confirm(`Delete this ${unit} and its questions?`)) return;
     await patchGame(sections.filter((s) => s.id !== id));
   }
 
@@ -130,10 +135,19 @@ export function GameManager({
       </div>
 
       <header className="mb-8">
-        <p className="text-text-muted text-sm">Manage game</p>
+        <p className="text-text-muted text-sm">
+          Manage {isScorecard ? "scorecard" : "game"}
+        </p>
         <h1 className="font-display text-4xl tracking-[3px]">
           {name || "UNTITLED"}
         </h1>
+        {isScorecard && (
+          <p className="text-text-faint text-sm mt-2 max-w-prose">
+            Scorecard only — you run the questions yourself and Trivix keeps
+            score. Players join, enter their answers each round, and you grade
+            them live.
+          </p>
+        )}
       </header>
 
       {error && (
@@ -255,12 +269,12 @@ export function GameManager({
       <div className="mt-8">
         <div className="flex items-center justify-between mb-3">
           <h2 className="font-display text-2xl tracking-[3px]">
-            SECTIONS ({sections.length})
+            {unitPlural.toUpperCase()} ({sections.length})
           </h2>
           {canEdit && (
             <Button asChild size="sm">
               <Link href={`/host/games/${gameId}/sections/new`}>
-                Add section
+                Add {unit}
               </Link>
             </Button>
           )}
@@ -269,8 +283,11 @@ export function GameManager({
         {sections.length === 0 ? (
           <Card>
             <div className="p-6 text-sm text-text-muted">
-              No sections yet.
-              {canEdit && " Add a section to enter a theme and questions."}
+              No {unitPlural} yet.
+              {canEdit &&
+                (isScorecard
+                  ? " Add a round to set its questions, answers and points."
+                  : " Add a section to enter a theme and questions.")}
             </div>
           </Card>
         ) : (
@@ -288,6 +305,14 @@ export function GameManager({
                     <div className="text-xs text-text-faint mt-0.5">
                       {s.questions.length} question
                       {s.questions.length === 1 ? "" : "s"}
+                      {isScorecard &&
+                        ` · ${s.questions.reduce(
+                          (n, q) =>
+                            n +
+                            (q.answerCount ?? q.acceptedAnswers?.length ?? 0) *
+                              q.points,
+                          0,
+                        )} pts`}
                     </div>
                   </div>
                   {canEdit && (

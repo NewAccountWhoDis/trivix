@@ -3,6 +3,7 @@ import { adminDb } from "@/lib/firebase/admin";
 import { verifySession } from "@/lib/firebase/session";
 import { gradeAnswersSchema } from "@/lib/validation/schemas";
 import { normalizeAnswer } from "@/lib/games/typed";
+import { isSectionReleased, scoreIsLive } from "@/lib/games/scoring";
 
 export const runtime = "nodejs";
 
@@ -15,15 +16,19 @@ interface PlayerLike {
   score?: number;
   answers?: Record<
     string,
-    { format?: string; typedAnswers?: string[] } | undefined
+    { format?: string; typedAnswers?: string[]; points?: number } | undefined
   >;
 }
 
 /**
- * Lock scores for a typed question. `approved` is the set of submitted answers
- * the host marked correct (auto-matches pre-checked client-side, host can
- * override). Each player earns the question's points for every distinct
- * approved answer they submitted.
+ * Lock (or re-lock) scores for a typed question. `approved` is the set of
+ * submitted answers the host marked correct (auto-matches pre-checked
+ * client-side, host can override). Each player earns the question's points for
+ * every distinct approved answer they submitted.
+ *
+ * Any revealed question can be scored — current or past — up until the game
+ * ends, and an already-scored question can be re-scored: each player's total
+ * moves by the difference between their new and previously-awarded points.
  */
 export async function POST(
   request: Request,
@@ -64,7 +69,6 @@ export async function POST(
       if (data.hostUid !== session.uid) throw new Error("HOST_ONLY");
       if (data.status !== "active") throw new Error("NOT_ACTIVE");
       if (Number(data.revealedIndex ?? -1) < qIndex) throw new Error("NOT_REVEALED");
-      if (Number(data.gradedIndex ?? -1) >= qIndex) throw new Error("ALREADY_GRADED");
 
       const keysSnap = await tx.get(keysRef);
       const key = (keysSnap.data()?.questions as KeyQuestionLike[] | undefined) ?? [];
@@ -72,8 +76,29 @@ export async function POST(
       if (!k || k.format !== "typed") throw new Error("NOT_TYPED");
       const points = Number(k.points ?? 0);
 
+      // End-of-round sections stage points on the answer but defer crediting
+      // player.score until the round-break release in /advance. A question's
+      // points are only "live" in player.score once its section has been
+      // released — otherwise we edit the staged answer points and let the
+      // release (or a later re-score after the break) apply them.
+      const sessionQs =
+        (data.questions as Array<Record<string, unknown>> | undefined) ?? [];
+      const heldMode =
+        String(sessionQs[qIndex]?.revealMode ?? "per-question") ===
+        "end-of-round";
+      const currentIndex = Number(data.currentQuestionIndex ?? -1);
+      const atBreak = data.atBreak === true;
+      const qSection = Number(sessionQs[qIndex]?.sectionIndex ?? 0);
+      const curSection = Number(sessionQs[currentIndex]?.sectionIndex ?? 0);
+      const live = scoreIsLive(
+        heldMode,
+        isSectionReleased(qSection, curSection, atBreak),
+      );
+
       const players = (data.players as Record<string, PlayerLike>) ?? {};
-      const updates: Record<string, unknown> = { gradedIndex: qIndex };
+      const updates: Record<string, unknown> = {
+        gradedIndex: Math.max(Number(data.gradedIndex ?? -1), qIndex),
+      };
 
       for (const [uid, p] of Object.entries(players)) {
         const ans = p.answers?.[String(qIndex)];
@@ -85,12 +110,22 @@ export async function POST(
         );
         const matched = distinct.size;
         const earned = matched * points;
+        const prevEarned = Number(ans.points ?? 0);
         updates[`players.${uid}.answers.${qIndex}.correct`] = matched > 0;
         updates[`players.${uid}.answers.${qIndex}.points`] = earned;
-        updates[`players.${uid}.score`] = Number(p.score ?? 0) + earned;
+        // Adjust the running total by the delta so re-scoring is idempotent.
+        if (live && earned !== prevEarned) {
+          updates[`players.${uid}.score`] =
+            Number(p.score ?? 0) + (earned - prevEarned);
+        }
       }
 
       tx.update(ref, updates);
+      // Remember what the host approved so the grading toggles can be
+      // re-seeded exactly when this question is re-scored later. Host-only doc.
+      tx.update(keysRef, {
+        [`approvals.${qIndex}`]: Array.from(approvedSet),
+      });
     });
   } catch (err) {
     const msg = err instanceof Error ? err.message : "";
@@ -99,7 +134,6 @@ export async function POST(
       HOST_ONLY: [403, "Host only"],
       NOT_ACTIVE: [409, "Session not active"],
       NOT_REVEALED: [409, "Reveal the question before grading"],
-      ALREADY_GRADED: [409, "This question is already graded"],
       NOT_TYPED: [400, "This question isn't a typed question"],
     };
     const entry = map[msg];

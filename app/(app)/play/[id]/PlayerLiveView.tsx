@@ -1,19 +1,21 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui";
 import { Card } from "@/components/ui/Card";
 import { AnimatedChoice } from "@/components/games/AnimatedChoice";
 import { Leaderboard } from "@/components/games/Leaderboard";
 import { useGameSession } from "@/hooks/useGameSession";
+import { useHeartbeat } from "@/hooks/useHeartbeat";
 import { aggregateTeams } from "@/lib/games/team-aggregate";
 
 interface QuestionRow {
   format: "choice" | "typed";
   theme: string;
   sectionIndex: number;
+  revealMode?: "per-question" | "end-of-round";
   prompt: string;
   points: number;
   choices?: string[];
@@ -50,8 +52,14 @@ export function PlayerLiveView({
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [typedSlots, setTypedSlots] = useState<string[]>([]);
+  const [nowMs, setNowMs] = useState(() => Date.now());
+  const [captainBusy, setCaptainBusy] = useState(false);
+  const claimedRef = useRef(false);
 
   const currentQuestionIndex = Number(session?.currentQuestionIndex ?? -1);
+
+  // Presence ping so teammates know who's live (drives takeover routing).
+  useHeartbeat(sessionId, Boolean(session) && session?.isDemo !== true);
 
   // Reset the typed input slots whenever the active question changes.
   useEffect(() => {
@@ -65,6 +73,52 @@ export function PlayerLiveView({
     }
     /* eslint-enable react-hooks/set-state-in-effect */
   }, [currentQuestionIndex, session?.questions]);
+
+  // Tick a 1s clock only while a captain takeover is pending for my team.
+  useEffect(() => {
+    const players =
+      (session?.players as Record<string, { teamId?: string | null }>) ?? {};
+    const teamId = players[myUid]?.teamId ?? null;
+    const teams = session?.teams as
+      | Record<string, { pendingTakeover?: { deadlineMs: number } | null }>
+      | undefined;
+    const pending = teamId ? (teams?.[teamId]?.pendingTakeover ?? null) : null;
+    if (!pending) return;
+    /* eslint-disable-next-line react-hooks/set-state-in-effect */
+    setNowMs(Date.now());
+    const t = setInterval(() => setNowMs(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, [session, myUid]);
+
+  // Auto-claim captaincy once my own request runs out its 30s window.
+  useEffect(() => {
+    const players =
+      (session?.players as Record<string, { teamId?: string | null }>) ?? {};
+    const teamId = players[myUid]?.teamId ?? null;
+    const teams = session?.teams as
+      | Record<
+          string,
+          {
+            pendingTakeover?: {
+              requesterUid: string;
+              deadlineMs: number;
+            } | null;
+          }
+        >
+      | undefined;
+    const pending = teamId ? (teams?.[teamId]?.pendingTakeover ?? null) : null;
+    if (!pending || pending.requesterUid !== myUid) {
+      claimedRef.current = false;
+      return;
+    }
+    if (nowMs < pending.deadlineMs || claimedRef.current) return;
+    claimedRef.current = true;
+    void fetch(`/api/sessions/${sessionId}/captain/request`, {
+      method: "POST",
+    }).catch(() => {
+      claimedRef.current = false;
+    });
+  }, [session, myUid, nowMs, sessionId]);
 
   if (loading) return <p className="text-text-muted">Loading…</p>;
   if (error || !session) {
@@ -100,13 +154,94 @@ export function PlayerLiveView({
   const myTeamRank = teamAggregates.findIndex((t) => t.teamId === myTeamId) + 1;
   const myTeam = teamAggregates.find((t) => t.teamId === myTeamId) ?? null;
 
+  // ── Team captain state ──
+  const teamsState =
+    (session.teams as
+      | Record<
+          string,
+          {
+            captainUid?: string | null;
+            pendingTakeover?: {
+              requesterUid: string;
+              requesterName: string;
+              deadlineMs: number;
+            } | null;
+          }
+        >
+      | undefined) ?? undefined;
+  const myTeamState = myTeamId ? (teamsState?.[myTeamId] ?? null) : null;
+  const captainUid = myTeamState?.captainUid ?? null;
+  const iAmCaptain = captainUid === myUid;
+  const captainName = captainUid
+    ? (playersMap[captainUid]?.displayName ?? "teammate")
+    : null;
+  const teamPending = myTeamState?.pendingTakeover ?? null;
+  const pendingActive = teamPending != null && teamPending.deadlineMs > nowMs;
+  const iAmRequester = Boolean(pendingActive && teamPending!.requesterUid === myUid);
+  const showApprovalModal = Boolean(
+    iAmCaptain && pendingActive && teamPending!.requesterUid !== myUid,
+  );
+  const secondsLeft = pendingActive
+    ? Math.max(0, Math.ceil((teamPending!.deadlineMs - nowMs) / 1000))
+    : 0;
+  const onATeam = myTeamId != null;
+  // Free agents and captains submit; other team members are locked out.
+  const canSubmit = !onATeam || iAmCaptain;
+  // What the captain has locked in for the current question (shown to teammates).
+  const captainAnswer =
+    captainUid && !iAmCaptain
+      ? (playersMap[captainUid]?.answers?.[String(currentQuestionIndex)] ?? null)
+      : null;
+
+  async function requestCaptain() {
+    setCaptainBusy(true);
+    setSubmitError(null);
+    try {
+      const res = await fetch(`/api/sessions/${sessionId}/captain/request`, {
+        method: "POST",
+      });
+      if (!res.ok) {
+        const b = (await res.json().catch(() => ({}))) as { error?: string };
+        throw new Error(b.error ?? "Request failed");
+      }
+    } catch (err) {
+      setSubmitError(err instanceof Error ? err.message : "Request failed");
+    } finally {
+      setCaptainBusy(false);
+    }
+  }
+  async function respondCaptain(allow: boolean) {
+    setCaptainBusy(true);
+    setSubmitError(null);
+    try {
+      const res = await fetch(`/api/sessions/${sessionId}/captain/respond`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ allow }),
+      });
+      if (!res.ok) {
+        const b = (await res.json().catch(() => ({}))) as { error?: string };
+        throw new Error(b.error ?? "Response failed");
+      }
+    } catch (err) {
+      setSubmitError(err instanceof Error ? err.message : "Response failed");
+    } finally {
+      setCaptainBusy(false);
+    }
+  }
+
   const isDemo = Boolean(session.isDemo);
   const atBreak = Boolean(session.atBreak);
   const questions = (session.questions as QuestionRow[] | undefined) ?? [];
   const q = status === "active" ? questions[currentQuestionIndex] : null;
   const nextQuestion = questions[currentQuestionIndex + 1] ?? null;
   const myAnswer = me?.answers?.[String(currentQuestionIndex)];
-  const revealed = revealedIndex >= currentQuestionIndex;
+  const hostRevealed = revealedIndex >= currentQuestionIndex;
+  // In end-of-round mode, hide the correct answer from the player until the
+  // round break. The host has still "revealed" (which closes answering and
+  // applies choice scoring) — we just don't render correctness yet.
+  const holdReveal = q?.revealMode === "end-of-round";
+  const revealed = hostRevealed && !holdReveal;
   const graded = gradedIndex >= currentQuestionIndex;
   const isSectionStart =
     q != null &&
@@ -159,14 +294,18 @@ export function PlayerLiveView({
       <header className="flex items-start justify-between gap-4 flex-wrap">
         <div>
           <p className="text-text-muted text-sm">Live game</p>
-          <h1 className="font-display text-3xl tracking-[3px]">YOUR SCORE</h1>
+          <h1 className="font-display text-3xl tracking-[3px]">
+            {onATeam ? "TEAM SCORE" : "YOUR SCORE"}
+          </h1>
         </div>
         <div className="text-right flex flex-col items-end gap-2">
-          <div className="font-display text-5xl">{myScore}</div>
+          <div className="font-display text-5xl">
+            {onATeam ? (myTeam?.score ?? 0) : myScore}
+          </div>
           {myTeam && (
             <p className="text-xs text-text-faint">
               Team {myTeam.teamName} · #{myTeamRank} ·{" "}
-              <span className="text-text-muted">{myTeam.score} pts</span>
+              <span className="text-text-muted">you: {myScore} pts</span>
             </p>
           )}
           <Badge tone={status === "ended" ? "neutral" : "success"}>
@@ -184,6 +323,40 @@ export function PlayerLiveView({
         </div>
       )}
 
+      {onATeam && status !== "ended" && (
+        <Card>
+          <div className="p-4 flex items-center justify-between gap-3 flex-wrap">
+            <div className="flex flex-col gap-0.5 min-w-0">
+              <span className="text-xs uppercase tracking-[3px] text-text-faint">
+                {myTeam?.teamName ?? "Your team"}
+              </span>
+              <span className="text-sm text-text-primary">
+                {iAmCaptain
+                  ? "You're the captain — you answer for the team."
+                  : captainUid
+                    ? `Captain: @${captainName}`
+                    : "No captain yet — pick one to lock in answers."}
+              </span>
+            </div>
+            {!iAmCaptain &&
+              (iAmRequester ? (
+                <span className="text-xs text-text-muted whitespace-nowrap">
+                  Waiting for @{captainName}… {secondsLeft}s
+                </span>
+              ) : (
+                <Button
+                  size="sm"
+                  variant={captainUid ? "secondary" : "primary"}
+                  onClick={requestCaptain}
+                  disabled={captainBusy || (pendingActive && !iAmRequester)}
+                >
+                  {captainUid ? "Take over as captain" : "Be captain"}
+                </Button>
+              ))}
+          </div>
+        </Card>
+      )}
+
       {status === "lobby" && (
         <Card>
           <div className="p-6 text-text-muted">
@@ -194,18 +367,69 @@ export function PlayerLiveView({
 
       {status === "active" && atBreak && q && (
         <Card variant="neon">
-          <div className="p-6 flex flex-col gap-2 text-center">
-            <div className="text-xs uppercase tracking-[3px] text-text-faint">
-              Round {q.sectionIndex + 1} complete
+          <div className="p-6 flex flex-col gap-4">
+            <div className="text-center flex flex-col gap-2">
+              <div className="text-xs uppercase tracking-[3px] text-text-faint">
+                Round {q.sectionIndex + 1} complete
+              </div>
+              {nextQuestion && (
+                <div className="font-display text-2xl tracking-[2px]">
+                  Up next · Round {nextQuestion.sectionIndex + 1} ·{" "}
+                  {nextQuestion.theme}
+                </div>
+              )}
             </div>
-            {nextQuestion && (
-              <div className="font-display text-2xl tracking-[2px]">
-                Up next · Round {nextQuestion.sectionIndex + 1} ·{" "}
-                {nextQuestion.theme}
+            {q.revealMode === "end-of-round" && (
+              <div className="flex flex-col gap-3">
+                <div className="text-xs uppercase tracking-[3px] text-text-faint">
+                  Round {q.sectionIndex + 1} answers
+                </div>
+                <ul className="flex flex-col gap-2">
+                  {questions
+                    .map((row, i) => ({ row, i }))
+                    .filter(
+                      ({ row, i }) =>
+                        row.sectionIndex === q.sectionIndex &&
+                        i <= currentQuestionIndex,
+                    )
+                    .map(({ row, i }) => (
+                      <li
+                        key={i}
+                        className="rounded-md bg-brand-ink border border-brand-line p-3"
+                      >
+                        <div className="text-xs text-text-faint mb-1">
+                          Q{i + 1}
+                        </div>
+                        <div className="text-sm text-text-primary mb-2">
+                          {row.prompt}
+                        </div>
+                        {row.format === "choice" ? (
+                          <div className="text-sm text-game-green">
+                            {typeof row.correctIndex === "number"
+                              ? `${String.fromCharCode(65 + row.correctIndex)}. ${row.choices?.[row.correctIndex] ?? ""}`
+                              : "—"}
+                          </div>
+                        ) : (
+                          <div className="flex flex-wrap gap-1.5">
+                            {(row.acceptedAnswers ?? []).map((a, ai) => (
+                              <span
+                                key={ai}
+                                className="px-2 py-0.5 rounded-md bg-game-green/10 border border-game-green/30 text-xs text-game-green"
+                              >
+                                {a}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </li>
+                    ))}
+                </ul>
               </div>
             )}
-            <p className="text-sm text-text-muted">
-              Waiting for the host to start the next round…
+            <p className="text-sm text-text-muted text-center">
+              {nextQuestion
+                ? "Waiting for the host to start the next round…"
+                : "Final results coming up…"}
             </p>
           </div>
         </Card>
@@ -239,7 +463,38 @@ export function PlayerLiveView({
               </p>
             )}
 
-            {q.format === "choice" ? (
+            {!canSubmit ? (
+              <div className="rounded-md bg-brand-ink border border-brand-line p-4 flex flex-col gap-2">
+                {captainUid ? (
+                  <>
+                    <p className="text-sm text-text-muted">
+                      @{captainName} is answering for your team.
+                    </p>
+                    {captainAnswer && (
+                      <p className="text-sm text-text-primary">
+                        Captain&rsquo;s answer:{" "}
+                        <span className="text-text-muted">
+                          {captainAnswer.format === "choice"
+                            ? (q.choices?.[captainAnswer.choiceIndex ?? -1] ??
+                              "—")
+                            : (captainAnswer.typedAnswers ?? []).join(", ") ||
+                              "—"}
+                        </span>
+                      </p>
+                    )}
+                    <p className="text-xs text-text-faint">
+                      Only the captain can submit. Use &ldquo;Take over as
+                      captain&rdquo; above if you need to answer.
+                    </p>
+                  </>
+                ) : (
+                  <p className="text-sm text-text-muted">
+                    Your team has no captain yet. Tap &ldquo;Be captain&rdquo;
+                    above to lock in answers.
+                  </p>
+                )}
+              </div>
+            ) : q.format === "choice" ? (
               <div className="grid sm:grid-cols-2 gap-3">
                 {(q.choices ?? []).map((c, i) => {
                   const isMine = myAnswer?.choiceIndex === i;
@@ -335,13 +590,13 @@ export function PlayerLiveView({
                         )}
                       </div>
                     </div>
-                    {revealed && q.acceptedAnswers && (
+                    {revealed && (q.acceptedAnswers?.length ?? 0) > 0 && (
                       <div>
                         <p className="text-xs uppercase tracking-[2px] text-text-faint mb-1">
                           Accepted answers
                         </p>
                         <div className="flex flex-wrap gap-2">
-                          {q.acceptedAnswers.map((a, i) => (
+                          {(q.acceptedAnswers ?? []).map((a, i) => (
                             <span
                               key={i}
                               className="px-3 py-1 rounded-md bg-game-green/10 border border-game-green/30 text-sm text-game-green"
@@ -426,6 +681,49 @@ export function PlayerLiveView({
           </ul>
         </Card>
       </div>
+
+      {showApprovalModal && teamPending && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-6"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Captain takeover request"
+        >
+          <Card variant="neon" className="w-full max-w-sm">
+            <div className="p-6 flex flex-col gap-4 text-center">
+              <div className="text-xs uppercase tracking-[3px] text-text-faint">
+                Captain request
+              </div>
+              <p className="text-lg text-text-primary">
+                <span className="font-display">
+                  @{teamPending.requesterName}
+                </span>{" "}
+                wants to take over as captain. Allow?
+              </p>
+              <p className="text-xs text-text-faint">
+                Auto-approves in {secondsLeft}s
+              </p>
+              <div className="flex gap-3">
+                <Button
+                  variant="ghost"
+                  className="flex-1"
+                  onClick={() => respondCaptain(false)}
+                  disabled={captainBusy}
+                >
+                  No
+                </Button>
+                <Button
+                  className="flex-1"
+                  onClick={() => respondCaptain(true)}
+                  disabled={captainBusy}
+                >
+                  Yes, allow
+                </Button>
+              </div>
+            </div>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }

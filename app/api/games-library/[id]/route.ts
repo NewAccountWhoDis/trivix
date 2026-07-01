@@ -39,6 +39,7 @@ export async function GET(
     ownerUid: String(g.ownerUid ?? ""),
     hostUids,
     name: String(g.name ?? ""),
+    kind: g.kind === "scorecard" ? "scorecard" : "quiz",
     sections: (g.sections as GameSection[] | undefined) ?? [],
     createdAt: tsToMs(g.createdAt),
     updatedAt: tsToMs(g.updatedAt),

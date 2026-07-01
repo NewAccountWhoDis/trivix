@@ -10,6 +10,7 @@ import { QrCode, buildJoinUrl } from "@/components/games/QrCode";
 import { useGameSession } from "@/hooks/useGameSession";
 import { aggregateTeams } from "@/lib/games/team-aggregate";
 import { matchesAccepted, normalizeAnswer } from "@/lib/games/typed";
+import { RoundScoringPanel } from "./RoundScoringPanel";
 
 interface PlayerRow {
   uid: string;
@@ -27,6 +28,7 @@ interface QuestionRow {
   format: "choice" | "typed";
   theme: string;
   sectionIndex: number;
+  revealMode?: "per-question" | "end-of-round";
   prompt: string;
   points: number;
   choices?: string[];
@@ -214,6 +216,12 @@ export function HostGameDashboard({
     const ok = await call(`/api/sessions/${sessionId}/advance`);
     if (ok && isLast) router.refresh();
   }
+  async function gradeQuestion(qIndex: number, approvedList: string[]) {
+    return call(`/api/sessions/${sessionId}/grade`, "POST", {
+      questionIndex: qIndex,
+      approved: approvedList,
+    });
+  }
   async function exitDemo() {
     const ok = await call(`/api/sessions/${sessionId}`, "DELETE");
     if (ok) {
@@ -330,6 +338,12 @@ export function HostGameDashboard({
                 Round {current.sectionIndex + 1} · {current.theme}
               </div>
             )}
+            {current.revealMode === "end-of-round" && (
+              <div className="mb-3 inline-flex items-center gap-2 text-[10px] uppercase tracking-[2px] text-text-faint border border-brand-line rounded px-2 py-1">
+                <span className="size-1.5 rounded-full bg-brand-red" />
+                Answers hidden from players until round break
+              </div>
+            )}
             <div className="text-xs uppercase tracking-[3px] text-text-faint mb-2">
               {current.theme} · Question {currentQuestionIndex + 1} of{" "}
               {questions.length} · {current.points} pt
@@ -375,21 +389,28 @@ export function HostGameDashboard({
               </ul>
             ) : (
               <div className="flex flex-col gap-3">
-                <div>
-                  <p className="text-xs uppercase tracking-[2px] text-text-faint mb-1">
-                    Accepted answers
-                  </p>
-                  <div className="flex flex-wrap gap-2">
-                    {(current.acceptedAnswers ?? []).map((a, i) => (
-                      <span
-                        key={i}
-                        className="px-3 py-1 rounded-md bg-brand-ink border border-brand-line text-sm"
-                      >
-                        {a}
-                      </span>
-                    ))}
+                {(current.acceptedAnswers ?? []).length > 0 ? (
+                  <div>
+                    <p className="text-xs uppercase tracking-[2px] text-text-faint mb-1">
+                      Accepted answers
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {(current.acceptedAnswers ?? []).map((a, i) => (
+                        <span
+                          key={i}
+                          className="px-3 py-1 rounded-md bg-brand-ink border border-brand-line text-sm"
+                        >
+                          {a}
+                        </span>
+                      ))}
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  <p className="text-xs text-text-faint">
+                    No answer key — reveal, then tap each submitted answer you
+                    count as correct.
+                  </p>
+                )}
 
                 {revealed && (
                   <div>
@@ -474,6 +495,21 @@ export function HostGameDashboard({
             </div>
           </div>
         </Card>
+      )}
+
+      {status === "active" && (
+        <RoundScoringPanel
+          questions={questions}
+          playersMap={playersMapRaw}
+          approvals={
+            (answerKey?.approvals as Record<string, string[]> | undefined) ??
+            null
+          }
+          revealedIndex={revealedIndex}
+          gradedIndex={gradedIndex}
+          busy={busy}
+          gradeQuestion={gradeQuestion}
+        />
       )}
 
       {status === "ended" && (

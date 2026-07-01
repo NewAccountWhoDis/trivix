@@ -4,6 +4,7 @@ import { verifySession } from "@/lib/firebase/session";
 import { isAdminUid } from "@/lib/games/authz";
 import type { GameSection } from "@/types/firestore";
 import { SectionEditor } from "../SectionEditor";
+import { ScorecardEditor } from "../ScorecardEditor";
 
 export const dynamic = "force-dynamic";
 
@@ -23,11 +24,14 @@ export default async function NewSectionPage({
   const canEdit = session.uid === ownerUid || (await isAdminUid(session.uid));
   if (!canEdit) redirect(`/host/games/${id}`);
 
+  const sections = (g.sections as GameSection[] | undefined) ?? [];
+  const Editor = g.kind === "scorecard" ? ScorecardEditor : SectionEditor;
+
   return (
-    <SectionEditor
+    <Editor
       gameId={id}
       gameName={String(g.name ?? "")}
-      allSections={(g.sections as GameSection[] | undefined) ?? []}
+      allSections={sections}
       sectionId={null}
       initialSection={null}
     />

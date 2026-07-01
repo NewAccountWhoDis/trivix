@@ -51,13 +51,22 @@ export async function POST(
     : [];
   const k = key[i];
 
-  const updatedQuestions = sanitized.map((q, idx) => {
-    if (idx !== i) return q;
-    if (k?.format === "typed") {
-      return { ...q, acceptedAnswers: k.acceptedAnswers ?? [] };
-    }
-    return { ...q, correctIndex: Number(k?.correctIndex ?? 0) };
-  });
+  // In end-of-round mode we keep answer values off the session doc until the
+  // round break — that way a snooping player can't read the correct answer
+  // from the live snapshot during the round. The values get written in bulk
+  // by /advance when the round break starts.
+  const isHeld =
+    String(sanitized[i]?.revealMode ?? "per-question") === "end-of-round";
+
+  const updatedQuestions = isHeld
+    ? sanitized
+    : sanitized.map((q, idx) => {
+        if (idx !== i) return q;
+        if (k?.format === "typed") {
+          return { ...q, acceptedAnswers: k.acceptedAnswers ?? [] };
+        }
+        return { ...q, correctIndex: Number(k?.correctIndex ?? 0) };
+      });
 
   const isTyped = k?.format === "typed";
   await ref.update({

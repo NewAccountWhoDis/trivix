@@ -1,7 +1,8 @@
 import "server-only";
 import { FieldValue } from "firebase-admin/firestore";
 import { adminDb } from "@/lib/firebase/admin";
-import { aggregateTeams, uniqueTopRealTeam } from "@/lib/games/team-aggregate";
+import { aggregateTeams, resolveGameWinner } from "@/lib/games/team-aggregate";
+import type { Competitor } from "@/lib/games/team-aggregate";
 
 const TEAM_RECENT_GAMES_CAP = 25;
 
@@ -10,6 +11,7 @@ interface PlayerAggregate {
   score: number;
   correctCount: number;
   totalAnswered: number;
+  teamId: string | null;
 }
 
 interface VenueSummary {
@@ -17,6 +19,29 @@ interface VenueSummary {
   venueName: string;
   gamesAttended: number;
   lastVisitedAt: unknown;
+}
+
+/** Add one game's attendance to a venues list, in place, returning the copy. */
+function bumpVenue(
+  venues: VenueSummary[],
+  venueId: string,
+  venueName: string,
+  when: unknown,
+): VenueSummary[] {
+  if (!venueId) return venues;
+  const next = venues.slice();
+  const idx = next.findIndex((v) => v.venueId === venueId);
+  if (idx >= 0) {
+    const cur = next[idx]!;
+    next[idx] = {
+      ...cur,
+      gamesAttended: (cur.gamesAttended ?? 0) + 1,
+      lastVisitedAt: when,
+    };
+  } else {
+    next.push({ venueId, venueName, gamesAttended: 1, lastVisitedAt: when });
+  }
+  return next;
 }
 
 /**
@@ -60,14 +85,38 @@ export async function finalizeGameSession(sessionId: string): Promise<void> {
         score: Number(p.score ?? 0),
         correctCount,
         totalAnswered: answersList.length,
+        teamId: (p.teamId as string | null | undefined) ?? null,
       };
     },
   );
 
-  // Unique top scorer wins; ties → no winner.
-  const maxScore = summaries.reduce((m, s) => (s.score > m ? s.score : m), 0);
-  const top = summaries.filter((s) => s.score === maxScore && maxScore > 0);
-  const winnerUid = top.length === 1 ? top[0]!.uid : null;
+  // One winner across the mixed field of teams and free agents. Team members
+  // inherit their team's win; a solo player wins on their own score.
+  const teamAggregates = aggregateTeams(
+    players as Record<
+      string,
+      | {
+          uid: string;
+          displayName: string;
+          score: number;
+          teamId: string | null;
+          teamNameSnapshot: string | null;
+        }
+      | undefined
+    >,
+  );
+  const realTeams = teamAggregates.filter((t) => t.teamId !== null);
+  const competitors: Competitor[] = [
+    ...realTeams.map((t) => ({
+      kind: "team" as const,
+      id: t.teamId!,
+      score: t.score,
+    })),
+    ...summaries
+      .filter((s) => s.teamId == null)
+      .map((s) => ({ kind: "solo" as const, id: s.uid, score: s.score })),
+  ];
+  const winner = resolveGameWinner(competitors);
 
   for (const sum of summaries) {
     const userRef = adminDb.collection("users").doc(sum.uid);
@@ -76,27 +125,17 @@ export async function finalizeGameSession(sessionId: string): Promise<void> {
     const stats =
       ((userSnap.data() ?? {}).stats as Record<string, unknown>) ?? {};
 
-    const venues = ((stats.venues as VenueSummary[] | undefined) ?? []).slice();
-    if (venueId) {
-      const existingIdx = venues.findIndex((v) => v.venueId === venueId);
-      if (existingIdx >= 0) {
-        const cur = venues[existingIdx]!;
-        venues[existingIdx] = {
-          ...cur,
-          gamesAttended: (cur.gamesAttended ?? 0) + 1,
-          lastVisitedAt: nowMs,
-        };
-      } else {
-        venues.push({
-          venueId,
-          venueName,
-          gamesAttended: 1,
-          lastVisitedAt: nowMs,
-        });
-      }
-    }
+    const venues = bumpVenue(
+      (stats.venues as VenueSummary[] | undefined) ?? [],
+      venueId,
+      venueName,
+      nowMs,
+    );
 
-    const isWinner = sum.uid === winnerUid;
+    // Team members inherit their team's result; free agents win on their own.
+    const isWinner = sum.teamId
+      ? winner?.kind === "team" && winner.id === sum.teamId
+      : winner?.kind === "solo" && winner.id === sum.uid;
     const prevCurrentStreak = Number(stats.currentWinStreak ?? 0);
     const newCurrentStreak = isWinner ? prevCurrentStreak + 1 : 0;
     const newLongestStreak = Math.max(
@@ -123,23 +162,8 @@ export async function finalizeGameSession(sessionId: string): Promise<void> {
     });
   }
 
-  // ── Team writeback ──
-  const teamAggregates = aggregateTeams(
-    players as Record<
-      string,
-      | {
-          uid: string;
-          displayName: string;
-          score: number;
-          teamId: string | null;
-          teamNameSnapshot: string | null;
-        }
-      | undefined
-    >,
-  );
-  const realTeams = teamAggregates.filter((t) => t.teamId !== null);
+  // ── Team writeback ── (teamAggregates / realTeams / winner computed above)
   const totalTeams = realTeams.length;
-  const winnerTeam = uniqueTopRealTeam(teamAggregates);
 
   for (let rank = 0; rank < realTeams.length; rank++) {
     const t = realTeams[rank]!;
@@ -166,12 +190,20 @@ export async function finalizeGameSession(sessionId: string): Promise<void> {
       recent.length = TEAM_RECENT_GAMES_CAP;
     }
 
-    const isTeamWinner = winnerTeam?.teamId === t.teamId;
+    const teamVenues = bumpVenue(
+      (teamStats.venues as VenueSummary[] | undefined) ?? [],
+      venueId,
+      venueName,
+      nowMs,
+    );
+
+    const isTeamWinner = winner?.kind === "team" && winner.id === t.teamId;
     await teamRef.update({
       "stats.gamesPlayed": Number(teamStats.gamesPlayed ?? 0) + 1,
       "stats.gamesWon":
         Number(teamStats.gamesWon ?? 0) + (isTeamWinner ? 1 : 0),
       "stats.lastPlayedAt": now,
+      "stats.venues": teamVenues,
       "stats.recentGames": recent,
       updatedAt: now,
     });

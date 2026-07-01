@@ -140,6 +140,8 @@ export interface TeamStats {
   gamesPlayed: number;
   gamesWon: number;
   lastPlayedAt: FirestoreTimestamp | null;
+  /** Venues this team has played at, with per-venue play counts. */
+  venues: VenueSummary[];
   /** Capped at 25 most recent, newest first. */
   recentGames: TeamGameSummary[];
 }
@@ -160,6 +162,7 @@ export const DEFAULT_TEAM_STATS: TeamStats = {
   gamesPlayed: 0,
   gamesWon: 0,
   lastPlayedAt: null,
+  venues: [],
   recentGames: [],
 };
 
@@ -182,6 +185,7 @@ export interface SerializedTeamStats {
   gamesPlayed: number;
   gamesWon: number;
   lastPlayedAt: number | null;
+  venues: Array<Omit<VenueSummary, "lastVisitedAt"> & { lastVisitedAt: number }>;
   recentGames: SerializedTeamGameSummary[];
 }
 
@@ -269,12 +273,36 @@ export interface GameQuestion {
   correctIndex?: 0 | 1 | 2 | 3;
   /** `typed` format: 1+ accepted answers; each correct match scores points. */
   acceptedAnswers?: string[];
+  /**
+   * Number of answer slots shown to the player. `typed` quiz questions derive
+   * this from `acceptedAnswers.length`; scorecard questions (no answer key)
+   * carry it explicitly since the host grades manually.
+   */
+  answerCount?: number;
 }
+
+/**
+ * Per-section answer reveal timing.
+ * - `per-question` (default): host reveals each question's answer as it's played.
+ * - `end-of-round`: players see "answer locked" between questions; all answers in
+ *   the section are revealed together at the round break.
+ */
+export type SectionRevealMode = "per-question" | "end-of-round";
+
+/**
+ * - `quiz`: full authored trivia — sections of choice/typed questions with a
+ *   stored answer key, played and auto/host-graded inside Trivix.
+ * - `scorecard`: structure only — rounds of answer slots + points, no stored
+ *   questions or answer key. Trivia is run outside Trivix; the host grades
+ *   each round's submitted answers manually. Missing/undefined = `quiz`.
+ */
+export type GameKind = "quiz" | "scorecard";
 
 export interface GameSection {
   id: string;
   theme: string;
   questions: GameQuestion[];
+  revealMode?: SectionRevealMode;
 }
 
 export interface GameDoc {
@@ -283,6 +311,7 @@ export interface GameDoc {
   /** Owner + assigned sub-hosts. Determines who can view/Start the game. */
   hostUids: string[];
   name: string;
+  kind?: GameKind;
   sections: GameSection[];
   createdAt: FirestoreTimestamp;
   updatedAt: FirestoreTimestamp;
@@ -294,6 +323,7 @@ export interface SerializedGame {
   ownerUid: string;
   hostUids: string[];
   name: string;
+  kind?: GameKind;
   sections: GameSection[];
   createdAt: number;
   updatedAt: number;
@@ -343,6 +373,11 @@ export interface GameSessionKeyDoc {
   sessionId: string;
   hostUid: string;
   questions: SessionKeyQuestion[];
+  /**
+   * Host-only record of the approved (normalized) answers per graded question
+   * index. Lets the host re-seed the grading toggles when re-scoring a round.
+   */
+  approvals?: Record<string, string[]>;
   createdAt: FirestoreTimestamp;
 }
 
@@ -350,6 +385,7 @@ export interface SerializedGameSessionKey {
   sessionId: string;
   hostUid: string;
   questions: SessionKeyQuestion[];
+  approvals?: Record<string, string[]>;
   createdAt: number;
 }
 
@@ -375,8 +411,30 @@ export interface GameSessionPlayer {
   teamId: string | null;
   /** Snapshotted at join time so a later team rename doesn't desync UI. */
   teamNameSnapshot: string | null;
+  /** Presence heartbeat — updated periodically while the player is live. */
+  lastSeenAt: FirestoreTimestamp | null;
   /** Keyed by question index (as string for Firestore map keys). */
   answers: Record<string, PlayerAnswer>;
+}
+
+/**
+ * A pending "take over as captain" request. Resolves when the current captain
+ * responds, or auto-approves once `deadlineMs` (30s after the request) passes.
+ */
+export interface SessionTakeoverRequest {
+  requesterUid: string;
+  requesterName: string;
+  /** Epoch ms; the request auto-approves once the clock passes this. */
+  deadlineMs: number;
+}
+
+/**
+ * Per-team, per-session captain state. Teams start captain-less; the first
+ * member to claim becomes captain. Only the captain may submit answers.
+ */
+export interface SessionTeamState {
+  captainUid: string | null;
+  pendingTakeover: SessionTakeoverRequest | null;
 }
 
 export interface GameSessionDoc {
@@ -402,6 +460,8 @@ export interface GameSessionDoc {
   sessionCode: string;
   /** Keyed by player uid — lets us atomically update one player at a time. */
   players: Record<string, GameSessionPlayer>;
+  /** Keyed by teamId — captain + takeover state for each team in the session. */
+  teams?: Record<string, SessionTeamState>;
   createdAt: FirestoreTimestamp;
   startedAt: FirestoreTimestamp | null;
   endedAt: FirestoreTimestamp | null;
@@ -423,6 +483,7 @@ export interface SerializedGameSessionPlayer {
   score: number;
   teamId: string | null;
   teamNameSnapshot: string | null;
+  lastSeenAt: number | null;
   answers: Record<string, SerializedPlayerAnswer>;
 }
 
@@ -443,6 +504,7 @@ export interface SerializedGameSession {
   atBreak: boolean;
   sessionCode: string;
   players: Record<string, SerializedGameSessionPlayer>;
+  teams?: Record<string, SessionTeamState>;
   createdAt: number;
   startedAt: number | null;
   endedAt: number | null;

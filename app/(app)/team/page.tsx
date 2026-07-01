@@ -164,6 +164,11 @@ export default async function TeamPage() {
             | {
                 gamesPlayed?: number;
                 gamesWon?: number;
+                venues?: Array<{
+                  venueId: string;
+                  venueName: string;
+                  gamesAttended: number;
+                }>;
                 recentGames?: Array<{
                   sessionId: string;
                   venueNameSnapshot: string;
@@ -177,6 +182,9 @@ export default async function TeamPage() {
         const gamesPlayed = Number(stats.gamesPlayed ?? 0);
         const gamesWon = Number(stats.gamesWon ?? 0);
         const recent = (stats.recentGames ?? []).slice(0, 5);
+        const venues = (stats.venues ?? [])
+          .slice()
+          .sort((a, b) => (b.gamesAttended ?? 0) - (a.gamesAttended ?? 0));
         return (
           <>
             <h2 className="font-display text-2xl tracking-[3px] mb-3 mt-8">
@@ -227,6 +235,30 @@ export default async function TeamPage() {
                 </ul>
               )}
             </Card>
+
+            {venues.length > 0 && (
+              <>
+                <h2 className="font-display text-2xl tracking-[3px] mb-3">
+                  VENUES PLAYED
+                </h2>
+                <Card className="mb-6">
+                  <ul className="divide-y divide-brand-line">
+                    {venues.map((v) => (
+                      <li
+                        key={v.venueId}
+                        className="flex items-center justify-between gap-3 p-4"
+                      >
+                        <span className="text-text-primary">{v.venueName}</span>
+                        <span className="text-xs text-text-muted">
+                          {v.gamesAttended} game
+                          {v.gamesAttended === 1 ? "" : "s"}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </Card>
+              </>
+            )}
           </>
         );
       })()}

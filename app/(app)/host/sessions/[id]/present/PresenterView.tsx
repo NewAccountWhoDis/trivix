@@ -20,6 +20,7 @@ interface QuestionRow {
   format: "choice" | "typed";
   theme: string;
   sectionIndex: number;
+  revealMode?: "per-question" | "end-of-round";
   prompt: string;
   points: number;
   choices?: string[];
@@ -114,7 +115,9 @@ export function PresenterView({
   const atBreak = Boolean(session.atBreak);
   const current = status === "active" ? questions[currentQuestionIndex] : null;
   const nextQuestion = questions[currentQuestionIndex + 1] ?? null;
-  const revealed = revealedIndex >= currentQuestionIndex;
+  // Hold the visual reveal until the round break for end-of-round sections.
+  const holdReveal = current?.revealMode === "end-of-round";
+  const revealed = revealedIndex >= currentQuestionIndex && !holdReveal;
   const isSectionStart =
     current != null &&
     (currentQuestionIndex === 0 ||
@@ -154,6 +157,16 @@ export function PresenterView({
   }
 
   if (status === "active" && atBreak && current) {
+    const sectionRecap =
+      current.revealMode === "end-of-round"
+        ? questions
+            .map((row, i) => ({ row, i }))
+            .filter(
+              ({ row, i }) =>
+                row.sectionIndex === current.sectionIndex &&
+                i <= currentQuestionIndex,
+            )
+        : [];
     return (
       <div className="min-h-screen flex flex-col items-center justify-center px-10 py-12 gap-10">
         <div className="flex flex-col items-center gap-3">
@@ -167,6 +180,46 @@ export function PresenterView({
             </p>
           )}
         </div>
+        {sectionRecap.length > 0 && (
+          <div className="w-full max-w-5xl">
+            <p className="font-display text-2xl md:text-3xl tracking-[4px] text-text-faint uppercase mb-4 text-center">
+              Round Answers
+            </p>
+            <ul className="grid sm:grid-cols-2 gap-4">
+              {sectionRecap.map(({ row, i }) => (
+                <li
+                  key={i}
+                  className="rounded-xl border-2 border-brand-line bg-brand-ink p-5"
+                >
+                  <div className="text-xs md:text-sm uppercase tracking-[3px] text-text-faint mb-2">
+                    Q{i + 1}
+                  </div>
+                  <div className="text-xl md:text-2xl text-text-primary mb-3 leading-snug">
+                    {row.prompt}
+                  </div>
+                  {row.format === "choice" ? (
+                    <div className="text-xl md:text-2xl text-game-green">
+                      {typeof row.correctIndex === "number"
+                        ? `${String.fromCharCode(65 + row.correctIndex)}. ${row.choices?.[row.correctIndex] ?? ""}`
+                        : "—"}
+                    </div>
+                  ) : (
+                    <div className="flex flex-wrap gap-2">
+                      {(row.acceptedAnswers ?? []).map((a, ai) => (
+                        <span
+                          key={ai}
+                          className="px-3 py-1 rounded-md border border-game-green/40 bg-game-green/10 text-base md:text-lg text-game-green"
+                        >
+                          {a}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
         <div className="w-full max-w-4xl">
           <Leaderboard teams={teams} size="lg" max={8} />
         </div>

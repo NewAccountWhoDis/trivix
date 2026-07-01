@@ -48,13 +48,9 @@ export async function POST(request: Request): Promise<NextResponse> {
     return NextResponse.json({ ok: true, sessionId, alreadyJoined: true });
   }
 
-  // Demos are watch-only, so latecomers can join after the game starts.
-  if (status !== "lobby" && data.isDemo !== true) {
-    return NextResponse.json(
-      { error: "Game already in progress" },
-      { status: 409 },
-    );
-  }
+  // Players may join at any point while the game is live — a latecomer joins
+  // their team and can immediately claim/contest captaincy. Only ended games
+  // are closed (already handled above).
 
   const userSnap = await adminDb.collection("users").doc(session.uid).get();
   const userData = userSnap.data() ?? {};
@@ -77,6 +73,7 @@ export async function POST(request: Request): Promise<NextResponse> {
       score: 0,
       teamId,
       teamNameSnapshot,
+      lastSeenAt: FieldValue.serverTimestamp(),
       answers: {},
     },
   });

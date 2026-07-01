@@ -66,3 +66,32 @@ export function uniqueTopRealTeam(
   if (tied.length !== 1) return null;
   return tied[0] ?? null;
 }
+
+export interface Competitor {
+  /** A real team competes as a unit; a free agent competes as themselves. */
+  kind: "team" | "solo";
+  /** teamId for a team, uid for a solo player. */
+  id: string;
+  score: number;
+}
+
+export type GameWinner =
+  | { kind: "team"; id: string }
+  | { kind: "solo"; id: string }
+  | null;
+
+/**
+ * Resolve the single game winner across a mixed field of teams and free
+ * agents: the unique competitor with the highest positive score. Ties (or an
+ * all-zero field) yield no winner. Team members inherit a team win; a solo
+ * player wins on their own score.
+ */
+export function resolveGameWinner(competitors: Competitor[]): GameWinner {
+  const scoring = competitors.filter((c) => c.score > 0);
+  if (scoring.length === 0) return null;
+  const top = scoring.reduce((m, c) => Math.max(m, c.score), 0);
+  const tied = scoring.filter((c) => c.score === top);
+  if (tied.length !== 1) return null;
+  const w = tied[0]!;
+  return { kind: w.kind, id: w.id };
+}

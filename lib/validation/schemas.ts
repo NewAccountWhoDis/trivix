@@ -262,16 +262,49 @@ export const gameSectionSchema = z.object({
     .array(gameQuestionSchema)
     .min(1, "At least 1 question")
     .max(50, "50 questions max"),
+  revealMode: z.enum(["per-question", "end-of-round"]).optional(),
 });
 
-/** Create only needs a name — sections are added on the manage screen. */
+// ── Scorecard games ──────────────────────────────────────────────────────────
+// A scorecard round has no stored questions or answer key — only answer-slot
+// counts and points. Questions are hosted outside Trivix; the host grades each
+// round's submitted answers manually. Persisted as `typed` questions so the
+// live session pipeline (join / answer / grade / leaderboard) is reused as-is.
+export const scorecardQuestionSchema = z.object({
+  id: z.string().min(1),
+  format: z.literal("typed"),
+  // Auto-labelled ("Question 1", …) at save time; the trivia itself is external.
+  prompt: z.string().trim().max(500).optional().default(""),
+  points: gamePointsSchema,
+  answerCount: z.number().int().min(1, "At least 1 answer").max(20, "20 answers max"),
+});
+
+export const scorecardSectionSchema = z.object({
+  id: z.string().min(1),
+  theme: z.string().trim().min(1, "Required").max(60, "60 characters max"),
+  questions: z
+    .array(scorecardQuestionSchema)
+    .min(1, "At least 1 question")
+    .max(50, "50 questions max"),
+});
+
+export const gameKindSchema = z.enum(["quiz", "scorecard"]);
+
+/** Create only needs a name + kind — content is added on the manage screen. */
 export const createGameSchema = z.object({
   name: gameNameSchema,
+  kind: gameKindSchema.optional(),
 });
 
+// Sections may be quiz sections or scorecard rounds. The union tries the quiz
+// shape first; scorecard rounds fail it (typed questions have no
+// `acceptedAnswers`) and fall through to the scorecard shape.
 export const updateGameSchema = z.object({
   name: gameNameSchema,
-  sections: z.array(gameSectionSchema).max(50, "50 sections max"),
+  kind: gameKindSchema.optional(),
+  sections: z
+    .array(z.union([gameSectionSchema, scorecardSectionSchema]))
+    .max(50, "50 sections max"),
 });
 
 export const assignHostsSchema = z.object({
