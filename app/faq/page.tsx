@@ -16,11 +16,36 @@ const FAQS: readonly Item[] = [
   },
   {
     q: "How do I play?",
-    a: "Create an account, head to Play, and join the game your host has started. Questions appear on your device — lock in your answers before the timer runs out.",
+    a: (
+      <>
+        Create an account, head to Play, and join with the 6-character code your
+        host shares &mdash; you can jump in any time, even after the game has
+        already started. Questions appear on your device; lock in your answers
+        before the host reveals each one.
+      </>
+    ),
   },
   {
     q: "How do I join or create a team?",
-    a: "Open the Team tab once you're signed in. You can start a new team and invite friends, or join an existing one.",
+    a: (
+      <>
+        Open the Team tab once you&rsquo;re signed in. You can start a new team
+        and invite friends, or join an existing one.
+      </>
+    ),
+  },
+  {
+    q: "Who submits answers for my team?",
+    a: (
+      <>
+        If you&rsquo;re on a team, one person is the captain and submits the
+        answers for everyone. No captain yet? Anyone can tap &ldquo;Be
+        captain.&rdquo; To take over mid-game, tap &ldquo;Take over as
+        captain&rdquo; &mdash; the current captain gets a quick prompt to allow
+        it, and it switches automatically after 30 seconds if they don&rsquo;t
+        respond.
+      </>
+    ),
   },
   {
     q: "How do I become a host?",
@@ -37,8 +62,42 @@ const FAQS: readonly Item[] = [
     a: "Yes. After you submit a host application, an admin will review it and follow up directly with payment details.",
   },
   {
+    q: "What kinds of games can I create?",
+    a: (
+      <>
+        Two kinds. A full game stores your questions and answers in Trivix and
+        scores players automatically. A scorecard is just the structure &mdash;
+        rounds, answer slots and points &mdash; for when you run the questions
+        yourself (aloud or on a screen) and let Trivix keep score.
+      </>
+    ),
+  },
+  {
+    q: "Can I preview a game before I host it?",
+    a: (
+      <>
+        Yes. Open the game in Host tools and choose &ldquo;Preview this
+        game&rdquo; to step through it exactly as your players will see it.
+        Nothing is saved or scored.
+      </>
+    ),
+  },
+  {
+    q: "Which venues can I host at?",
+    a: (
+      <>
+        Any venue in the system &mdash; it doesn&rsquo;t have to be one you
+        created &mdash; or add a new venue right from the start-game screen.
+      </>
+    ),
+  },
+  {
+    q: "Can I fix a team's score during a game?",
+    a: "Yes. You can grade or re-grade any round, current or earlier, right up until the game ends. Corrections update team totals automatically.",
+  },
+  {
     q: "Can I add other hosts to my account?",
-    a: "Yes. Note it on your host application. Sub-hosts you add inherit access to your venues and question sets.",
+    a: "Yes. Note it on your host application. Sub-hosts you add inherit access to your venues and games.",
   },
   {
     q: "How do I update my account details?",
